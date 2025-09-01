@@ -22,7 +22,7 @@
             border-bottom: 1px solid #e0e0e0;
         }
 
-        .claude-icon {
+        .vstate-icon {
             width: 24px;
             height: 24px;
             margin-right: 12px;
@@ -336,71 +336,91 @@
         }
 
         .services-overview {
-            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-            border-radius: 8px;
-            padding: 12px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 12px;
+            padding: 16px;
             margin-bottom: 16px;
-            border: 1px solid #e0e0e0;
+            border: none;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.2);
+        }
+
+        .overview-title {
+            font-size: 12px;
+            font-weight: 600;
+            color: white;
+            margin-bottom: 12px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.3);
         }
 
         .services-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 8px;
+            gap: 10px;
         }
 
         .service-item {
             display: flex;
             align-items: center;
-            padding: 6px 8px;
-            border-radius: 6px;
-            background: white;
-            border: 1px solid #e0e0e0;
-            transition: all 0.2s ease;
+            padding: 10px 12px;
+            border-radius: 8px;
+            background: rgba(255,255,255,0.95);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.3);
+            transition: all 0.3s ease;
             font-size: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
         }
 
         .service-item:hover {
-            background: #f8f9fa;
-            transform: translateY(-1px);
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            background: rgba(255,255,255,1);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.15);
         }
 
         .service-icon {
-            width: 16px;
-            height: 16px;
-            margin-right: 6px;
-            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            margin-right: 8px;
+            border-radius: 6px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 8px;
+            font-size: 12px;
             font-weight: bold;
-            color: white;
             flex-shrink: 0;
+            background: rgba(255,255,255,0.8);
+            transition: all 0.2s ease;
         }
 
-        .service-icon.operational { background: #10B981; }
-        .service-icon.minor { background: #F59E0B; }
-        .service-icon.major { background: #EF4444; }
-        .service-icon.critical { background: #DC2626; }
-        .service-icon.unknown { background: #6B7280; }
+        .service-icon.operational { 
+            background: linear-gradient(45deg, #10B981, #34D399);
+            color: white;
+        }
+        .service-icon.minor { 
+            background: linear-gradient(45deg, #F59E0B, #FBBF24);
+            color: white;
+        }
+        .service-icon.major { 
+            background: linear-gradient(45deg, #EF4444, #F87171);
+            color: white;
+        }
+        .service-icon.critical { 
+            background: linear-gradient(45deg, #DC2626, #EF4444);
+            color: white;
+        }
+        .service-icon.unknown { 
+            background: linear-gradient(45deg, #6B7280, #9CA3AF);
+            color: white;
+        }
 
         .service-name {
-            font-weight: 500;
+            font-weight: 600;
             color: #374151;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
-        }
-
-        .overview-title {
-            font-size: 11px;
-            font-weight: 600;
-            color: #6B7280;
-            margin-bottom: 8px;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
         }
 
         .last-updated.error {
@@ -525,55 +545,55 @@
 </head>
 <body>
     <div class="header">
-        <img src="icons/claude-32.png" alt="Claude status icon" class="claude-icon" id="status-icon">
+        <img src="icons/vstate-32.png" alt="VState status icon" class="vstate-icon" id="status-icon">
         <div>
             <h3 class="status-title">
-                Claude Status
+                VState - Dev Tools Vibe
                 <span class="status-indicator" id="status-indicator" role="img"></span>
             </h3>
             <div class="last-updated" id="last-updated" aria-live="polite">Loading...</div>
         </div>
-        <button class="about-btn" id="about-btn" aria-label="About this extension" title="About">About</button>
+        <button class="about-btn" id="about-btn" aria-label="About VState extension" title="About">About</button>
         <button class="refresh-btn" id="refresh-btn" aria-label="Refresh status data" title="Refresh status (Ctrl+R)">Refresh</button>
     </div>
 
     <div class="services-overview">
-        <div class="overview-title">Service Status</div>
+        <div class="overview-title">🔥 Dev Tools Vibe Check</div>
         <div class="services-grid" id="services-grid">
-            <div class="service-item">
-                <div class="service-icon unknown">?</div>
-                <div class="service-name">claude.ai</div>
+            <div class="service-item claude-service">
+                <div class="service-icon unknown">🤖</div>
+                <div class="service-name">Claude AI</div>
             </div>
-            <div class="service-item">
-                <div class="service-icon unknown">?</div>
-                <div class="service-name">Console</div>
+            <div class="service-item github-service">
+                <div class="service-icon unknown">🐙</div>
+                <div class="service-name">GitHub Copilot</div>
             </div>
-            <div class="service-item">
-                <div class="service-icon unknown">?</div>
-                <div class="service-name">API</div>
+            <div class="service-item claude-api">
+                <div class="service-icon unknown">⚡</div>
+                <div class="service-name">Claude API</div>
             </div>
-            <div class="service-item">
-                <div class="service-icon unknown">?</div>
-                <div class="service-name">Claude Code</div>
+            <div class="service-item github-api">
+                <div class="service-icon unknown">🔧</div>
+                <div class="service-name">GitHub API</div>
             </div>
         </div>
     </div>
 
     <div class="incidents-section">
         <div class="section-tabs" role="tablist" aria-label="Incident data views">
-            <button class="tab-button active" data-tab="active" role="tab" aria-controls="active-tab" aria-selected="true" title="View active issues (Press 1)">Active Issues</button>
-            <button class="tab-button" data-tab="recent" role="tab" aria-controls="recent-tab" aria-selected="false" title="View last 5 incidents (Press 2)">Last 5 Incidents</button>
+            <button class="tab-button active" data-tab="active" role="tab" aria-controls="active-tab" aria-selected="true" title="View active issues (Press 1)">🚨 Active Issues</button>
+            <button class="tab-button" data-tab="recent" role="tab" aria-controls="recent-tab" aria-selected="false" title="View recent incidents (Press 2)">📝 Recent History</button>
         </div>
         
         <div id="active-tab" class="tab-content active" role="tabpanel" aria-labelledby="active-tab" tabindex="0">
             <div id="incidents-container" aria-live="polite">
-                <div class="loading">Loading incidents...</div>
+                <div class="loading">🔄 Checking incidents...</div>
             </div>
         </div>
         
         <div id="recent-tab" class="tab-content" role="tabpanel" aria-labelledby="recent-tab" tabindex="0">
             <div id="recent-incidents-container" aria-live="polite">
-                <div class="loading">Loading recent incidents...</div>
+                <div class="loading">🔄 Loading recent incidents...</div>
             </div>
         </div>
     </div>
@@ -583,8 +603,8 @@
         <div class="about-content">
             <button class="about-close" id="about-close" aria-label="Close about dialog">&times;</button>
             <div class="about-header">
-                <img src="icons/claude-48.png" alt="Claude Status Monitor Icon" class="about-icon">
-                <h2 class="about-title" id="about-title">Claude Status Monitor</h2>
+                <img src="icons/vstate-48.png" alt="VState Icon" class="about-icon">
+                <h2 class="about-title" id="about-title">VState - Vibe Code</h2>
                 <p class="about-version" id="about-version">Version 1.0.0</p>
             </div>
             <div class="about-status-colors">
@@ -593,7 +613,7 @@
                 <div class="status-color red" title="Major Issues - Significant service disruptions"></div>
             </div>
             <p class="about-description" id="about-description">
-                Monitor Claude's status from Anthropic and display colored status icon with recent incidents
+                Monitor Claude AI and GitHub Copilot status with real-time updates and recent incidents. Keep your dev tools vibe in check! 🔥
             </p>
             <div class="about-author">
                 <div class="about-author-label">Created by</div>

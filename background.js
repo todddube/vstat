@@ -1,22 +1,33 @@
 /**
- * StatusMonitor class handles monitoring of Claude service status
+ * VStateMonitor class handles monitoring of Claude and GitHub Copilot service status
  * Uses Chrome alarms API for reliable background execution
  */
-class StatusMonitor {
+class VStateMonitor {
   constructor() {
-    this.statusUrl = 'https://status.anthropic.com/api/v2/status.json';
-    this.incidentsUrl = 'https://status.anthropic.com/api/v2/incidents.json';
-    this.summaryUrl = 'https://status.anthropic.com/api/v2/summary.json';
-    this.componentsUrl = 'https://status.anthropic.com/api/v2/components.json';
+    // Claude API endpoints
+    this.claude = {
+      statusUrl: 'https://status.anthropic.com/api/v2/status.json',
+      incidentsUrl: 'https://status.anthropic.com/api/v2/incidents.json',
+      summaryUrl: 'https://status.anthropic.com/api/v2/summary.json',
+      componentsUrl: 'https://status.anthropic.com/api/v2/components.json'
+    };
     
-    this.alarmName = 'statusCheck';
+    // GitHub API endpoints
+    this.github = {
+      statusUrl: 'https://www.githubstatus.com/api/v2/status.json',
+      incidentsUrl: 'https://www.githubstatus.com/api/v2/incidents.json',
+      summaryUrl: 'https://www.githubstatus.com/api/v2/summary.json',
+      componentsUrl: 'https://www.githubstatus.com/api/v2/components.json'
+    };
+    
+    this.alarmName = 'vstateCheck';
     this.intervalMinutes = 5;
     this.maxRetries = 3;
     this.retryDelay = 2000;
   }
 
   /**
-   * Initialize the status monitor
+   * Initialize the VState monitor
    * Sets up alarms for periodic checking
    */
   async init() {
@@ -27,51 +38,116 @@ class StatusMonitor {
         periodInMinutes: this.intervalMinutes 
       });
       
-      // Initial status check
-      await this.checkStatus();
+      // Initial status check for both services
+      await this.checkAllStatuses();
     } catch (error) {
-      console.error('Failed to initialize status monitor:', error);
+      console.error('Failed to initialize VState monitor:', error);
       this.handleError(error, 'initialization');
     }
   }
 
   /**
-   * Check status with retry logic and proper error handling
+   * Check status for both Claude and GitHub services
    */
-  async checkStatus(retryCount = 0) {
+  async checkAllStatuses(retryCount = 0) {
     try {
-      const [statusData, incidentsData, summaryData] = await Promise.allSettled([
-        this.fetchData(this.statusUrl),
-        this.fetchData(this.incidentsUrl),
-        this.fetchData(this.summaryUrl)
+      const [claudeResults, githubResults] = await Promise.allSettled([
+        this.checkServiceStatus('claude'),
+        this.checkServiceStatus('github')
       ]);
 
-      // Process results, handling partial failures gracefully
-      const status = this.extractStatusFromResult(statusData);
-      const incidents = this.extractIncidentsFromResult(incidentsData);
-      const components = this.extractComponentsFromResult(summaryData);
+      // Process results for both services
+      const claudeStatus = this.extractStatusFromResult(claudeResults, 'claude');
+      const githubStatus = this.extractStatusFromResult(githubResults, 'github');
 
-      const recentIncidents = this.getRecentIncidents(incidents);
-      const historicalIncidents = this.getHistoricalIncidents(incidents);
-      const lastFiveIncidents = this.getLastFiveIncidents(incidents);
-
-      await this.updateStatus(status, recentIncidents, historicalIncidents, components, lastFiveIncidents);
-      await this.updateBadgeIcon(status, components);
+      // Combine status and determine overall state
+      const combinedStatus = this.combineStatuses(claudeStatus, githubStatus);
+      
+      // Store the status data
+      await this.updateVStateStatus(claudeStatus, githubStatus, combinedStatus);
+      await this.updateBadgeIcon(combinedStatus);
       
       // Store success timestamp
       await chrome.storage.local.set({ lastSuccessfulCheck: Date.now() });
       
     } catch (error) {
-      console.error('Failed to check status (attempt', retryCount + 1, '):', error);
+      console.error('Failed to check VState status (attempt', retryCount + 1, '):', error);
       
       if (retryCount < this.maxRetries) {
-        setTimeout(() => this.checkStatus(retryCount + 1), this.retryDelay * (retryCount + 1));
+        setTimeout(() => this.checkAllStatuses(retryCount + 1), this.retryDelay * (retryCount + 1));
         return;
       }
       
       // Final failure - set unknown status
       await this.handleCheckFailure(error);
     }
+  }
+
+  /**
+   * Check status for a specific service (claude or github)
+   */
+  async checkServiceStatus(serviceName) {
+    const serviceConfig = this[serviceName];
+    if (!serviceConfig) {
+      throw new Error(`Unknown service: ${serviceName}`);
+    }
+
+    const [statusData, incidentsData, summaryData] = await Promise.allSettled([
+      this.fetchData(serviceConfig.statusUrl),
+      this.fetchData(serviceConfig.incidentsUrl),
+      this.fetchData(serviceConfig.summaryUrl)
+    ]);
+
+    return {
+      service: serviceName,
+      status: this.extractStatusFromResult(statusData),
+      incidents: this.extractIncidentsFromResult(incidentsData),
+      components: this.extractComponentsFromResult(summaryData)
+    };
+  }
+
+  /**
+   * Combine statuses from multiple services
+   */
+  combineStatuses(claudeStatus, githubStatus) {
+    // Priority: critical > major > minor > operational
+    const statusPriority = {
+      'critical': 4,
+      'major': 3, 
+      'minor': 2,
+      'operational': 1,
+      'unknown': 0
+    };
+
+    const claudeLevel = statusPriority[claudeStatus?.status?.indicator] || 0;
+    const githubLevel = statusPriority[githubStatus?.status?.indicator] || 0;
+    
+    const maxLevel = Math.max(claudeLevel, githubLevel);
+    const combinedIndicator = Object.keys(statusPriority).find(key => 
+      statusPriority[key] === maxLevel
+    ) || 'unknown';
+
+    return {
+      indicator: combinedIndicator,
+      description: this.getCombinedDescription(claudeStatus, githubStatus, combinedIndicator),
+      claude: claudeStatus,
+      github: githubStatus
+    };
+  }
+
+  /**
+   * Get combined status description
+   */
+  getCombinedDescription(claudeStatus, githubStatus, indicator) {
+    const descriptions = {
+      'operational': 'All dev tools are vibing! 🔥',
+      'minor': 'Minor issues detected in your dev tools',
+      'major': 'Major issues affecting your dev tools',
+      'critical': 'Critical issues - dev tools are down!',
+      'unknown': 'Unable to determine dev tools status'
+    };
+    
+    return descriptions[indicator] || descriptions.unknown;
   }
 
   /**
@@ -108,12 +184,19 @@ class StatusMonitor {
   }
 
   /**
-   * Extract status from Promise.allSettled result
+   * Extract status from Promise.allSettled result or service result
    */
-  extractStatusFromResult(result) {
+  extractStatusFromResult(result, serviceName = null) {
+    // Handle service-specific results (from checkServiceStatus)
+    if (serviceName && result.status === 'fulfilled' && result.value) {
+      return result.value;
+    }
+    
+    // Handle individual API call results  
     if (result.status === 'fulfilled' && result.value?.status?.indicator) {
       return result.value.status.indicator;
     }
+    
     return 'unknown';
   }
 
@@ -284,6 +367,34 @@ class StatusMonitor {
     return `${dateStr} ${timeStr} - ${name}`;
   }
 
+  /**
+   * Update VState status data in storage
+   */
+  async updateVStateStatus(claudeStatus, githubStatus, combinedStatus) {
+    const currentTime = new Date().toISOString();
+    
+    await chrome.storage.local.set({
+      // Combined status
+      vstateStatus: combinedStatus,
+      
+      // Individual service data
+      claudeStatus: claudeStatus,
+      githubStatus: githubStatus,
+      
+      // Individual incidents
+      claudeIncidents: claudeStatus?.incidents || [],
+      githubIncidents: githubStatus?.incidents || [],
+      
+      // Individual components
+      claudeComponents: claudeStatus?.components || [],
+      githubComponents: githubStatus?.components || [],
+      
+      // Timestamps
+      lastUpdated: currentTime,
+      lastSuccessfulCheck: Date.now()
+    });
+  }
+
   async updateStatus(status, incidents, historicalIncidents, components, lastFiveIncidents) {
     await chrome.storage.local.set({
       status: status,
@@ -423,49 +534,49 @@ class StatusMonitor {
 }
 
 // Global monitor instance
-let statusMonitor = null;
+let vstateMonitor = null;
 
 // Event listeners using modern async patterns
 chrome.runtime.onInstalled.addListener(async (details) => {
-  console.log('Extension installed/updated:', details.reason);
+  console.log('VState extension installed/updated:', details.reason);
   try {
-    statusMonitor = new StatusMonitor();
-    await statusMonitor.init();
+    vstateMonitor = new VStateMonitor();
+    await vstateMonitor.init();
   } catch (error) {
-    console.error('Failed to initialize on install:', error);
+    console.error('Failed to initialize VState on install:', error);
   }
 });
 
 chrome.runtime.onStartup.addListener(async () => {
-  console.log('Extension startup');
+  console.log('VState extension startup');
   try {
-    statusMonitor = new StatusMonitor();
-    await statusMonitor.init();
+    vstateMonitor = new VStateMonitor();
+    await vstateMonitor.init();
   } catch (error) {
-    console.error('Failed to initialize on startup:', error);
+    console.error('Failed to initialize VState on startup:', error);
   }
 });
 
 // Handle alarm events for periodic checks
 chrome.alarms.onAlarm.addListener(async (alarm) => {
-  if (alarm.name === 'statusCheck' && statusMonitor) {
-    await statusMonitor.checkStatus();
+  if (alarm.name === 'vstateCheck' && vstateMonitor) {
+    await vstateMonitor.checkAllStatuses();
   }
 });
 
-// Service worker keep-alive pattern (optional, for Edge compatibility)
+// Service worker message handling
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.action === 'forceRefresh') {
     (async () => {
       try {
-        if (!statusMonitor) {
-          statusMonitor = new StatusMonitor();
-          await statusMonitor.init();
+        if (!vstateMonitor) {
+          vstateMonitor = new VStateMonitor();
+          await vstateMonitor.init();
         }
-        await statusMonitor.checkStatus();
+        await vstateMonitor.checkAllStatuses();
         sendResponse({ status: 'refreshing', timestamp: Date.now() });
       } catch (error) {
-        console.error('Force refresh failed:', error);
+        console.error('VState force refresh failed:', error);
         sendResponse({ status: 'error', error: error.message });
       }
     })();
@@ -476,8 +587,8 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     (async () => {
       try {
         const data = await chrome.storage.local.get([
-          'status', 'incidents', 'historicalIncidents', 'lastFiveIncidents',
-          'components', 'lastUpdated', 'lastError'
+          'vstateStatus', 'claudeStatus', 'githubStatus', 'claudeIncidents', 
+          'githubIncidents', 'lastUpdated', 'lastError'
         ]);
         sendResponse({ status: 'success', data });
       } catch (error) {

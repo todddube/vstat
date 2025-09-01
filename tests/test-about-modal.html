@@ -84,6 +84,41 @@
             margin-bottom: 20px;
         }
 
+        .about-status-colors {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 16px;
+            gap: 6px;
+        }
+
+        .status-color {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            border: 1px solid #ddd;
+            transition: transform 0.2s;
+        }
+
+        .status-color:hover {
+            transform: scale(1.2);
+        }
+
+        .status-color.green {
+            background-color: #4CAF50;
+            border-color: #45a049;
+        }
+
+        .status-color.yellow {
+            background-color: #FFC107;
+            border-color: #e0a800;
+        }
+
+        .status-color.red {
+            background-color: #F44336;
+            border-color: #da190b;
+        }
+
         .about-icon {
             width: 48px;
             height: 48px;
@@ -141,9 +176,17 @@
         
         <h2>Features Added:</h2>
         <ul>
-            <li>About button next to the Refresh button in the popup header</li>
+            <li>About button positioned to the right of the Refresh button in the popup header</li>
+            <li>About button has the same height and styling as the Refresh button</li>
             <li>Modal overlay showing extension information from manifest.json</li>
             <li>Displays: Extension name, version, description, and author</li>
+            <li><strong>Small status color indicators at the top of the modal:</strong>
+                <ul>
+                    <li>🟢 Green - Operational (all systems functioning normally)</li>
+                    <li>🟡 Yellow - Minor Issues (some services experiencing problems)</li>
+                    <li>🔴 Red - Major Issues (significant service disruptions)</li>
+                </ul>
+            </li>
             <li>Keyboard shortcuts: 
                 <ul>
                     <li><code>Ctrl+I</code> / <code>Cmd+I</code> to open About modal</li>
@@ -175,6 +218,11 @@
                 <img src="icons/claude-48.png" alt="Claude Status Monitor Icon" class="about-icon">
                 <h2 class="about-title">Claude Status Monitor</h2>
                 <p class="about-version">Version 1.0.0</p>
+            </div>
+            <div class="about-status-colors">
+                <div class="status-color green" title="Operational - All systems functioning normally"></div>
+                <div class="status-color yellow" title="Minor Issues - Some services may be experiencing minor problems"></div>
+                <div class="status-color red" title="Major Issues - Significant service disruptions"></div>
             </div>
             <p class="about-description">
                 Monitor Claude's status from Anthropic and display colored status icon with recent incidents
