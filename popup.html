@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <style>
+        body {
+            width: 380px;
+            max-height: 600px;
+            margin: 0;
+            padding: 16px;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            font-size: 14px;
+            line-height: 1.4;
+            overflow-y: auto;
+        }
+
+        .header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 16px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .claude-icon {
+            width: 24px;
+            height: 24px;
+            margin-right: 12px;
+        }
+
+        .status-title {
+            font-weight: 600;
+            margin: 0;
+            font-size: 16px;
+        }
+
+        .status-indicator {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            margin-left: 8px;
+        }
+
+        .status-operational { background-color: #4CAF50; }
+        .status-minor { background-color: #FFC107; }
+        .status-major { background-color: #F44336; }
+        .status-critical { background-color: #D32F2F; }
+        .status-unknown { background-color: #9E9E9E; }
+
+        .last-updated {
+            color: #666;
+            font-size: 12px;
+            margin-top: 4px;
+        }
+
+        .incidents-section {
+            margin-top: 16px;
+        }
+
+        .incidents-title {
+            font-weight: 600;
+            margin-bottom: 12px;
+            color: #333;
+        }
+
+        .incident {
+            background: #f8f9fa;
+            border-radius: 6px;
+            padding: 12px;
+            margin-bottom: 8px;
+            border-left: 3px solid #ddd;
+        }
+
+        .incident.impact-major {
+            border-left-color: #F44336;
+        }
+
+        .incident.impact-minor {
+            border-left-color: #FFC107;
+        }
+
+        .incident.impact-critical {
+            border-left-color: #D32F2F;
+        }
+
+        .incident-name {
+            font-weight: 500;
+            margin-bottom: 6px;
+            color: #333;
+        }
+
+        .incident-status {
+            display: inline-block;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 11px;
+            font-weight: 500;
+            text-transform: uppercase;
+        }
+
+        .incident-status.investigating {
+            background-color: #fff3cd;
+            color: #856404;
+        }
+
+        .incident-status.identified {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+
+        .incident-status.monitoring {
+            background-color: #d4edda;
+            color: #155724;
+        }
+
+        .incident-update {
+            margin-top: 8px;
+            font-size: 12px;
+            color: #666;
+            line-height: 1.3;
+        }
+
+        .incident-date {
+            font-size: 11px;
+            color: #999;
+            margin-top: 4px;
+        }
+
+        .no-incidents {
+            color: #666;
+            font-style: italic;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .loading {
+            text-align: center;
+            color: #666;
+            padding: 20px;
+        }
+
+        .refresh-btn {
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            padding: 6px 12px;
+            font-size: 12px;
+            cursor: pointer;
+            float: right;
+            margin-top: -4px;
+            transition: background 0.2s, opacity 0.2s;
+        }
+
+        .refresh-btn:hover:not(:disabled) {
+            background: #0056b3;
+        }
+
+        .refresh-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .refresh-btn[aria-busy="true"] {
+            position: relative;
+        }
+
+        .refresh-btn[aria-busy="true"]::after {
+            content: "";
+            position: absolute;
+            right: 8px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 10px;
+            height: 10px;
+            border: 1px solid currentColor;
+            border-top-color: transparent;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: translateY(-50%) rotate(360deg); }
+        }
+
+        .last-updated.error {
+            color: #d32f2f;
+        }
+
+        .no-incidents.error {
+            color: #d32f2f;
+        }
+
+        .no-incidents.error button {
+            background: #d32f2f;
+            color: white;
+            border: none;
+            padding: 4px 8px;
+            border-radius: 3px;
+            font-size: 11px;
+            cursor: pointer;
+            margin-left: 8px;
+        }
+
+        .no-incidents.error button:hover {
+            background: #b71c1c;
+        }
+
+        .historical-section {
+            margin-top: 20px;
+            padding-top: 16px;
+            border-top: 1px solid #e0e0e0;
+        }
+
+        .historical-incident {
+            background: #f8f9fa;
+            border-radius: 6px;
+            padding: 10px;
+            margin-bottom: 8px;
+            border-left: 3px solid #ddd;
+            font-size: 13px;
+        }
+
+        .historical-incident.resolved {
+            opacity: 0.8;
+            background: #f1f8f1;
+        }
+
+        .historical-incident.impact-major {
+            border-left-color: #F44336;
+        }
+
+        .historical-incident.impact-minor {
+            border-left-color: #FFC107;
+        }
+
+        .historical-incident.impact-critical {
+            border-left-color: #D32F2F;
+        }
+
+        .incident-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 6px;
+        }
+
+        .incident-summary {
+            color: #666;
+            font-size: 12px;
+            line-height: 1.3;
+            margin-bottom: 8px;
+        }
+
+        .incident-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 11px;
+            color: #999;
+        }
+
+        .incident-duration {
+            color: #666;
+            font-weight: 500;
+        }
+
+        .section-tabs {
+            display: flex;
+            margin-bottom: 12px;
+            background: #f1f1f1;
+            border-radius: 6px;
+            overflow: hidden;
+        }
+
+        .tab-button {
+            flex: 1;
+            background: transparent;
+            border: none;
+            padding: 8px 12px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 500;
+            transition: background 0.2s;
+        }
+
+        .tab-button.active {
+            background: #007bff;
+            color: white;
+        }
+
+        .tab-button:hover:not(.active) {
+            background: #e9ecef;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+    </style>
+</head>
+<body>
+    <div class="header">
+        <img src="icons/claude-32.png" alt="Claude status icon" class="claude-icon" id="status-icon">
+        <div>
+            <h3 class="status-title">
+                Claude Status
+                <span class="status-indicator" id="status-indicator" role="img"></span>
+            </h3>
+            <div class="last-updated" id="last-updated" aria-live="polite">Loading...</div>
+        </div>
+        <button class="refresh-btn" id="refresh-btn" aria-label="Refresh status data" title="Refresh status (Ctrl+R)">Refresh</button>
+    </div>
+
+    <div class="incidents-section">
+        <div class="section-tabs" role="tablist" aria-label="Incident data views">
+            <button class="tab-button active" data-tab="active" role="tab" aria-controls="active-tab" aria-selected="true" title="View active issues (Press 1)">Active Issues</button>
+            <button class="tab-button" data-tab="recent" role="tab" aria-controls="recent-tab" aria-selected="false" title="View last 5 incidents (Press 2)">Last 5 Incidents</button>
+        </div>
+        
+        <div id="active-tab" class="tab-content active" role="tabpanel" aria-labelledby="active-tab" tabindex="0">
+            <div id="incidents-container" aria-live="polite">
+                <div class="loading">Loading incidents...</div>
+            </div>
+        </div>
+        
+        <div id="recent-tab" class="tab-content" role="tabpanel" aria-labelledby="recent-tab" tabindex="0">
+            <div id="recent-incidents-container" aria-live="polite">
+                <div class="loading">Loading recent incidents...</div>
+            </div>
+        </div>
+    </div>
+
+    <script src="popup.js"></script>
+</body>
+</html>

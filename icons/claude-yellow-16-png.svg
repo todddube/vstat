@@ -1,0 +1,18 @@
+<svg width="16" height="16" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16">
+    <!-- Clean, PNG-friendly version -->
+    <g transform="translate(8, 8)">
+      <!-- Main shape - abstract "A" representing Anthropic + monitoring -->
+      <path d="M 0 -4.48 L 3.2 -0.8 L 3.2 4.48 L 1.6 4.48 L 1.6 0.8 L -1.6 0.8 L -1.6 4.48 L -3.2 4.48 L -3.2 -0.8 Z" 
+            fill="#F59E0B" 
+            stroke="none"/>
+      
+      <!-- Horizontal bar for "A" -->
+      <rect x="-2.4" y="-0.8" 
+            width="4.8" height="2" 
+            fill="#F59E0B" opacity="0.9"/>
+      
+      <!-- Status indicator -->
+      <circle cx="4" cy="-4" r="3" 
+              fill="#F59E0B" opacity="0.8"/>
+    </g>
+  </svg>

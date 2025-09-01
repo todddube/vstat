@@ -1,0 +1,18 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(C:\\Users\\todd\\.claude/**)",
+      "Bash(node:*)",
+      "Bash(start convert_svg_to_png.html)",
+      "Bash(dir:*)",
+      "Bash(start convert_base_icons.html)",
+      "Bash(copy iconsclaude-green-16.png iconsclaude-16.png)",
+      "Bash(copy iconsclaude-green-32.png iconsclaude-32.png)",
+      "Bash(copy iconsclaude-green-48.png iconsclaude-48.png)",
+      "Bash(copy iconsclaude-green-128.png iconsclaude-128.png)",
+      "Bash(del:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

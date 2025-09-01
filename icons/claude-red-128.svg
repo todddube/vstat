@@ -1,0 +1,33 @@
+<svg width="128" height="128" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
+    <defs>
+      <style>
+        .main-shape { fill: #EF4444; }
+        .accent { fill: #EF4444; opacity: 0.8; }
+        .indicator { fill: #EF4444; opacity: 0.9; }
+      </style>
+    </defs>
+    
+    <!-- Background circle for better visibility -->
+    <circle cx="64" cy="64" r="63" 
+            fill="white" stroke="none" opacity="0.1"/>
+    
+    <g transform="translate(64, 64)">
+      <!-- Main geometric "A" shape inspired by Anthropic -->
+      <path class="main-shape" d="M 0 -40.96 L 28.16 -10.24 L 28.16 40.96 L 14.08 40.96 L 14.08 10.24 L -14.08 10.24 L -14.08 40.96 L -28.16 40.96 L -28.16 -10.24 Z"/>
+      
+      <!-- Cross-bar for "A" -->
+      <rect class="accent" x="-20.48" y="-7.68" 
+            width="40.96" height="10.240000000000002" rx="1"/>
+      
+      <!-- Status indicator dot -->
+      <circle class="indicator" cx="35.84" cy="-35.84" r="10.240000000000002"/>
+      
+      <!-- Subtle connection lines for "monitoring" concept -->
+      <path class="accent" d="M -28.16 -5.12 L -44.8 -23.04" 
+            stroke="#EF4444" stroke-width="5.120000000000001" 
+            stroke-linecap="round" fill="none" opacity="0.6"/>
+      <path class="accent" d="M -28.16 5.12 L -44.8 23.04" 
+            stroke="#EF4444" stroke-width="5.120000000000001" 
+            stroke-linecap="round" fill="none" opacity="0.6"/>
+    </g>
+  </svg>

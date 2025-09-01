@@ -1,0 +1,453 @@
+/**
+ * StatusMonitor class handles monitoring of Claude service status
+ * Uses Chrome alarms API for reliable background execution
+ */
+class StatusMonitor {
+  constructor() {
+    this.statusUrl = 'https://status.anthropic.com/api/v2/status.json';
+    this.incidentsUrl = 'https://status.anthropic.com/api/v2/incidents.json';
+    this.summaryUrl = 'https://status.anthropic.com/api/v2/summary.json';
+    this.componentsUrl = 'https://status.anthropic.com/api/v2/components.json';
+    
+    this.alarmName = 'statusCheck';
+    this.intervalMinutes = 5;
+    this.maxRetries = 3;
+    this.retryDelay = 2000;
+  }
+
+  /**
+   * Initialize the status monitor
+   * Sets up alarms for periodic checking
+   */
+  async init() {
+    try {
+      // Clear any existing alarm and create new one
+      await chrome.alarms.clear(this.alarmName);
+      await chrome.alarms.create(this.alarmName, { 
+        periodInMinutes: this.intervalMinutes 
+      });
+      
+      // Initial status check
+      await this.checkStatus();
+    } catch (error) {
+      console.error('Failed to initialize status monitor:', error);
+      this.handleError(error, 'initialization');
+    }
+  }
+
+  /**
+   * Check status with retry logic and proper error handling
+   */
+  async checkStatus(retryCount = 0) {
+    try {
+      const [statusData, incidentsData, summaryData] = await Promise.allSettled([
+        this.fetchData(this.statusUrl),
+        this.fetchData(this.incidentsUrl),
+        this.fetchData(this.summaryUrl)
+      ]);
+
+      // Process results, handling partial failures gracefully
+      const status = this.extractStatusFromResult(statusData);
+      const incidents = this.extractIncidentsFromResult(incidentsData);
+      const components = this.extractComponentsFromResult(summaryData);
+
+      const recentIncidents = this.getRecentIncidents(incidents);
+      const historicalIncidents = this.getHistoricalIncidents(incidents);
+      const lastFiveIncidents = this.getLastFiveIncidents(incidents);
+
+      await this.updateStatus(status, recentIncidents, historicalIncidents, components, lastFiveIncidents);
+      await this.updateBadgeIcon(status);
+      
+      // Store success timestamp
+      await chrome.storage.local.set({ lastSuccessfulCheck: Date.now() });
+      
+    } catch (error) {
+      console.error('Failed to check status (attempt', retryCount + 1, '):', error);
+      
+      if (retryCount < this.maxRetries) {
+        setTimeout(() => this.checkStatus(retryCount + 1), this.retryDelay * (retryCount + 1));
+        return;
+      }
+      
+      // Final failure - set unknown status
+      await this.handleCheckFailure(error);
+    }
+  }
+
+  /**
+   * Fetch data with timeout and proper error handling
+   */
+  async fetchData(url, timeout = 10000) {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), timeout);
+    
+    try {
+      const response = await fetch(url, { 
+        signal: controller.signal,
+        cache: 'no-cache',
+        headers: {
+          'Accept': 'application/json',
+          'User-Agent': 'Claude Status Monitor Extension'
+        }
+      });
+      
+      clearTimeout(timeoutId);
+      
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+      
+      return await response.json();
+    } catch (error) {
+      clearTimeout(timeoutId);
+      if (error.name === 'AbortError') {
+        throw new Error('Request timeout');
+      }
+      throw error;
+    }
+  }
+
+  /**
+   * Extract status from Promise.allSettled result
+   */
+  extractStatusFromResult(result) {
+    if (result.status === 'fulfilled' && result.value?.status?.indicator) {
+      return result.value.status.indicator;
+    }
+    return 'unknown';
+  }
+
+  /**
+   * Extract incidents from Promise.allSettled result
+   */
+  extractIncidentsFromResult(result) {
+    if (result.status === 'fulfilled' && Array.isArray(result.value?.incidents)) {
+      return result.value.incidents;
+    }
+    return [];
+  }
+
+  /**
+   * Extract components from Promise.allSettled result
+   */
+  extractComponentsFromResult(result) {
+    if (result.status === 'fulfilled' && Array.isArray(result.value?.components)) {
+      return result.value.components;
+    }
+    return [];
+  }
+
+  /**
+   * Handle check failure with proper error tracking
+   */
+  async handleCheckFailure(error) {
+    await this.updateStatus('unknown', [], [], [], []);
+    await this.updateBadgeIcon('unknown');
+    await chrome.storage.local.set({ 
+      lastError: {
+        message: error.message,
+        timestamp: Date.now()
+      }
+    });
+    this.handleError(error, 'status-check');
+  }
+
+  /**
+   * Generic error handler with categorization
+   */
+  handleError(error, category) {
+    console.error(`[${category}] Error:`, error);
+    // Could integrate with crash reporting service here
+  }
+
+
+  /**
+   * Get recent active incidents (unresolved) with formatted titles
+   */
+  getRecentIncidents(incidents) {
+    return incidents
+      .filter(incident => incident.status !== 'resolved')
+      .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+      .slice(0, 5)
+      .map(incident => ({
+        name: incident.name,
+        titleWithDate: this.formatIncidentTitle(incident.name, incident.created_at),
+        status: incident.status,
+        created_at: incident.created_at,
+        shortlink: incident.shortlink,
+        impact: incident.impact,
+        updates: incident.incident_updates.slice(0, 1).map(update => ({
+          body: update.body,
+          created_at: update.created_at,
+          status: update.status
+        }))
+      }));
+  }
+
+  /**
+   * Get last 5 incidents regardless of status with formatted titles
+   */
+  getLastFiveIncidents(incidents) {
+    return incidents
+      .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+      .slice(0, 5)
+      .map(incident => ({
+        name: incident.name,
+        titleWithDate: this.formatIncidentTitle(incident.name, incident.created_at),
+        status: incident.status,
+        created_at: incident.created_at,
+        resolved_at: incident.resolved_at,
+        shortlink: incident.shortlink,
+        impact: incident.impact,
+        duration: incident.resolved_at ? 
+          this.calculateDuration(incident.created_at, incident.resolved_at) : null,
+        summary: this.generateIncidentSummary(incident),
+        updates: incident.incident_updates.slice(0, 2).map(update => ({
+          body: update.body,
+          created_at: update.created_at,
+          status: update.status
+        }))
+      }));
+  }
+
+  getHistoricalIncidents(incidents) {
+    const last24Hours = new Date(Date.now() - 24 * 60 * 60 * 1000);
+    return incidents
+      .filter(incident => new Date(incident.created_at) >= last24Hours)
+      .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+      .slice(0, 3)
+      .map(incident => ({
+        name: incident.name,
+        status: incident.status,
+        created_at: incident.created_at,
+        resolved_at: incident.resolved_at,
+        impact: incident.impact,
+        summary: this.generateIncidentSummary(incident),
+        duration: incident.resolved_at ? 
+          this.calculateDuration(incident.created_at, incident.resolved_at) : null,
+        updates: incident.incident_updates.map(update => ({
+          body: update.body,
+          created_at: update.created_at,
+          status: update.status
+        }))
+      }));
+  }
+
+  generateIncidentSummary(incident) {
+    if (!incident.incident_updates || incident.incident_updates.length === 0) {
+      return `${incident.impact || 'Minor'} impact incident affecting Claude services.`;
+    }
+    
+    const firstUpdate = incident.incident_updates[incident.incident_updates.length - 1];
+    const lastUpdate = incident.incident_updates[0];
+    
+    let summary = `${incident.impact || 'Minor'} impact: `;
+    
+    if (incident.status === 'resolved') {
+      summary += `Issue resolved. ${lastUpdate.body.slice(0, 100)}...`;
+    } else {
+      summary += `${firstUpdate.body.slice(0, 100)}...`;
+    }
+    
+    return summary;
+  }
+
+  calculateDuration(startTime, endTime) {
+    const start = new Date(startTime);
+    const end = new Date(endTime);
+    const durationMs = end - start;
+    const hours = Math.floor(durationMs / (1000 * 60 * 60));
+    const minutes = Math.floor((durationMs % (1000 * 60 * 60)) / (1000 * 60));
+    
+    if (hours > 0) {
+      return `${hours}h ${minutes}m`;
+    }
+    return `${minutes}m`;
+  }
+
+  /**
+   * Format incident title with date
+   */
+  formatIncidentTitle(name, createdAt) {
+    const date = new Date(createdAt);
+    const dateStr = date.toLocaleDateString('en-US', { 
+      month: 'short', 
+      day: 'numeric',
+      year: date.getFullYear() !== new Date().getFullYear() ? 'numeric' : undefined
+    });
+    const timeStr = date.toLocaleTimeString('en-US', { 
+      hour: 'numeric', 
+      minute: '2-digit',
+      hour12: true
+    });
+    
+    return `${dateStr} ${timeStr} - ${name}`;
+  }
+
+  async updateStatus(status, incidents, historicalIncidents, components, lastFiveIncidents) {
+    await chrome.storage.local.set({
+      status: status,
+      incidents: incidents,
+      historicalIncidents: historicalIncidents || [],
+      lastFiveIncidents: lastFiveIncidents || [],
+      components: components || [],
+      lastUpdated: new Date().toISOString()
+    });
+  }
+
+  /**
+   * Update badge icon with error handling
+   */
+  async updateBadgeIcon(status) {
+    try {
+      const iconColor = this.getIconColor(status);
+      const iconPath = this.getIconPath(iconColor);
+      
+      await chrome.action.setIcon({ path: iconPath });
+
+      const badgeText = status === 'major' || status === 'critical' ? '!' : 
+                       status === 'minor' ? '?' : '';
+      
+      await chrome.action.setBadgeText({ text: badgeText });
+
+      if (badgeText) {
+        await chrome.action.setBadgeBackgroundColor({
+          color: this.getBadgeColor(status)
+        });
+      }
+      
+      // Update title with status
+      const statusText = this.getStatusText(status);
+      await chrome.action.setTitle({
+        title: `Claude Status: ${statusText}`
+      });
+      
+    } catch (error) {
+      console.error('Failed to update badge icon:', error);
+    }
+  }
+
+  getIconColor(status) {
+    switch (status) {
+      case 'none':
+      case 'operational':
+        return 'green';
+      case 'minor':
+        return 'yellow';
+      case 'major':
+      case 'critical':
+        return 'red';
+      default:
+        return 'gray';
+    }
+  }
+
+  getIconPath(color) {
+    return {
+      "16": `icons/claude-${color}-16.png`,
+      "32": `icons/claude-${color}-32.png`,
+      "48": `icons/claude-${color}-48.png`,
+      "128": `icons/claude-${color}-128.png`
+    };
+  }
+
+  getBadgeColor(status) {
+    switch (status) {
+      case 'none':
+      case 'operational':
+        return '#4CAF50';
+      case 'minor':
+        return '#FFC107';
+      case 'major':
+      case 'critical':
+        return '#F44336';
+      default:
+        return '#9E9E9E';
+    }
+  }
+
+  /**
+   * Get human-readable status text
+   */
+  getStatusText(status) {
+    switch (status) {
+      case 'none':
+      case 'operational':
+        return 'All Systems Operational';
+      case 'minor':
+        return 'Minor Issues';
+      case 'major':
+        return 'Major Issues';
+      case 'critical':
+        return 'Critical Issues';
+      default:
+        return 'Status Unknown';
+    }
+  }
+}
+
+// Global monitor instance
+let statusMonitor = null;
+
+// Event listeners using modern async patterns
+chrome.runtime.onInstalled.addListener(async (details) => {
+  console.log('Extension installed/updated:', details.reason);
+  try {
+    statusMonitor = new StatusMonitor();
+    await statusMonitor.init();
+  } catch (error) {
+    console.error('Failed to initialize on install:', error);
+  }
+});
+
+chrome.runtime.onStartup.addListener(async () => {
+  console.log('Extension startup');
+  try {
+    statusMonitor = new StatusMonitor();
+    await statusMonitor.init();
+  } catch (error) {
+    console.error('Failed to initialize on startup:', error);
+  }
+});
+
+// Handle alarm events for periodic checks
+chrome.alarms.onAlarm.addListener(async (alarm) => {
+  if (alarm.name === 'statusCheck' && statusMonitor) {
+    await statusMonitor.checkStatus();
+  }
+});
+
+// Service worker keep-alive pattern (optional, for Edge compatibility)
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  if (message.action === 'forceRefresh') {
+    (async () => {
+      try {
+        if (!statusMonitor) {
+          statusMonitor = new StatusMonitor();
+          await statusMonitor.init();
+        }
+        await statusMonitor.checkStatus();
+        sendResponse({ status: 'refreshing', timestamp: Date.now() });
+      } catch (error) {
+        console.error('Force refresh failed:', error);
+        sendResponse({ status: 'error', error: error.message });
+      }
+    })();
+    return true; // Indicates async response
+  }
+  
+  if (message.action === 'getStatus') {
+    (async () => {
+      try {
+        const data = await chrome.storage.local.get([
+          'status', 'incidents', 'historicalIncidents', 'lastFiveIncidents',
+          'components', 'lastUpdated', 'lastError'
+        ]);
+        sendResponse({ status: 'success', data });
+      } catch (error) {
+        sendResponse({ status: 'error', error: error.message });
+      }
+    })();
+    return true; // Indicates async response
+  }
+});
