@@ -60,6 +60,29 @@ class PopupController {
         }
       });
 
+      // About modal functionality
+      const aboutBtn = document.getElementById('about-btn');
+      const aboutModal = document.getElementById('about-modal');
+      const aboutClose = document.getElementById('about-close');
+
+      if (aboutBtn && aboutModal && aboutClose) {
+        aboutBtn.addEventListener('click', (e) => {
+          e.preventDefault();
+          this.showAboutModal();
+        });
+
+        aboutClose.addEventListener('click', (e) => {
+          e.preventDefault();
+          this.hideAboutModal();
+        });
+
+        // Close modal when clicking outside content
+        aboutModal.addEventListener('click', (e) => {
+          if (e.target === aboutModal) {
+            this.hideAboutModal();
+          }
+        });
+      }
 
     } catch (error) {
       console.error('Error setting up event listeners:', error);
@@ -71,6 +94,22 @@ class PopupController {
    */
   setupKeyboardNavigation() {
     document.addEventListener('keydown', (e) => {
+      // Close about modal with Escape key
+      if (e.key === 'Escape') {
+        const aboutModal = document.getElementById('about-modal');
+        if (aboutModal && aboutModal.classList.contains('show')) {
+          e.preventDefault();
+          this.hideAboutModal();
+          return;
+        }
+      }
+
+      // Don't handle other shortcuts if about modal is open
+      const aboutModal = document.getElementById('about-modal');
+      if (aboutModal && aboutModal.classList.contains('show')) {
+        return;
+      }
+
       if (e.key === 'r' && (e.ctrlKey || e.metaKey)) {
         e.preventDefault();
         this.refreshStatus();
@@ -82,6 +121,12 @@ class PopupController {
         if (tabs[tabIndex]) {
           this.switchTab(tabs[tabIndex]);
         }
+      }
+
+      // Show about modal with Ctrl/Cmd + I
+      if (e.key === 'i' && (e.ctrlKey || e.metaKey)) {
+        e.preventDefault();
+        this.showAboutModal();
       }
     });
   }
@@ -574,6 +619,70 @@ class PopupController {
     if (incidentsContainer) {
       incidentsContainer.innerHTML = 
         '<div class="no-incidents error">Error loading incidents. <button onclick="location.reload()">Retry</button></div>';
+    }
+  }
+
+  /**
+   * Show the About modal with manifest information
+   */
+  async showAboutModal() {
+    try {
+      const manifest = chrome.runtime.getManifest();
+      
+      // Update modal content with manifest data
+      const titleEl = document.getElementById('about-title');
+      const versionEl = document.getElementById('about-version');
+      const descriptionEl = document.getElementById('about-description');
+      const authorEl = document.getElementById('about-author');
+
+      if (titleEl) titleEl.textContent = manifest.name;
+      if (versionEl) versionEl.textContent = `Version ${manifest.version}`;
+      if (descriptionEl) descriptionEl.textContent = manifest.description;
+      
+      // Extract author name and URL from the author field
+      if (authorEl && manifest.author) {
+        const authorText = manifest.author;
+        const urlMatch = authorText.match(/https?:\/\/[^\s]+/);
+        const nameMatch = authorText.match(/^([^-]+)/);
+        
+        if (nameMatch && urlMatch) {
+          const authorName = nameMatch[1].trim();
+          const authorUrl = urlMatch[0];
+          authorEl.textContent = authorName;
+          authorEl.href = authorUrl;
+        } else {
+          authorEl.textContent = authorText;
+          authorEl.href = '#';
+        }
+      }
+
+      // Show the modal
+      const modal = document.getElementById('about-modal');
+      if (modal) {
+        modal.classList.add('show');
+        // Focus the close button for accessibility
+        const closeBtn = document.getElementById('about-close');
+        if (closeBtn) {
+          closeBtn.focus();
+        }
+      }
+    } catch (error) {
+      console.error('Error showing about modal:', error);
+    }
+  }
+
+  /**
+   * Hide the About modal
+   */
+  hideAboutModal() {
+    const modal = document.getElementById('about-modal');
+    if (modal) {
+      modal.classList.remove('show');
+      // Return focus to the about button
+      const aboutBtn = document.getElementById('about-btn');
+      if (aboutBtn) {
+        aboutBtn.focus();
+      }
     }
   }
 

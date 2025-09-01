@@ -3,7 +3,7 @@
   "name": "Claude Status Monitor",
   "version": "1.0.0",
   "description": "Monitor Claude's status from Anthropic and display colored status icon with recent incidents",
-  "author": "Claude Status Monitor Team",
+  "author": "Todd Dube - https://github.com/todddube",
   "minimum_chrome_version": "88",
   "permissions": [
     "storage",

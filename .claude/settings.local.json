@@ -18,7 +18,8 @@
       "Bash(npm test:*)",
       "Bash(npm run visual:validate:*)",
       "Bash(npm run validate:*)",
-      "Bash(npm run build:*)"
+      "Bash(npm run build:*)",
+      "Bash(npm run visual:viewer:*)"
     ],
     "deny": [],
     "ask": []

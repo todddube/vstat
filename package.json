@@ -11,6 +11,8 @@
   "scripts": {
     "test": "cd tests && npm test",
     "test:visual": "cd tests && npm run test:visual",
+    "visual:viewer": "cd tests && npm run visual:viewer",
+    "visual:validate": "cd tests && npm run visual:validate", 
     "build": "node build-extension.js",
     "build:clean": "node build-extension.js --clean",
     "validate": "node build-extension.js --validate-only",

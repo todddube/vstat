@@ -90,13 +90,21 @@ function openVisualViewer() {
   }
 
   // Try to open the HTML file in the default browser
-  const command = process.platform === 'win32' ? 'start' : 
-                 process.platform === 'darwin' ? 'open' : 'xdg-open';
+  let command;
+  if (process.platform === 'win32') {
+    // Use cmd /c start for Windows to properly handle file paths with spaces
+    command = `cmd /c start "" "${viewerPath}"`;
+  } else if (process.platform === 'darwin') {
+    command = `open "${viewerPath}"`;
+  } else {
+    command = `xdg-open "${viewerPath}"`;
+  }
   
-  exec(`${command} "${viewerPath}"`, (error) => {
+  exec(command, (error) => {
     if (error) {
       console.log(colorize('⚠️  Could not auto-open browser. Please manually open:', 'yellow'));
-      console.log(colorize(`📁 ${viewerPath}`, 'blue'));
+      console.log(colorize(`📁 file:///${viewerPath.replace(/\\/g, '/')}`, 'blue'));
+      console.log(colorize('💡 Or copy this path to your browser address bar', 'blue'));
     } else {
       console.log(colorize('🌐 Visual test viewer opened in browser', 'green'));
     }

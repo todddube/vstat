@@ -184,6 +184,157 @@
             to { transform: translateY(-50%) rotate(360deg); }
         }
 
+        .about-btn {
+            background: #6c757d;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            padding: 6px 10px;
+            font-size: 12px;
+            cursor: pointer;
+            float: right;
+            margin-top: -4px;
+            margin-right: 10px;
+            transition: background 0.2s;
+        }
+
+        .about-btn:hover {
+            background: #5a6268;
+        }
+
+        .about-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            display: none;
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .about-modal.show {
+            display: flex;
+        }
+
+        .about-content {
+            background: white;
+            border-radius: 8px;
+            padding: 24px;
+            max-width: 320px;
+            margin: 16px;
+            position: relative;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .about-close {
+            position: absolute;
+            top: 8px;
+            right: 12px;
+            background: none;
+            border: none;
+            font-size: 20px;
+            color: #999;
+            cursor: pointer;
+            padding: 4px;
+            line-height: 1;
+        }
+
+        .about-close:hover {
+            color: #333;
+        }
+
+        .about-header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .about-status-colors {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 16px;
+            gap: 6px;
+        }
+
+        .status-color {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            border: 1px solid #ddd;
+            transition: transform 0.2s;
+        }
+
+        .status-color:hover {
+            transform: scale(1.2);
+        }
+
+        .status-color.green {
+            background-color: #4CAF50;
+            border-color: #45a049;
+        }
+
+        .status-color.yellow {
+            background-color: #FFC107;
+            border-color: #e0a800;
+        }
+
+        .status-color.red {
+            background-color: #F44336;
+            border-color: #da190b;
+        }
+
+        .about-icon {
+            width: 48px;
+            height: 48px;
+            margin-bottom: 12px;
+        }
+
+        .about-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin: 0 0 4px 0;
+            color: #333;
+        }
+
+        .about-version {
+            color: #666;
+            font-size: 14px;
+            margin: 0;
+        }
+
+        .about-description {
+            color: #555;
+            font-size: 14px;
+            line-height: 1.5;
+            margin: 16px 0;
+            text-align: center;
+        }
+
+        .about-author {
+            text-align: center;
+            padding-top: 16px;
+            border-top: 1px solid #e0e0e0;
+        }
+
+        .about-author-label {
+            color: #666;
+            font-size: 12px;
+            margin-bottom: 4px;
+        }
+
+        .about-author-link {
+            color: #007bff;
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .about-author-link:hover {
+            text-decoration: underline;
+        }
+
         .services-overview {
             background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
             border-radius: 8px;
@@ -382,6 +533,7 @@
             </h3>
             <div class="last-updated" id="last-updated" aria-live="polite">Loading...</div>
         </div>
+        <button class="about-btn" id="about-btn" aria-label="About this extension" title="About">About</button>
         <button class="refresh-btn" id="refresh-btn" aria-label="Refresh status data" title="Refresh status (Ctrl+R)">Refresh</button>
     </div>
 
@@ -422,6 +574,32 @@
         <div id="recent-tab" class="tab-content" role="tabpanel" aria-labelledby="recent-tab" tabindex="0">
             <div id="recent-incidents-container" aria-live="polite">
                 <div class="loading">Loading recent incidents...</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- About Modal -->
+    <div class="about-modal" id="about-modal">
+        <div class="about-content">
+            <button class="about-close" id="about-close" aria-label="Close about dialog">&times;</button>
+            <div class="about-header">
+                <img src="icons/claude-48.png" alt="Claude Status Monitor Icon" class="about-icon">
+                <h2 class="about-title" id="about-title">Claude Status Monitor</h2>
+                <p class="about-version" id="about-version">Version 1.0.0</p>
+            </div>
+            <div class="about-status-colors">
+                <div class="status-color green" title="Operational - All systems functioning normally"></div>
+                <div class="status-color yellow" title="Minor Issues - Some services may be experiencing minor problems"></div>
+                <div class="status-color red" title="Major Issues - Significant service disruptions"></div>
+            </div>
+            <p class="about-description" id="about-description">
+                Monitor Claude's status from Anthropic and display colored status icon with recent incidents
+            </p>
+            <div class="about-author">
+                <div class="about-author-label">Created by</div>
+                <a href="https://github.com/todddube" target="_blank" class="about-author-link" id="about-author">
+                    Todd Dube
+                </a>
             </div>
         </div>
     </div>
