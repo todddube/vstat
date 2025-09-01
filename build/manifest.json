@@ -1,13 +1,14 @@
 {
   "manifest_version": 3,
-  "name": "VState - Vibe Code Status Monitor",
-  "version": "1.0.0",
-  "description": "Monitor Claude and GitHub Copilot status with real-time updates and recent incidents - Your dev tools vibe check",
+  "name": "Vibe Stats - Dev Tools Status Monitor",
+  "version": "1.0.1",
+  "description": "Monitor Claude and GitHub Copilot status with real-time updates, recent incidents, and animated lightning bolt indicators - Your dev tools vibe check ⚡",
   "author": "Todd Dube - https://github.com/todddube",
   "minimum_chrome_version": "88",
   "permissions": [
     "storage",
-    "alarms"
+    "alarms",
+    "activeTab"
   ],
   "host_permissions": [
     "https://status.anthropic.com/*",
@@ -19,19 +20,19 @@
   },
   "action": {
     "default_popup": "popup.html",
-    "default_title": "VState - Monitor your dev tools vibe",
+    "default_title": "Vibe Stats - Monitor your dev tools vibe ⚡",
     "default_icon": {
-      "16": "icons/vstate-green-16.png",
-      "32": "icons/vstate-green-32.png",
-      "48": "icons/vstate-green-48.png",
-      "128": "icons/vstate-green-128.png"
+      "16": "icons/lightning-16.png",
+      "32": "icons/lightning-32.png",
+      "48": "icons/lightning-48.png",
+      "128": "icons/lightning-128.png"
     }
   },
   "icons": {
-    "16": "icons/vstate-green-16.png",
-    "32": "icons/vstate-green-32.png",
-    "48": "icons/vstate-green-48.png",
-    "128": "icons/vstate-green-128.png"
+    "16": "icons/lightning-16.png",
+    "32": "icons/lightning-32.png",
+    "48": "icons/lightning-48.png",
+    "128": "icons/lightning-128.png"
   },
   "content_security_policy": {
     "extension_pages": "script-src 'self'; object-src 'self'"
@@ -41,5 +42,6 @@
       "resources": ["icons/*.png"],
       "matches": ["<all_urls>"]
     }
-  ]
+  ],
+  "offline_enabled": false
 }

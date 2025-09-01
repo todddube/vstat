@@ -12,6 +12,12 @@
             font-size: 14px;
             line-height: 1.4;
             overflow-y: auto;
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
         }
 
         .header {
@@ -20,9 +26,14 @@
             margin-bottom: 16px;
             padding-bottom: 12px;
             border-bottom: 1px solid #e0e0e0;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            margin: -16px -16px 16px -16px;
+            padding: 16px 16px 12px 16px;
+            border-radius: 10px 10px 0 0;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
         }
 
-        .vstate-icon {
+        .vibe-stats-icon {
             width: 24px;
             height: 24px;
             margin-right: 12px;
@@ -32,6 +43,8 @@
             font-weight: 600;
             margin: 0;
             font-size: 16px;
+            color: white;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.3);
         }
 
         .status-indicator {
@@ -49,9 +62,10 @@
         .status-unknown { background-color: #9E9E9E; }
 
         .last-updated {
-            color: #666;
+            color: rgba(255,255,255,0.8);
             font-size: 12px;
             margin-top: 4px;
+            text-shadow: 0 1px 1px rgba(0,0,0,0.3);
         }
 
         .incidents-section {
@@ -141,20 +155,24 @@
         }
 
         .refresh-btn {
-            background: #007bff;
+            background: rgba(255,255,255,0.25);
             color: white;
-            border: none;
-            border-radius: 4px;
-            padding: 6px 12px;
+            border: 1px solid rgba(255,255,255,0.4);
+            border-radius: 20px;
+            padding: 6px 14px;
             font-size: 12px;
             cursor: pointer;
             float: right;
             margin-top: -4px;
-            transition: background 0.2s, opacity 0.2s;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+            font-weight: 500;
         }
 
         .refresh-btn:hover:not(:disabled) {
-            background: #0056b3;
+            background: rgba(255,255,255,0.35);
+            transform: scale(1.05);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
         }
 
         .refresh-btn:disabled {
@@ -184,22 +202,55 @@
             to { transform: translateY(-50%) rotate(360deg); }
         }
 
+        @keyframes pulse {
+            0% { 
+                transform: scale(1);
+                opacity: 1;
+            }
+            50% { 
+                transform: scale(1.1);
+                opacity: 0.8;
+            }
+            100% { 
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        @keyframes lightning-glow {
+            0% { filter: drop-shadow(0 0 2px #FFD700); }
+            50% { filter: drop-shadow(0 0 8px #FFD700) drop-shadow(0 0 12px #FFC107); }
+            100% { filter: drop-shadow(0 0 2px #FFD700); }
+        }
+
+        .vibe-stats-icon {
+            transition: all 0.3s ease;
+        }
+
+        .vibe-stats-icon:hover {
+            transform: scale(1.1);
+            animation: lightning-glow 2s ease-in-out infinite;
+        }
+
         .about-btn {
-            background: #6c757d;
+            background: rgba(255,255,255,0.2);
             color: white;
-            border: none;
-            border-radius: 4px;
-            padding: 6px 10px;
+            border: 1px solid rgba(255,255,255,0.3);
+            border-radius: 20px;
+            padding: 6px 12px;
             font-size: 12px;
             cursor: pointer;
             float: right;
             margin-top: -4px;
             margin-right: 10px;
-            transition: background 0.2s;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
         }
 
         .about-btn:hover {
-            background: #5a6268;
+            background: rgba(255,255,255,0.3);
+            transform: scale(1.05);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
         }
 
         .about-modal {
@@ -354,10 +405,52 @@
             text-shadow: 0 1px 2px rgba(0,0,0,0.3);
         }
 
-        .services-grid {
+        .claude-section, .github-section {
+            margin-bottom: 16px;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            animation: slideUp 0.5s ease-out;
+            transform: translateY(0);
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .claude-section {
+            background: linear-gradient(135deg, #10B981 0%, #059669 100%);
+        }
+
+        .github-section {
+            background: linear-gradient(135deg, #6366F1 0%, #4F46E5 100%);
+            animation-delay: 0.2s;
+            animation-fill-mode: both;
+        }
+
+        .section-title {
+            font-size: 13px;
+            font-weight: 600;
+            color: white;
+            padding: 12px 16px 8px 16px;
+            margin: 0;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .claude-grid, .github-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 10px;
+            gap: 8px;
+            padding: 12px;
+            background: rgba(255,255,255,0.95);
         }
 
         .service-item {
@@ -371,9 +464,14 @@
             transition: all 0.3s ease;
             font-size: 12px;
             box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            position: relative;
         }
 
-        .service-item:hover {
+        .expandable-service {
+            cursor: pointer;
+        }
+
+        .expandable-service:hover {
             background: rgba(255,255,255,1);
             transform: translateY(-2px);
             box-shadow: 0 4px 15px rgba(0,0,0,0.15);
@@ -421,6 +519,81 @@
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
+            flex: 1;
+        }
+
+        .expand-icon {
+            margin-left: auto;
+            font-size: 10px;
+            color: #666;
+            transition: transform 0.2s ease;
+        }
+
+        .expandable-service.expanded .expand-icon {
+            transform: rotate(90deg);
+        }
+
+        .incidents-container {
+            background: #f8f9fa;
+            border-top: 1px solid rgba(0,0,0,0.1);
+            padding: 0;
+            animation: slideDown 0.3s ease-out;
+        }
+
+        .incidents-content {
+            padding: 12px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                max-height: 0;
+            }
+            to {
+                opacity: 1;
+                max-height: 200px;
+            }
+        }
+
+        .incident {
+            background: white;
+            border-radius: 6px;
+            padding: 10px;
+            margin-bottom: 8px;
+            border-left: 3px solid #ddd;
+            font-size: 12px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .incident.impact-major {
+            border-left-color: #F44336;
+        }
+
+        .incident.impact-minor {
+            border-left-color: #FFC107;
+        }
+
+        .incident.impact-critical {
+            border-left-color: #D32F2F;
+        }
+
+        .incident-name {
+            font-weight: 600;
+            margin-bottom: 4px;
+            color: #333;
+            font-size: 13px;
+        }
+
+        .incident-status {
+            display: inline-block;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 10px;
+            font-weight: 500;
+            text-transform: uppercase;
+            margin-bottom: 6px;
         }
 
         .last-updated.error {
@@ -545,55 +718,78 @@
 </head>
 <body>
     <div class="header">
-        <img src="icons/vstate-32.png" alt="VState status icon" class="vstate-icon" id="status-icon">
+        <img src="icons/lightning-32.png" alt="Vibe Stats status icon" class="vibe-stats-icon" id="status-icon">
         <div>
             <h3 class="status-title">
-                VState - Dev Tools Vibe
+                Vibe Stats ⚡ Dev Tools Monitor
                 <span class="status-indicator" id="status-indicator" role="img"></span>
             </h3>
             <div class="last-updated" id="last-updated" aria-live="polite">Loading...</div>
         </div>
-        <button class="about-btn" id="about-btn" aria-label="About VState extension" title="About">About</button>
+        <button class="about-btn" id="about-btn" aria-label="About Vibe Stats extension" title="About">About</button>
         <button class="refresh-btn" id="refresh-btn" aria-label="Refresh status data" title="Refresh status (Ctrl+R)">Refresh</button>
     </div>
 
-    <div class="services-overview">
-        <div class="overview-title">🔥 Dev Tools Vibe Check</div>
-        <div class="services-grid" id="services-grid">
-            <div class="service-item claude-service">
-                <div class="service-icon unknown">🤖</div>
-                <div class="service-name">Claude AI</div>
+    <!-- Claude Services Section -->
+    <div class="claude-section">
+        <div class="section-title">🤖 Claude AI Services</div>
+        <div class="claude-grid" id="claude-grid">
+            <div class="service-item expandable-service" data-service="claude-web">
+                <div class="service-icon unknown">🌐</div>
+                <div class="service-name">Claude Web</div>
+                <div class="expand-icon">▶</div>
             </div>
-            <div class="service-item github-service">
-                <div class="service-icon unknown">🐙</div>
-                <div class="service-name">GitHub Copilot</div>
-            </div>
-            <div class="service-item claude-api">
+            <div class="service-item expandable-service" data-service="claude-api">
                 <div class="service-icon unknown">⚡</div>
                 <div class="service-name">Claude API</div>
+                <div class="expand-icon">▶</div>
             </div>
-            <div class="service-item github-api">
-                <div class="service-icon unknown">🔧</div>
-                <div class="service-name">GitHub API</div>
+            <div class="service-item expandable-service" data-service="claude-dashboard">
+                <div class="service-icon unknown">📊</div>
+                <div class="service-name">Dashboard</div>
+                <div class="expand-icon">▶</div>
+            </div>
+            <div class="service-item expandable-service" data-service="claude-docs">
+                <div class="service-icon unknown">�</div>
+                <div class="service-name">Docs/Support</div>
+                <div class="expand-icon">▶</div>
+            </div>
+        </div>
+        <div class="incidents-container" id="claude-incidents" style="display: none;">
+            <div class="incidents-content" id="claude-incidents-content">
+                <div class="loading">🔄 Loading Claude incidents...</div>
             </div>
         </div>
     </div>
 
-    <div class="incidents-section">
-        <div class="section-tabs" role="tablist" aria-label="Incident data views">
-            <button class="tab-button active" data-tab="active" role="tab" aria-controls="active-tab" aria-selected="true" title="View active issues (Press 1)">🚨 Active Issues</button>
-            <button class="tab-button" data-tab="recent" role="tab" aria-controls="recent-tab" aria-selected="false" title="View recent incidents (Press 2)">📝 Recent History</button>
-        </div>
-        
-        <div id="active-tab" class="tab-content active" role="tabpanel" aria-labelledby="active-tab" tabindex="0">
-            <div id="incidents-container" aria-live="polite">
-                <div class="loading">🔄 Checking incidents...</div>
+    <!-- GitHub Copilot Section -->
+    <div class="github-section">
+        <div class="section-title">🐙 GitHub Copilot Services</div>
+        <div class="github-grid" id="github-grid">
+            <div class="service-item expandable-service" data-service="github-copilot">
+                <div class="service-icon unknown">🤖</div>
+                <div class="service-name">Copilot</div>
+                <div class="expand-icon">▶</div>
+            </div>
+            <div class="service-item expandable-service" data-service="github-api">
+                <div class="service-icon unknown">🔧</div>
+                <div class="service-name">GitHub API</div>
+                <div class="expand-icon">▶</div>
+            </div>
+            <div class="service-item expandable-service" data-service="github-codespaces">
+                <div class="service-icon unknown">☁️</div>
+                <div class="service-name">Codespaces</div>
+                <div class="expand-icon">▶</div>
+            </div>
+            <div class="service-item expandable-service" data-service="github-actions">
+                <div class="service-icon unknown">⚙️</div>
+                <div class="service-name">Actions</div>
+                <div class="expand-icon">▶</div>
             </div>
         </div>
-        
-        <div id="recent-tab" class="tab-content" role="tabpanel" aria-labelledby="recent-tab" tabindex="0">
-            <div id="recent-incidents-container" aria-live="polite">
-                <div class="loading">🔄 Loading recent incidents...</div>
+        <div class="incidents-container" id="github-incidents" style="display: none;">
+            <div class="incidents-content" id="github-incidents-content">
+                <div class="loading">🔄 Loading GitHub incidents...</div>
             </div>
         </div>
     </div>
@@ -603,9 +799,9 @@
         <div class="about-content">
             <button class="about-close" id="about-close" aria-label="Close about dialog">&times;</button>
             <div class="about-header">
-                <img src="icons/vstate-48.png" alt="VState Icon" class="about-icon">
-                <h2 class="about-title" id="about-title">VState - Vibe Code</h2>
-                <p class="about-version" id="about-version">Version 1.0.0</p>
+                <img src="icons/lightning-48.png" alt="Vibe Stats Icon" class="about-icon">
+                <h2 class="about-title" id="about-title">Vibe Stats ⚡</h2>
+                <p class="about-version" id="about-version">Version 1.0.1</p>
             </div>
             <div class="about-status-colors">
                 <div class="status-color green" title="Operational - All systems functioning normally"></div>

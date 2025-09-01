@@ -401,15 +401,9 @@ class VStatePopupController {
       }
       
       if (statusIcon) {
-        statusIcon.src = `icons/lightning-32.png`;
-        statusIcon.alt = `Vibe Stats status: ${this.getStatusText(status)} ⚡`;
-        
-        // Add pulse animation for non-operational statuses
-        if (status !== 'operational' && status !== 'none') {
-          statusIcon.style.animation = 'pulse 2s ease-in-out infinite';
-        } else {
-          statusIcon.style.animation = '';
-        }
+        const iconColor = this.getIconColor(status);
+        statusIcon.src = `icons/vstate-${iconColor}-32.png`;
+        statusIcon.alt = `VState status: ${this.getStatusText(status)}`;
       }
 
       if (lastUpdatedEl) {

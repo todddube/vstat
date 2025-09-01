@@ -19,7 +19,11 @@
       "Bash(npm run visual:validate:*)",
       "Bash(npm run validate:*)",
       "Bash(npm run build:*)",
-      "Bash(npm run visual:viewer:*)"
+      "Bash(npm run visual:viewer:*)",
+      "Bash(start generate-lightning-icons.html)",
+      "Bash(start create-lightning-icons.html)",
+      "Bash(start convert-lightning-icons.html)",
+      "Bash(copy:*)"
     ],
     "deny": [],
     "ask": []

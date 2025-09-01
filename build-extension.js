@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 /**
- * Extension Build Script for Claude Status Monitor
+ * Extension Build Script for Vibe Stats - Dev Tools Status Monitor
  * Creates production-ready zip files for Chrome Web Store submission
  */
 
@@ -43,22 +43,10 @@ class ExtensionBuilder {
       
       // Icon files
       icons: [
-        'icons/claude-green-16.png',
-        'icons/claude-green-32.png',
-        'icons/claude-green-48.png',
-        'icons/claude-green-128.png',
-        'icons/claude-yellow-16.png',
-        'icons/claude-yellow-32.png',
-        'icons/claude-yellow-48.png',
-        'icons/claude-yellow-128.png',
-        'icons/claude-red-16.png',
-        'icons/claude-red-32.png',
-        'icons/claude-red-48.png',
-        'icons/claude-red-128.png',
-        'icons/claude-gray-16.png',
-        'icons/claude-gray-32.png',
-        'icons/claude-gray-48.png',
-        'icons/claude-gray-128.png'
+        'icons/lightning-16.png',
+        'icons/lightning-32.png',
+        'icons/lightning-48.png',
+        'icons/lightning-128.png'
       ],
       
       // Optional files
@@ -83,6 +71,10 @@ class ExtensionBuilder {
       'create_colored_icons.js',
       'convert_svg_to_png.html',
       'convert_all_icons.html',
+      'generate-lightning-icons.html',
+      'create-lightning-icons.html',
+      'convert-lightning-icons.html',
+      'generate-vstate-icons.html',
       '*.md',
       '*.log',
       '.DS_Store',
@@ -254,7 +246,7 @@ class ExtensionBuilder {
     
     const version = manifest.version;
     const timestamp = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
-    const zipName = `claude-status-monitor-v${version}-${timestamp}.zip`;
+    const zipName = `vibe-stats-v${version}-${timestamp}.zip`;
     const zipPath = path.join(this.distDir, zipName);
     
     try {
@@ -349,7 +341,7 @@ class ExtensionBuilder {
   async build(options = {}) {
     const startTime = Date.now();
     
-    console.log(colorize('🚀 Starting Claude Status Monitor Extension Build', 'bright'));
+    console.log(colorize('🚀 Starting Vibe Stats Extension Build ⚡', 'bright'));
     console.log(colorize('='.repeat(60), 'blue'));
     
     try {
@@ -408,7 +400,7 @@ class ExtensionBuilder {
  */
 function printUsage() {
   console.log(`
-${colorize('Claude Status Monitor - Extension Builder', 'bright')}
+${colorize('Vibe Stats ⚡ - Extension Builder', 'bright')}
 
 ${colorize('Usage:', 'cyan')}
   node build-extension.js [options]

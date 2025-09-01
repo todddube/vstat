@@ -1,12 +1,13 @@
 /**
- * PopupController manages the extension popup interface
- * Handles status display, incident management, and user interactions
+ * VState PopupController manages the extension popup interface
+ * Handles status display, service expansion, and user interactions
  */
-class PopupController {
+class VStatePopupController {
   constructor() {
     this.refreshing = false;
     this.errorRetryCount = 0;
     this.maxErrorRetries = 3;
+    this.expandedServices = new Set();
     this.init().catch(error => {
       console.error('Failed to initialize popup:', error);
       this.showError('Failed to initialize');
@@ -42,14 +43,12 @@ class PopupController {
         });
       }
 
-      // Tab switching functionality
-      document.querySelectorAll('.tab-button').forEach(button => {
-        button.addEventListener('click', (e) => {
+      // Expandable service items
+      document.querySelectorAll('.expandable-service').forEach(service => {
+        service.addEventListener('click', (e) => {
           e.preventDefault();
-          const tabName = e.target.getAttribute('data-tab');
-          if (tabName) {
-            this.switchTab(tabName);
-          }
+          const serviceName = service.getAttribute('data-service');
+          this.toggleServiceExpansion(serviceName);
         });
       });
 
@@ -98,101 +97,185 @@ class PopupController {
       if (e.key === 'Escape') {
         const aboutModal = document.getElementById('about-modal');
         if (aboutModal && aboutModal.classList.contains('show')) {
-          e.preventDefault();
           this.hideAboutModal();
           return;
         }
       }
 
-      // Don't handle other shortcuts if about modal is open
-      const aboutModal = document.getElementById('about-modal');
-      if (aboutModal && aboutModal.classList.contains('show')) {
+      // Refresh with Ctrl+R or F5
+      if ((e.ctrlKey && e.key === 'r') || e.key === 'F5') {
+        e.preventDefault();
+        this.refreshStatus();
         return;
       }
 
-      if (e.key === 'r' && (e.ctrlKey || e.metaKey)) {
-        e.preventDefault();
-        this.refreshStatus();
-      }
-      
-      if (e.key >= '1' && e.key <= '2') {
-        const tabIndex = parseInt(e.key) - 1;
-        const tabs = ['active', 'recent'];
-        if (tabs[tabIndex]) {
-          this.switchTab(tabs[tabIndex]);
+      // Navigate services with arrow keys when focused
+      if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+        const focused = document.activeElement;
+        if (focused && focused.classList.contains('expandable-service')) {
+          e.preventDefault();
+          const services = Array.from(document.querySelectorAll('.expandable-service'));
+          const currentIndex = services.indexOf(focused);
+          const nextIndex = e.key === 'ArrowDown' 
+            ? (currentIndex + 1) % services.length 
+            : (currentIndex - 1 + services.length) % services.length;
+          services[nextIndex].focus();
         }
       }
 
-      // Show about modal with Ctrl/Cmd + I
-      if (e.key === 'i' && (e.ctrlKey || e.metaKey)) {
-        e.preventDefault();
-        this.showAboutModal();
+      // Activate service expansion with Enter or Space
+      if (e.key === 'Enter' || e.key === ' ') {
+        const focused = document.activeElement;
+        if (focused && focused.classList.contains('expandable-service')) {
+          e.preventDefault();
+          const serviceName = focused.getAttribute('data-service');
+          this.toggleServiceExpansion(serviceName);
+        }
       }
     });
   }
 
   /**
-   * Start auto-refresh when popup is visible
+   * Toggle service expansion to show/hide incidents
+   */
+  toggleServiceExpansion(serviceName) {
+    const service = document.querySelector(`[data-service="${serviceName}"]`);
+    const isExpanded = this.expandedServices.has(serviceName);
+    
+    if (isExpanded) {
+      // Collapse
+      this.expandedServices.delete(serviceName);
+      service.classList.remove('expanded');
+      this.hideServiceIncidents(serviceName);
+    } else {
+      // Expand
+      this.expandedServices.add(serviceName);
+      service.classList.add('expanded');
+      this.showServiceIncidents(serviceName);
+    }
+  }
+
+  /**
+   * Show incidents for a specific service
+   */
+  async showServiceIncidents(serviceName) {
+    const sectionName = serviceName.startsWith('claude') ? 'claude' : 'github';
+    const incidentsContainer = document.getElementById(`${sectionName}-incidents`);
+    const incidentsContent = document.getElementById(`${sectionName}-incidents-content`);
+    
+    if (!incidentsContainer || !incidentsContent) return;
+    
+    // Show the container
+    incidentsContainer.style.display = 'block';
+    incidentsContent.innerHTML = '<div class="loading">🔄 Loading incidents...</div>';
+    
+    try {
+      // Get status data from storage
+      const result = await chrome.storage.local.get(['vstateStatus', 'claudeStatus', 'githubStatus', 'claudeIncidents', 'githubIncidents']);
+      
+      let incidents = [];
+      if (sectionName === 'claude') {
+        incidents = result.claudeIncidents || [];
+      } else {
+        incidents = result.githubIncidents || [];
+      }
+      
+      // Filter incidents for specific service if needed
+      const filteredIncidents = this.filterIncidentsForService(incidents, serviceName);
+      
+      if (filteredIncidents.length === 0) {
+        incidentsContent.innerHTML = `<div class="no-incidents">No recent incidents for ${this.getServiceDisplayName(serviceName)} 🎉</div>`;
+      } else {
+        incidentsContent.innerHTML = filteredIncidents.map(incident => this.renderIncident(incident)).join('');
+      }
+      
+    } catch (error) {
+      console.error('Error loading service incidents:', error);
+      incidentsContent.innerHTML = '<div class="no-incidents error">Error loading incidents</div>';
+    }
+  }
+
+  /**
+   * Hide incidents for a specific service
+   */
+  hideServiceIncidents(serviceName) {
+    const sectionName = serviceName.startsWith('claude') ? 'claude' : 'github';
+    const incidentsContainer = document.getElementById(`${sectionName}-incidents`);
+    
+    if (incidentsContainer) {
+      incidentsContainer.style.display = 'none';
+    }
+  }
+
+  /**
+   * Filter incidents based on service type
+   */
+  filterIncidentsForService(incidents, serviceName) {
+    // For now, return all incidents for the service provider
+    // Could be enhanced to filter by specific service components
+    return incidents.slice(0, 5); // Show max 5 recent incidents
+  }
+
+  /**
+   * Get display name for service
+   */
+  getServiceDisplayName(serviceName) {
+    const serviceNames = {
+      'claude-web': 'Claude Web',
+      'claude-api': 'Claude API',
+      'claude-dashboard': 'Claude Dashboard',
+      'claude-docs': 'Claude Docs/Support',
+      'github-copilot': 'GitHub Copilot',
+      'github-api': 'GitHub API',
+      'github-codespaces': 'GitHub Codespaces',
+      'github-actions': 'GitHub Actions'
+    };
+    return serviceNames[serviceName] || serviceName;
+  }
+
+  /**
+   * Handle when popup becomes visible
+   */
+  onPopupVisible() {
+    // Auto-refresh if data is older than 30 seconds
+    chrome.storage.local.get(['lastUpdated'], (result) => {
+      const lastUpdated = result.lastUpdated;
+      if (lastUpdated) {
+        const timeSince = Date.now() - lastUpdated;
+        if (timeSince > 30000) { // 30 seconds
+          this.loadStatus();
+        }
+      }
+    });
+  }
+
+  /**
+   * Start auto-refresh interval
    */
   startAutoRefresh() {
-    // Refresh data every 30 seconds when popup is open
+    // Refresh every 2 minutes when popup is open
     this.autoRefreshInterval = setInterval(() => {
       if (!document.hidden && !this.refreshing) {
         this.loadStatus();
       }
-    }, 30000);
+    }, 120000);
   }
 
   /**
-   * Handle popup becoming visible
-   */
-  async onPopupVisible() {
-    try {
-      await this.loadStatus();
-    } catch (error) {
-      console.error('Error refreshing on popup visible:', error);
-    }
-  }
-
-  switchTab(tabName) {
-    // Update tab buttons
-    document.querySelectorAll('.tab-button').forEach(btn => {
-      btn.classList.remove('active');
-    });
-    document.querySelector(`[data-tab="${tabName}"]`).classList.add('active');
-
-    // Update tab content
-    document.querySelectorAll('.tab-content').forEach(content => {
-      content.classList.remove('active');
-    });
-    document.getElementById(`${tabName}-tab`).classList.add('active');
-  }
-
-  /**
-   * Load status data with enhanced error handling and retry logic
+   * Load status data from storage
    */
   async loadStatus() {
     try {
-      // Try to get fresh data via message first, fallback to storage
-      const response = await this.sendMessage({ action: 'getStatus' });
-      
-      let data;
-      if (response?.status === 'success') {
-        data = response.data;
-      } else {
-        // Fallback to direct storage access
-        data = await chrome.storage.local.get([
-          'status', 'incidents', 'historicalIncidents', 'lastFiveIncidents', 
-          'components', 'lastUpdated', 'lastError'
-        ]);
-      }
-      
-      if (data.status) {
-        this.updateStatusDisplay(data.status, data.lastUpdated, data.lastError);
-        this.updateServicesDisplay(data.components || []);
-        this.updateIncidentsDisplay(data.incidents || []);
-        this.updateRecentIncidentsDisplay(data.lastFiveIncidents || []);
-        this.errorRetryCount = 0; // Reset on success
+      const result = await chrome.storage.local.get([
+        'vstateStatus', 'claudeStatus', 'githubStatus', 
+        'claudeIncidents', 'githubIncidents', 'lastUpdated', 'lastError'
+      ]);
+
+      if (result.vstateStatus) {
+        this.updateStatusDisplay(result.vstateStatus, result.lastUpdated, result.lastError);
+        this.updateClaudeServices(result.claudeStatus);
+        this.updateGitHubServices(result.githubStatus);
+        this.errorRetryCount = 0; // Reset error count on success
       } else {
         this.showNoData();
       }
@@ -206,6 +289,82 @@ class PopupController {
         this.showError('Unable to load status data');
       }
     }
+  }
+
+  /**
+   * Update Claude services display
+   */
+  updateClaudeServices(claudeStatus) {
+    if (!claudeStatus) return;
+
+    // Update Claude service icons based on status data
+    const claudeServices = {
+      'claude-web': 'claude.ai',
+      'claude-api': 'API',
+      'claude-dashboard': 'Console',
+      'claude-docs': 'Documentation'
+    };
+
+    Object.entries(claudeServices).forEach(([serviceId, componentName]) => {
+      const serviceEl = document.querySelector(`[data-service="${serviceId}"]`);
+      if (!serviceEl) return;
+
+      const iconEl = serviceEl.querySelector('.service-icon');
+      if (!iconEl) return;
+
+      // Find matching component in Claude status
+      let status = 'unknown';
+      if (claudeStatus.components) {
+        const component = claudeStatus.components.find(comp => 
+          comp.name.toLowerCase().includes(componentName.toLowerCase()) ||
+          componentName.toLowerCase().includes(comp.name.toLowerCase())
+        );
+        if (component) {
+          status = this.mapComponentStatus(component.status);
+        }
+      }
+
+      iconEl.className = `service-icon ${status}`;
+      iconEl.textContent = this.getServiceIcon(status);
+    });
+  }
+
+  /**
+   * Update GitHub services display
+   */
+  updateGitHubServices(githubStatus) {
+    if (!githubStatus) return;
+
+    // Update GitHub service icons based on status data
+    const githubServices = {
+      'github-copilot': 'Copilot',
+      'github-api': 'API',
+      'github-codespaces': 'Codespaces',
+      'github-actions': 'Actions'
+    };
+
+    Object.entries(githubServices).forEach(([serviceId, componentName]) => {
+      const serviceEl = document.querySelector(`[data-service="${serviceId}"]`);
+      if (!serviceEl) return;
+
+      const iconEl = serviceEl.querySelector('.service-icon');
+      if (!iconEl) return;
+
+      // Find matching component in GitHub status
+      let status = 'unknown';
+      if (githubStatus.components) {
+        const component = githubStatus.components.find(comp => 
+          comp.name.toLowerCase().includes(componentName.toLowerCase()) ||
+          componentName.toLowerCase().includes(comp.name.toLowerCase())
+        );
+        if (component) {
+          status = this.mapComponentStatus(component.status);
+        }
+      }
+
+      iconEl.className = `service-icon ${status}`;
+      iconEl.textContent = this.getServiceIcon(status);
+    });
   }
 
   /**
@@ -242,9 +401,15 @@ class PopupController {
       }
       
       if (statusIcon) {
-        const iconColor = this.getIconColor(status);
-        statusIcon.src = `icons/claude-${iconColor}-32.png`;
-        statusIcon.alt = `Claude status: ${this.getStatusText(status)}`;
+        statusIcon.src = `icons/lightning-32.png`;
+        statusIcon.alt = `Vibe Stats status: ${this.getStatusText(status)} ⚡`;
+        
+        // Add pulse animation for non-operational statuses
+        if (status !== 'operational' && status !== 'none') {
+          statusIcon.style.animation = 'pulse 2s ease-in-out infinite';
+        } else {
+          statusIcon.style.animation = '';
+        }
       }
 
       if (lastUpdatedEl) {
@@ -289,46 +454,6 @@ class PopupController {
   }
 
   /**
-   * Update services display with component status
-   */
-  updateServicesDisplay(components) {
-    const serviceMapping = {
-      'claude.ai': ['Claude Frontend', 'Claude.ai Website', 'claude.ai'],
-      'Console': ['Anthropic Console', 'console.anthropic.com', 'Console'],
-      'API': ['Anthropic API', 'api.anthropic.com', 'API'],
-      'Claude Code': ['Claude Code Extension', 'Claude Code', 'Code Editor']
-    };
-
-    const serviceItems = document.querySelectorAll('.service-item');
-    serviceItems.forEach((item, index) => {
-      const serviceNameEl = item.querySelector('.service-name');
-      const serviceIconEl = item.querySelector('.service-icon');
-      const serviceName = serviceNameEl.textContent;
-      
-      // Find matching component
-      const possibleNames = serviceMapping[serviceName] || [serviceName];
-      const component = components.find(comp => 
-        possibleNames.some(name => 
-          comp.name.toLowerCase().includes(name.toLowerCase()) ||
-          name.toLowerCase().includes(comp.name.toLowerCase())
-        )
-      );
-
-      let status = 'unknown';
-      let icon = '?';
-      
-      if (component) {
-        status = this.mapComponentStatus(component.status);
-        icon = this.getServiceIcon(status);
-      }
-
-      serviceIconEl.className = `service-icon ${status}`;
-      serviceIconEl.textContent = icon;
-      serviceIconEl.setAttribute('title', component ? `${component.name}: ${component.status}` : `${serviceName}: Status unknown`);
-    });
-  }
-
-  /**
    * Map component status to our internal status levels
    */
   mapComponentStatus(status) {
@@ -355,48 +480,9 @@ class PopupController {
     }
   }
 
-  updateIncidentsDisplay(incidents) {
-    const container = document.getElementById('incidents-container');
-    
-    if (!container) return;
-    
-    if (!incidents || incidents.length === 0) {
-      container.innerHTML = '<div class="no-incidents">No active incidents 🎉</div>';
-      return;
-    }
-
-    container.innerHTML = incidents.map(incident => this.renderIncident(incident)).join('');
-  }
-
   /**
-   * Update recent incidents display (last 5)
+   * Render incident for display
    */
-  updateRecentIncidentsDisplay(incidents) {
-    const container = document.getElementById('recent-incidents-container');
-    
-    if (!container) return;
-    
-    if (!incidents || incidents.length === 0) {
-      container.innerHTML = '<div class="no-incidents">No recent incidents found</div>';
-      return;
-    }
-
-    container.innerHTML = incidents.map(incident => this.renderRecentIncident(incident)).join('');
-  }
-
-  updateHistoricalDisplay(historicalIncidents) {
-    const container = document.getElementById('historical-container');
-    
-    if (!container) return; // Element might not exist yet
-    
-    if (!historicalIncidents || historicalIncidents.length === 0) {
-      container.innerHTML = '<div class="no-incidents">No incidents in past 24 hours 🎉</div>';
-      return;
-    }
-
-    container.innerHTML = historicalIncidents.map(incident => this.renderHistoricalIncident(incident)).join('');
-  }
-
   renderIncident(incident) {
     const impactClass = incident.impact ? `impact-${incident.impact}` : '';
     const statusClass = incident.status ? incident.status.replace(/\s+/g, '-').toLowerCase() : '';
@@ -416,71 +502,6 @@ class PopupController {
         <span class="incident-status ${statusClass}">${incident.status}</span>
         ${updateText}
         <div class="incident-date">${this.formatTime(new Date(incident.created_at))}</div>
-      </div>
-    `;
-  }
-
-  /**
-   * Render a recent incident with full details
-   */
-  renderRecentIncident(incident) {
-    const impactClass = incident.impact ? `impact-${incident.impact}` : '';
-    const statusClass = incident.status ? incident.status.replace(/\s+/g, '-').toLowerCase() : '';
-    const isResolved = incident.status === 'resolved';
-    
-    let durationText = '';
-    if (incident.duration) {
-      durationText = `<span class="incident-duration">Duration: ${incident.duration}</span>`;
-    }
-
-    let updatesText = '';
-    if (incident.updates && incident.updates.length > 0) {
-      const latestUpdate = incident.updates[0];
-      updatesText = `
-        <div class="incident-update">
-          <strong>Latest:</strong> ${this.truncateText(latestUpdate.body, 100)}
-        </div>
-      `;
-    }
-
-    return `
-      <div class="historical-incident ${impactClass} ${isResolved ? 'resolved' : ''}">
-        <div class="incident-header">
-          <div class="incident-name">${this.escapeHtml(incident.titleWithDate || incident.name)}</div>
-          <span class="incident-status ${statusClass}">${incident.status}</span>
-        </div>
-        ${updatesText}
-        <div class="incident-meta">
-          <div class="incident-date">${this.formatTime(new Date(incident.created_at))}</div>
-          ${durationText}
-        </div>
-      </div>
-    `;
-  }
-
-  renderHistoricalIncident(incident) {
-    const impactClass = incident.impact ? `impact-${incident.impact}` : '';
-    const statusClass = incident.status ? incident.status.replace(/\s+/g, '-').toLowerCase() : '';
-    const isResolved = incident.status === 'resolved';
-    
-    let durationText = '';
-    if (incident.duration) {
-      durationText = `<span class="incident-duration">Duration: ${incident.duration}</span>`;
-    }
-
-    return `
-      <div class="historical-incident ${impactClass} ${isResolved ? 'resolved' : ''}">
-        <div class="incident-header">
-          <div class="incident-name">${this.escapeHtml(incident.name)}</div>
-          <span class="incident-status ${statusClass}">${incident.status}</span>
-        </div>
-        <div class="incident-summary">
-          ${this.escapeHtml(incident.summary || 'No summary available')}
-        </div>
-        <div class="incident-meta">
-          <div class="incident-date">${this.formatTime(new Date(incident.created_at))}</div>
-          ${durationText}
-        </div>
       </div>
     `;
   }
@@ -592,15 +613,9 @@ class PopupController {
    */
   showNoData() {
     const lastUpdatedEl = document.getElementById('last-updated');
-    const incidentsContainer = document.getElementById('incidents-container');
     
     if (lastUpdatedEl) {
-      lastUpdatedEl.textContent = 'No data available';
-    }
-    
-    if (incidentsContainer) {
-      incidentsContainer.innerHTML = 
-        '<div class="loading">Click refresh to load data</div>';
+      lastUpdatedEl.textContent = 'No data available - Click refresh';
     }
   }
 
@@ -609,16 +624,10 @@ class PopupController {
    */
   showError(message = 'Failed to load data') {
     const lastUpdatedEl = document.getElementById('last-updated');
-    const incidentsContainer = document.getElementById('incidents-container');
     
     if (lastUpdatedEl) {
       lastUpdatedEl.textContent = message;
       lastUpdatedEl.className = 'last-updated error';
-    }
-    
-    if (incidentsContainer) {
-      incidentsContainer.innerHTML = 
-        '<div class="no-incidents error">Error loading incidents. <button onclick="location.reload()">Retry</button></div>';
     }
   }
 
@@ -686,7 +695,6 @@ class PopupController {
     }
   }
 
-
   /**
    * Cleanup when popup closes
    */
@@ -699,7 +707,7 @@ class PopupController {
 
 // Initialize when DOM is ready
 document.addEventListener('DOMContentLoaded', () => {
-  const controller = new PopupController();
+  const controller = new VStatePopupController();
   
   // Cleanup when popup closes
   window.addEventListener('beforeunload', () => {

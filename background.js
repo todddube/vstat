@@ -24,6 +24,7 @@ class VStateMonitor {
     this.intervalMinutes = 5;
     this.maxRetries = 3;
     this.retryDelay = 2000;
+    this.animationInterval = null;
   }
 
   /**
@@ -407,14 +408,16 @@ class VStateMonitor {
   }
 
   /**
-   * Update badge icon with error handling
+   * Update badge icon with error handling and animation
    */
   async updateBadgeIcon(status, components = []) {
     try {
-      const iconColor = this.getIconColor(status);
-      const iconPath = this.getIconPath(iconColor);
+      const iconPath = this.getIconPath(status);
       
       await chrome.action.setIcon({ path: iconPath });
+      
+      // Start icon animation for non-operational states
+      this.handleIconAnimation(status);
 
       // Count affected services
       const affectedCount = this.countAffectedServices(components);
@@ -440,7 +443,7 @@ class VStateMonitor {
       const statusText = this.getStatusText(status);
       const titleSuffix = affectedCount > 0 ? ` (${affectedCount} service${affectedCount > 1 ? 's' : ''} affected)` : '';
       await chrome.action.setTitle({
-        title: `Claude Status: ${statusText}${titleSuffix}`
+        title: `Vibe Stats ⚡: ${statusText}${titleSuffix}`
       });
       
     } catch (error) {
@@ -491,11 +494,48 @@ class VStateMonitor {
 
   getIconPath(color) {
     return {
-      "16": `icons/claude-${color}-16.png`,
-      "32": `icons/claude-${color}-32.png`,
-      "48": `icons/claude-${color}-48.png`,
-      "128": `icons/claude-${color}-128.png`
+      "16": `icons/lightning-16.png`,
+      "32": `icons/lightning-32.png`,
+      "48": `icons/lightning-48.png`,
+      "128": `icons/lightning-128.png`
     };
+  }
+
+  /**
+   * Handle icon animation for different statuses
+   */
+  handleIconAnimation(status) {
+    // Clear any existing animation interval
+    if (this.animationInterval) {
+      clearInterval(this.animationInterval);
+      this.animationInterval = null;
+    }
+
+    // Start animation for problematic statuses
+    if (status !== 'operational' && status !== 'none') {
+      let isVisible = true;
+      const iconPath = this.getIconPath(status);
+      
+      this.animationInterval = setInterval(async () => {
+        try {
+          if (isVisible) {
+            // Create a transparent icon for blink effect
+            const transparentIcon = {
+              "16": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAABHNCSVQICAgIfAhkiAAAAAlwSFlzAAAAdgAAAHYBTnsmCAAAABl0RVh0U29mdHdhcmUAd3d3Lmlua3NjYXBlLm9yZ5vuPBoAAAANSURBVDiNY/z//z8DAAj8Av6IXwbgAAAAAElFTkSuQmCC",
+              "32": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAABHNCSVQICAgIfAhkiAAAAAlwSFlzAAAAdgAAAHYBTnsmCAAAABl0RVh0U29mdHdhcmUAd3d3Lmlua3NjYXBlLm9yZ5vuPBoAAAANSURBVFiF7cEBAQAAAIKg/q+uiQYAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAC4AwAAAP//AwBQgAEc7L0AAAAASUVORK5CYII=",
+              "48": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAAABHNCSVQICAgIfAhkiAAAAAlwSFlzAAAAdgAAAHYBTnsmCAAAABl0RVh0U29mdHdhcmUAd3d3Lmlua3NjYXBlLm9yZ5vuPBoAAAANSURBVGiB7cEBDQAAAMKg909tDjegAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAwAUAAAD//wNAjAEczL0AAAAASUVORK5CYII=",
+              "128": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIAAAACACAYAAADDPmHLAAAABHNCSVQICAgIfAhkiAAAAAlwSFlzAAAAdgAAAHYBTnsmCAAAABl0RVh0U29mdHdhcmUAd3d3Lmlua3NjYXBlLm9yZ5vuPBoAAAAOSURBVHic7cEBAQAAAIIg/69uSAUAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABQgAEAAAH//wMLQAB1zL0AAAAASUVORK5CYII="
+            };
+            await chrome.action.setIcon({ path: transparentIcon });
+          } else {
+            await chrome.action.setIcon({ path: iconPath });
+          }
+          isVisible = !isVisible;
+        } catch (error) {
+          console.error('Animation error:', error);
+        }
+      }, 800); // Blink every 800ms
+    }
   }
 
   getBadgeColor(status) {

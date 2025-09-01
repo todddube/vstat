@@ -1,7 +1,7 @@
 {
-  "name": "claude-status-monitor",
-  "version": "1.0.0",
-  "description": "Monitor Claude's status from Anthropic and display colored status icon with recent incidents",
+  "name": "vibe-stats",
+  "version": "1.0.1",
+  "description": "Monitor Claude and GitHub Copilot status with animated lightning bolt indicators and real-time updates",
   "author": "Todd Dube",
   "license": ".-.",
   "repository": {
@@ -9,10 +9,6 @@
     "url": "https://github.com/todddube/clstat.git"
   },
   "scripts": {
-    "test": "cd tests && npm test",
-    "test:visual": "cd tests && npm run test:visual",
-    "visual:viewer": "cd tests && npm run visual:viewer",
-    "visual:validate": "cd tests && npm run visual:validate", 
     "build": "node build-extension.js",
     "build:clean": "node build-extension.js --clean",
     "validate": "node build-extension.js --validate-only",
@@ -23,7 +19,10 @@
     "status-monitor",
     "anthropic",
     "claude",
-    "browser-extension"
+    "github-copilot",
+    "browser-extension",
+    "dev-tools",
+    "lightning-bolt"
   ],
   "engines": {
     "node": ">=14.0.0"
