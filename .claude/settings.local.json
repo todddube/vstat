@@ -10,7 +10,9 @@
       "Bash(copy iconsclaude-green-32.png iconsclaude-32.png)",
       "Bash(copy iconsclaude-green-48.png iconsclaude-48.png)",
       "Bash(copy iconsclaude-green-128.png iconsclaude-128.png)",
-      "Bash(del:*)"
+      "Bash(del:*)",
+      "Bash(start convert_all_icons.html)",
+      "Bash(ls:*)"
     ],
     "deny": [],
     "ask": []
