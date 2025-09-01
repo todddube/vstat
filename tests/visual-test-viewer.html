@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Claude Status Monitor - Visual Test Viewer</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            background: #f5f5f5;
+            padding: 20px;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            color: #333;
+        }
+        
+        .test-section {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .test-section h2 {
+            margin-bottom: 15px;
+            color: #333;
+            border-bottom: 2px solid #eee;
+            padding-bottom: 5px;
+        }
+        
+        .icon-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+        
+        .icon-item {
+            text-align: center;
+            padding: 15px;
+            border: 2px solid #eee;
+            border-radius: 8px;
+            background: #fafafa;
+        }
+        
+        .icon-item img {
+            width: 48px;
+            height: 48px;
+            margin-bottom: 8px;
+            display: block;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        
+        .icon-item .label {
+            font-weight: bold;
+            margin-bottom: 4px;
+        }
+        
+        .icon-item .status {
+            font-size: 12px;
+            color: #666;
+        }
+        
+        .popup-simulator {
+            max-width: 350px;
+            margin: 0 auto;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            background: white;
+            overflow: hidden;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+        
+        .popup-content {
+            padding: 16px;
+        }
+        
+        .status-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+        
+        .status-icon {
+            width: 32px;
+            height: 32px;
+            margin-right: 12px;
+        }
+        
+        .status-indicator {
+            flex: 1;
+        }
+        
+        .status-text {
+            font-weight: bold;
+            margin-bottom: 4px;
+        }
+        
+        .last-updated {
+            font-size: 12px;
+            color: #666;
+        }
+        
+        .services-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            margin: 16px 0;
+        }
+        
+        .service-item {
+            display: flex;
+            align-items: center;
+            padding: 8px;
+            background: #f9f9f9;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        
+        .service-icon {
+            width: 16px;
+            height: 16px;
+            margin-right: 8px;
+            text-align: center;
+            font-weight: bold;
+            font-size: 12px;
+        }
+        
+        .service-icon.operational { color: #4CAF50; }
+        .service-icon.minor { color: #FFC107; }
+        .service-icon.major { color: #FF9800; }
+        .service-icon.critical { color: #F44336; }
+        .service-icon.unknown { color: #9E9E9E; }
+        
+        .controls {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+        
+        .control-group label {
+            font-weight: bold;
+            font-size: 12px;
+            color: #666;
+        }
+        
+        button, select {
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background: white;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        
+        button:hover {
+            background: #f0f0f0;
+        }
+        
+        button.active {
+            background: #2196F3;
+            color: white;
+        }
+        
+        .test-log {
+            background: #f8f8f8;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 10px;
+            max-height: 200px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 12px;
+            margin-top: 15px;
+        }
+        
+        .badge-preview {
+            display: inline-block;
+            position: relative;
+            margin: 10px;
+        }
+        
+        .badge-preview img {
+            width: 32px;
+            height: 32px;
+        }
+        
+        .badge-text {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background: #F44336;
+            color: white;
+            border-radius: 50%;
+            width: 18px;
+            height: 18px;
+            font-size: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+        
+        .status-operational { border-left: 4px solid #4CAF50; }
+        .status-minor { border-left: 4px solid #FFC107; }
+        .status-major { border-left: 4px solid #FF9800; }
+        .status-critical { border-left: 4px solid #F44336; }
+        .status-unknown { border-left: 4px solid #9E9E9E; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🔍 Claude Status Monitor - Visual Test Viewer</h1>
+        <p>Interactive testing environment for status icons and UI components</p>
+    </div>
+
+    <div class="test-section">
+        <h2>Status Icon Variations</h2>
+        <div class="icon-grid" id="icon-grid">
+            <!-- Icons will be populated by JavaScript -->
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h2>Extension Badge Simulation</h2>
+        <div class="controls">
+            <div class="control-group">
+                <label>Status:</label>
+                <select id="badge-status">
+                    <option value="operational">Operational</option>
+                    <option value="minor">Minor Issues</option>
+                    <option value="major">Major Issues</option>
+                    <option value="critical">Critical Issues</option>
+                    <option value="unknown">Unknown</option>
+                </select>
+            </div>
+            <div class="control-group">
+                <label>Affected Services:</label>
+                <select id="affected-count">
+                    <option value="0">0</option>
+                    <option value="1">1</option>
+                    <option value="2">2</option>
+                    <option value="3">3</option>
+                    <option value="4">4+</option>
+                </select>
+            </div>
+        </div>
+        
+        <div id="badge-previews">
+            <!-- Badge previews will be populated here -->
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h2>Popup Interface Simulation</h2>
+        <div class="controls">
+            <button onclick="setPopupStatus('operational')">Operational</button>
+            <button onclick="setPopupStatus('minor')">Minor Issues</button>
+            <button onclick="setPopupStatus('major')">Major Issues</button>
+            <button onclick="setPopupStatus('critical')">Critical Issues</button>
+            <button onclick="setPopupStatus('unknown')">Unknown</button>
+            <button onclick="simulateIncident()">Add Test Incident</button>
+            <button onclick="clearIncidents()">Clear Incidents</button>
+        </div>
+
+        <div class="popup-simulator">
+            <div class="popup-content">
+                <div class="status-header">
+                    <img id="popup-status-icon" src="../icons/claude-green-32.png" class="status-icon" alt="Status">
+                    <div class="status-indicator">
+                        <div class="status-text" id="popup-status-text">All Systems Operational</div>
+                        <div class="last-updated" id="popup-last-updated">Updated: Just now</div>
+                    </div>
+                </div>
+                
+                <div class="services-grid">
+                    <div class="service-item">
+                        <span class="service-icon operational" id="service-claude">✓</span>
+                        <span>claude.ai</span>
+                    </div>
+                    <div class="service-item">
+                        <span class="service-icon operational" id="service-console">✓</span>
+                        <span>Console</span>
+                    </div>
+                    <div class="service-item">
+                        <span class="service-icon operational" id="service-api">✓</span>
+                        <span>API</span>
+                    </div>
+                    <div class="service-item">
+                        <span class="service-icon operational" id="service-code">✓</span>
+                        <span>Claude Code</span>
+                    </div>
+                </div>
+
+                <div id="incidents-display" style="margin-top: 16px; min-height: 60px; padding: 8px; background: #f9f9f9; border-radius: 4px;">
+                    <div style="color: #666; font-size: 14px;">No active incidents 🎉</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h2>Test Actions & Results</h2>
+        <div class="controls">
+            <button onclick="runIconTest()">Test All Icon States</button>
+            <button onclick="runPopupTest()">Test Popup States</button>
+            <button onclick="runBadgeTest()">Test Badge Variations</button>
+            <button onclick="clearLog()">Clear Log</button>
+        </div>
+        <div class="test-log" id="test-log">
+            <div>Visual test viewer initialized. Click buttons above to run tests.</div>
+        </div>
+    </div>
+
+    <script>
+        // Status configurations
+        const statusConfigs = {
+            operational: { color: 'green', text: 'All Systems Operational', badgeColor: '#4CAF50' },
+            minor: { color: 'yellow', text: 'Minor Issues', badgeColor: '#FFC107' },
+            major: { color: 'red', text: 'Major Issues', badgeColor: '#FF9800' },
+            critical: { color: 'red', text: 'Critical Issues', badgeColor: '#F44336' },
+            unknown: { color: 'gray', text: 'Status Unknown', badgeColor: '#9E9E9E' }
+        };
+
+        const serviceIcons = {
+            operational: '✓',
+            minor: '⚠',
+            major: '⚡',
+            critical: '✕',
+            unknown: '?'
+        };
+
+        // Initialize the page
+        function init() {
+            populateIconGrid();
+            updateBadgePreviews();
+            setupEventListeners();
+            log('Visual test environment ready');
+        }
+
+        function populateIconGrid() {
+            const grid = document.getElementById('icon-grid');
+            grid.innerHTML = '';
+
+            Object.entries(statusConfigs).forEach(([status, config]) => {
+                const sizes = [16, 32, 48, 128];
+                sizes.forEach(size => {
+                    const item = document.createElement('div');
+                    item.className = 'icon-item';
+                    item.innerHTML = `
+                        <img src="../icons/claude-${config.color}-${size}.png" 
+                             alt="${status} ${size}px" 
+                             onerror="this.style.background='#ff00001a'; this.alt='Missing: ${config.color}-${size}'">
+                        <div class="label">${status}</div>
+                        <div class="status">${size}px</div>
+                    `;
+                    grid.appendChild(item);
+                });
+            });
+        }
+
+        function setupEventListeners() {
+            document.getElementById('badge-status').addEventListener('change', updateBadgePreviews);
+            document.getElementById('affected-count').addEventListener('change', updateBadgePreviews);
+        }
+
+        function updateBadgePreviews() {
+            const status = document.getElementById('badge-status').value;
+            const count = document.getElementById('affected-count').value;
+            const config = statusConfigs[status];
+            
+            const container = document.getElementById('badge-previews');
+            container.innerHTML = '';
+
+            [16, 32, 48].forEach(size => {
+                const preview = document.createElement('div');
+                preview.className = 'badge-preview';
+                preview.innerHTML = `
+                    <img src="../icons/claude-${config.color}-${size}.png" alt="Badge ${size}px">
+                    ${count > 0 ? `<div class="badge-text" style="background-color: ${config.badgeColor}">${count === '4' ? '4+' : count}</div>` : ''}
+                `;
+                container.appendChild(preview);
+            });
+        }
+
+        function setPopupStatus(status) {
+            const config = statusConfigs[status];
+            
+            // Update status icon and text
+            document.getElementById('popup-status-icon').src = `../icons/claude-${config.color}-32.png`;
+            document.getElementById('popup-status-text').textContent = config.text;
+            document.getElementById('popup-last-updated').textContent = 'Updated: Just now';
+            
+            // Update service icons
+            const serviceElements = ['service-claude', 'service-console', 'service-api', 'service-code'];
+            serviceElements.forEach(id => {
+                const element = document.getElementById(id);
+                element.className = `service-icon ${status}`;
+                element.textContent = serviceIcons[status];
+            });
+
+            // Update popup border
+            const popup = document.querySelector('.popup-simulator');
+            popup.className = `popup-simulator status-${status}`;
+            
+            log(`Popup status updated to: ${status} (${config.text})`);
+        }
+
+        function simulateIncident() {
+            const incidents = [
+                'API Response Delays - Investigating slow response times',
+                'Login Issues - Some users experiencing authentication problems', 
+                'Database Performance - Temporary slowdowns in data retrieval',
+                'File Upload Errors - Issues with document processing'
+            ];
+            
+            const incident = incidents[Math.floor(Math.random() * incidents.length)];
+            const display = document.getElementById('incidents-display');
+            
+            display.innerHTML = `
+                <div style="padding: 8px; background: #fff3cd; border: 1px solid #ffeaa7; border-radius: 4px; margin-bottom: 8px;">
+                    <div style="font-weight: bold; color: #856404;">${incident}</div>
+                    <div style="font-size: 12px; color: #856404; margin-top: 4px;">Status: Investigating • Started: 5m ago</div>
+                </div>
+            `;
+            
+            log(`Added test incident: ${incident.split(' - ')[0]}`);
+        }
+
+        function clearIncidents() {
+            document.getElementById('incidents-display').innerHTML = 
+                '<div style="color: #666; font-size: 14px;">No active incidents 🎉</div>';
+            log('Cleared all incidents');
+        }
+
+        function runIconTest() {
+            log('=== Running Icon Test ===');
+            Object.keys(statusConfigs).forEach((status, index) => {
+                setTimeout(() => {
+                    setPopupStatus(status);
+                    log(`✓ Tested ${status} status icons`);
+                }, index * 1000);
+            });
+            
+            setTimeout(() => {
+                log('=== Icon test completed ===');
+                setPopupStatus('operational'); // Reset to operational
+            }, Object.keys(statusConfigs).length * 1000);
+        }
+
+        function runPopupTest() {
+            log('=== Running Popup Interaction Test ===');
+            
+            const tests = [
+                { status: 'operational', action: () => setPopupStatus('operational') },
+                { status: 'minor', action: () => { setPopupStatus('minor'); simulateIncident(); } },
+                { status: 'major', action: () => { setPopupStatus('major'); simulateIncident(); } },
+                { status: 'critical', action: () => { setPopupStatus('critical'); simulateIncident(); } },
+                { status: 'operational', action: () => { setPopupStatus('operational'); clearIncidents(); } }
+            ];
+            
+            tests.forEach((test, index) => {
+                setTimeout(() => {
+                    test.action();
+                    log(`✓ Tested ${test.status} popup state`);
+                }, index * 2000);
+            });
+            
+            setTimeout(() => {
+                log('=== Popup test completed ===');
+            }, tests.length * 2000);
+        }
+
+        function runBadgeTest() {
+            log('=== Running Badge Test ===');
+            const statuses = Object.keys(statusConfigs);
+            const counts = ['0', '1', '2', '3', '4'];
+            
+            let testIndex = 0;
+            statuses.forEach(status => {
+                counts.forEach(count => {
+                    setTimeout(() => {
+                        document.getElementById('badge-status').value = status;
+                        document.getElementById('affected-count').value = count;
+                        updateBadgePreviews();
+                        log(`✓ Badge: ${status} with ${count} affected services`);
+                    }, testIndex * 800);
+                    testIndex++;
+                });
+            });
+            
+            setTimeout(() => {
+                log('=== Badge test completed ===');
+                document.getElementById('badge-status').value = 'operational';
+                document.getElementById('affected-count').value = '0';
+                updateBadgePreviews();
+            }, testIndex * 800);
+        }
+
+        function log(message) {
+            const logElement = document.getElementById('test-log');
+            const timestamp = new Date().toLocaleTimeString();
+            const logEntry = document.createElement('div');
+            logEntry.innerHTML = `<span style="color: #666">[${timestamp}]</span> ${message}`;
+            logElement.appendChild(logEntry);
+            logElement.scrollTop = logElement.scrollHeight;
+        }
+
+        function clearLog() {
+            document.getElementById('test-log').innerHTML = 
+                '<div>Test log cleared. Click buttons above to run tests.</div>';
+        }
+
+        // Initialize when page loads
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>

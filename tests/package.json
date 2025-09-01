@@ -1,0 +1,38 @@
+{
+  "name": "claude-status-monitor-tests",
+  "version": "1.0.0",
+  "description": "Test suite for Claude Status Monitor Chrome Extension",
+  "scripts": {
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage",
+    "test:unit": "jest tests/unit",
+    "test:integration": "jest tests/integration",
+    "test:debug": "node --inspect-brk node_modules/.bin/jest --runInBand",
+    "test:visual": "node run-visual-tests.js test",
+    "visual:viewer": "node run-visual-tests.js viewer",
+    "visual:validate": "node run-visual-tests.js validate"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0",
+    "jest-environment-jsdom": "^29.7.0",
+    "@types/chrome": "^0.0.268",
+    "@types/jest": "^29.5.12"
+  },
+  "jest": {
+    "testEnvironment": "jsdom",
+    "setupFilesAfterEnv": ["<rootDir>/jest.setup.js"],
+    "testMatch": [
+      "**/tests/**/*.test.js",
+      "**/tests/**/*.spec.js"
+    ],
+    "collectCoverageFrom": [
+      "../*.js",
+      "!../node_modules/**",
+      "!**/tests/**"
+    ],
+    "coverageDirectory": "coverage",
+    "coverageReporters": ["text", "lcov", "html"],
+    "verbose": true
+  }
+}

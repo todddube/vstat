@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(C:\\Users\\todd\\OneDrive\\Documents\\GitHub\\clstat/**)",
+      "Read(C:\\Users\\todd\\OneDrive\\Documents\\GitHub\\clstat/**)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

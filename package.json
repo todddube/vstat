@@ -1,0 +1,29 @@
+{
+  "name": "claude-status-monitor",
+  "version": "1.0.0",
+  "description": "Monitor Claude's status from Anthropic and display colored status icon with recent incidents",
+  "author": "Todd Dube",
+  "license": ".-.",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/todddube/clstat.git"
+  },
+  "scripts": {
+    "test": "cd tests && npm test",
+    "test:visual": "cd tests && npm run test:visual",
+    "build": "node build-extension.js",
+    "build:clean": "node build-extension.js --clean",
+    "validate": "node build-extension.js --validate-only",
+    "prepare-release": "npm run validate && npm run build"
+  },
+  "keywords": [
+    "chrome-extension",
+    "status-monitor",
+    "anthropic",
+    "claude",
+    "browser-extension"
+  ],
+  "engines": {
+    "node": ">=14.0.0"
+  }
+}

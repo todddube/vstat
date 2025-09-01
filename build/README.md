@@ -97,28 +97,6 @@ clstat/
 └── README.md            # This file
 ```
 
-### Building for Production
-
-```bash
-# Validate all required files exist
-npm run validate
-
-# Build extension zip file for Chrome Web Store
-npm run build
-
-# Build and clean up temporary files
-npm run build:clean
-
-# Complete release preparation
-npm run prepare-release
-```
-
-The build process creates:
-- `./build/` - Temporary directory with extension files
-- `./dist/claude-status-monitor-v{version}-{date}.zip` - Production-ready zip file
-
-See [BUILD.md](BUILD.md) for detailed build documentation.
-
 ### Icon Generation
 ```bash
 node create_colored_icons.js  # Generate refined status-colored icons
