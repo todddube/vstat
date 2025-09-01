@@ -511,30 +511,33 @@ class VStateMonitor {
       this.animationInterval = null;
     }
 
-    // Start animation for problematic statuses
+    // Start badge animation for problematic statuses instead of icon blinking
     if (status !== 'operational' && status !== 'none') {
       let isVisible = true;
-      const iconPath = this.getIconPath(status);
       
       this.animationInterval = setInterval(async () => {
         try {
           if (isVisible) {
-            // Create a transparent icon for blink effect
-            const transparentIcon = {
-              "16": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAABHNCSVQICAgIfAhkiAAAAAlwSFlzAAAAdgAAAHYBTnsmCAAAABl0RVh0U29mdHdhcmUAd3d3Lmlua3NjYXBlLm9yZ5vuPBoAAAANSURBVDiNY/z//z8DAAj8Av6IXwbgAAAAAElFTkSuQmCC",
-              "32": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAABHNCSVQICAgIfAhkiAAAAAlwSFlzAAAAdgAAAHYBTnsmCAAAABl0RVh0U29mdHdhcmUAd3d3Lmlua3NjYXBlLm9yZ5vuPBoAAAANSURBVFiF7cEBAQAAAIKg/q+uiQYAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAC4AwAAAP//AwBQgAEc7L0AAAAASUVORK5CYII=",
-              "48": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAAABHNCSVQICAgIfAhkiAAAAAlwSFlzAAAAdgAAAHYBTnsmCAAAABl0RVh0U29mdHdhcmUAd3d3Lmlua3NjYXBlLm9yZ5vuPBoAAAANSURBVGiB7cEBDQAAAMKg909tDjegAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAwAUAAAD//wNAjAEczL0AAAAASUVORK5CYII=",
-              "128": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIAAAACACAYAAADDPmHLAAAABHNCSVQICAgIfAhkiAAAAAlwSFlzAAAAdgAAAHYBTnsmCAAAABl0RVh0U29mdHdhcmUAd3d3Lmlua3NjYXBlLm9yZ5vuPBoAAAAOSURBVHic7cEBAQAAAIIg/69uSAUAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABQgAEAAAH//wMLQAB1zL0AAAAASUVORK5CYII="
-            };
-            await chrome.action.setIcon({ path: transparentIcon });
+            // Make badge flash by changing opacity
+            await chrome.action.setBadgeBackgroundColor({
+              color: [255, 0, 0, 100] // Red with low opacity
+            });
           } else {
-            await chrome.action.setIcon({ path: iconPath });
+            // Restore original badge color
+            await chrome.action.setBadgeBackgroundColor({
+              color: this.getBadgeColor(status)
+            });
           }
           isVisible = !isVisible;
         } catch (error) {
           console.error('Animation error:', error);
+          // If animation fails, clear the interval to prevent spam
+          if (this.animationInterval) {
+            clearInterval(this.animationInterval);
+            this.animationInterval = null;
+          }
         }
-      }, 800); // Blink every 800ms
+      }, 1000); // Flash every second
     }
   }
 
