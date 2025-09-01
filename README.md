@@ -133,12 +133,18 @@ Click the extension icon to open a detailed status popup with two main sections:
 
 ### 📁 Project Structure
 ```
-clstat/
+vstat/
 ├── 📄 manifest.json              # Extension configuration (Manifest V3)
-├── ⚙️ background.js              # Service worker (status monitoring)
+├── ⚙️ background.js              # Service worker (dual-service monitoring)
 ├── 🎨 popup.html                 # Popup interface HTML
 ├── 📱 popup.js                   # Popup interface logic
-├── 🖼️ icons/                     # Status icons (16px to 128px, all states)
+├── ⚡ icons/                     # Lightning bolt icons (16px to 128px)
+│   ├── lightning-16.png          # Toolbar icon (small)
+│   ├── lightning-32.png          # Standard icon
+│   ├── lightning-48.png          # Large icon
+│   └── lightning-128.png         # Extension page icon
+├── 🎨 icon_dev/                  # Icon development tools
+│   └── create-improved-lightning-icons.html  # Icon generator
 ├── 🧪 tests/                     # Comprehensive test suite
 │   ├── unit/                     # Unit tests for components
 │   ├── integration/              # Integration tests
@@ -147,30 +153,29 @@ clstat/
 │   └── README.md                 # Testing documentation
 ├── 🔧 build-extension.js         # Production build script
 ├── 📖 BUILD.md                   # Build system documentation
-├── 🎯 create_icons.js            # Icon generation utilities
-├── 🎨 create_colored_icons.js    # Status-specific icon creation
 └── 📚 README.md                  # This documentation
 ```
 
 ### 🔧 Core Components
 
 #### Service Worker (`background.js`)
-- **StatusMonitor Class**: Handles all background monitoring
-- **API Integration**: Fetches from Anthropic's status endpoints
+- **VStateMonitor Class**: Handles dual-service monitoring (Claude + GitHub Copilot)
+- **API Integration**: Fetches from both Anthropic and GitHub status endpoints
 - **Smart Retry Logic**: Exponential backoff for failed requests
-- **Icon Management**: Updates browser icon and badge based on status
+- **Lightning Icon Management**: Updates browser lightning bolt icons and badges
 - **Efficient Storage**: Uses Chrome storage API for data persistence
 
 #### Popup Interface (`popup.js` + `popup.html`)
-- **PopupController Class**: Manages interactive interface
-- **Real-time Updates**: Auto-refresh with visual feedback
+- **VStatePopupController Class**: Manages dual-service interactive interface
+- **Real-time Updates**: Auto-refresh with visual feedback for both services
 - **Accessibility**: Full keyboard navigation and screen reader support
 - **Error Handling**: Graceful degradation and user feedback
 
-#### Icon System
-- **Four Status States**: Green, Yellow, Red, Gray
+#### Lightning Bolt Icon System
+- **Four Status States**: Green, Yellow-Orange, Red, Gray lightning bolts
+- **High-Resolution Optimized**: Thick, visible design for modern displays
 - **Multiple Sizes**: 16px, 32px, 48px, 128px for different contexts
-- **Custom Design**: Anthropic-inspired aesthetic with monitoring elements
+- **Yellow-Orange Theme**: Vibrant gradient from bright gold to deep orange
 - **Badge Integration**: Dynamic count badges and alert indicators
 
 ## 🧪 Testing
@@ -241,13 +246,17 @@ npm run prepare-release
 
 ## 🔗 API Integration
 
-### Anthropic Status Page APIs
-- **Status Endpoint**: `https://status.anthropic.com/api/v2/status.json`
-  - Overall system status (operational, minor, major, critical)
-- **Incidents Endpoint**: `https://status.anthropic.com/api/v2/incidents.json`
-  - Current and historical incident data
-- **Summary Endpoint**: `https://status.anthropic.com/api/v2/summary.json`
-  - Component-level status information
+### Dual-Service API Integration
+
+**Anthropic Status APIs (Claude AI)**:
+- Status: `https://status.anthropic.com/api/v2/status.json`
+- Incidents: `https://status.anthropic.com/api/v2/incidents.json`
+- Summary: `https://status.anthropic.com/api/v2/summary.json`
+
+**GitHub Status APIs (GitHub Copilot)**:
+- Status: `https://www.githubstatus.com/api/v2/status.json`
+- Incidents: `https://www.githubstatus.com/api/v2/incidents.json`
+- Summary: `https://www.githubstatus.com/api/v2/summary.json`
 
 ### Status Mapping Logic
 | API Response | Extension Status | Icon Color | Badge |
@@ -301,20 +310,28 @@ npm run prepare-release
 
 ### Icon Development
 
-Generate custom status icons:
-```bash
-# Generate base icons with sophisticated design
-node create_icons.js
+The extension uses custom yellow-orange lightning bolt icons optimized for high-resolution displays. Icon development tools are located in the `icon_dev/` folder:
 
-# Generate status-specific colored versions
-node create_colored_icons.js
+#### Lightning Bolt Icon Generator
+```bash
+# Open the HTML icon generator in your browser
+start icon_dev/create-improved-lightning-icons.html
+# Or double-click the file to open in default browser
 ```
 
-Icons feature:
-- **Abstract "A" Shape**: Anthropic/API monitoring aesthetic
-- **Status Indicator Dot**: Visual monitoring element
-- **Connection Lines**: Network visualization
-- **Modern Color Palette**: Professional status colors
+#### Icon Features
+- **Lightning Bolt Design**: Energy and speed aesthetic for dev tools monitoring
+- **Yellow-Orange Gradient**: Bright gold to deep orange for maximum visibility
+- **High-Resolution Optimized**: Thick strokes (15% of icon size) for crisp display
+- **Enhanced Contrast**: Inner highlights and stroke outlines for definition
+- **Four Sizes**: 16px (toolbar), 32px (standard), 48px (large), 128px (extension page)
+
+#### Icon Development Workflow
+1. Open `icon_dev/create-improved-lightning-icons.html` in browser
+2. Icons are auto-generated with download links
+3. Download all four sizes (lightning-16.png through lightning-128.png)  
+4. Replace existing files in `icons/` folder
+5. Reload extension in Chrome to see changes
 
 ## 🔧 Configuration
 

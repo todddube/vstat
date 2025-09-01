@@ -501,32 +501,25 @@
             overflow-y: auto;
         }
 
-        /* Brand-specific service icon styling */
-        .claude-section .service-icon.operational { 
-            background: linear-gradient(45deg, #D97706, #F59E0B);
+        /* Universal status-based service icon styling */
+        .service-icon.operational { 
+            background: linear-gradient(45deg, #10B981, #34D399);
             color: white;
         }
-        .claude-section .service-icon.minor { 
-            background: linear-gradient(45deg, #DC2626, #EF4444);
+        .service-icon.minor { 
+            background: linear-gradient(45deg, #F59E0B, #FBBF24);
             color: white;
         }
-        .claude-section .service-icon.major,
-        .claude-section .service-icon.critical { 
-            background: linear-gradient(45deg, #B91C1C, #DC2626);
+        .service-icon.major { 
+            background: linear-gradient(45deg, #F97316, #FB923C);
             color: white;
         }
-
-        .github-section .service-icon.operational { 
-            background: linear-gradient(45deg, #24292E, #4B5563);
+        .service-icon.critical { 
+            background: linear-gradient(45deg, #EF4444, #F87171);
             color: white;
         }
-        .github-section .service-icon.minor { 
+        .service-icon.unknown { 
             background: linear-gradient(45deg, #6B7280, #9CA3AF);
-            color: white;
-        }
-        .github-section .service-icon.major,
-        .github-section .service-icon.critical { 
-            background: linear-gradient(45deg, #1F2937, #374151);
             color: white;
         }
 
@@ -569,26 +562,6 @@
             transition: all 0.2s ease;
         }
 
-        .service-icon.operational { 
-            background: linear-gradient(45deg, #10B981, #34D399);
-            color: white;
-        }
-        .service-icon.minor { 
-            background: linear-gradient(45deg, #F59E0B, #FBBF24);
-            color: white;
-        }
-        .service-icon.major { 
-            background: linear-gradient(45deg, #EF4444, #F87171);
-            color: white;
-        }
-        .service-icon.critical { 
-            background: linear-gradient(45deg, #DC2626, #EF4444);
-            color: white;
-        }
-        .service-icon.unknown { 
-            background: linear-gradient(45deg, #6B7280, #9CA3AF);
-            color: white;
-        }
 
         .service-name {
             font-weight: 600;
@@ -781,6 +754,111 @@
             display: block;
         }
 
+        /* Testing/Development Section */
+        .testing-section {
+            margin-top: 16px;
+            background: linear-gradient(135deg, #374151 0%, #1F2937 100%);
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .testing-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 16px;
+            cursor: pointer;
+            transition: background 0.2s ease;
+        }
+
+        .testing-header:hover {
+            background: rgba(255,255,255,0.05);
+        }
+
+        .testing-title {
+            font-size: 12px;
+            font-weight: 600;
+            color: white;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+        }
+
+        .testing-toggle {
+            background: rgba(255,255,255,0.1);
+            color: white;
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            font-size: 10px;
+        }
+
+        .testing-toggle:hover {
+            background: rgba(255,255,255,0.2);
+            transform: scale(1.1);
+        }
+
+        .testing-toggle.expanded .expand-icon {
+            transform: rotate(90deg);
+        }
+
+        .testing-content {
+            background: rgba(255,255,255,0.95);
+            animation: slideDown 0.3s ease-out;
+        }
+
+        .testing-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            padding: 12px;
+        }
+
+        .test-button {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 10px 8px;
+            background: white;
+            border: 1px solid #e0e0e0;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-size: 11px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .test-button:hover {
+            background: #f8f9fa;
+            transform: translateY(-1px);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            border-color: #667eea;
+        }
+
+        .test-icon {
+            font-size: 16px;
+            margin-bottom: 4px;
+        }
+
+        .test-name {
+            font-weight: 600;
+            color: #374151;
+            text-align: center;
+            line-height: 1.2;
+        }
+
+        .testing-note {
+            text-align: center;
+            padding: 8px 12px 12px;
+            color: #6b7280;
+            border-top: 1px solid #e5e7eb;
+            background: #f9fafb;
+        }
 
     </style>
 </head>
@@ -826,7 +904,7 @@
                 <div class="service-name">Dashboard</div>
             </div>
             <div class="service-item" data-service="claude-docs">
-                <div class="service-icon unknown">📚</div>
+                <div class="service-icon unknown">❓</div>
                 <div class="service-name">Docs/Support</div>
             </div>
         </div>
@@ -888,6 +966,39 @@
                 <a href="https://github.com/todddube" target="_blank" class="about-author-link" id="about-author">
                     Todd Dube
                 </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Testing/Development Section -->
+    <div class="testing-section" id="testing-section">
+        <div class="testing-header">
+            <span class="testing-title">🧪 Development Testing</span>
+            <button class="testing-toggle" id="testing-toggle" aria-label="Toggle testing panel">
+                <span class="expand-icon">▶</span>
+            </button>
+        </div>
+        <div class="testing-content" id="testing-content" style="display: none;">
+            <div class="testing-grid">
+                <button class="test-button" onclick="openTestFile('test-dropdown.html')" title="Test individual service dropdowns">
+                    <span class="test-icon">🔽</span>
+                    <span class="test-name">Service Dropdowns</span>
+                </button>
+                <button class="test-button" onclick="openTestFile('test-consolidated-dropdowns.html')" title="Test consolidated section dropdowns">
+                    <span class="test-icon">📋</span>
+                    <span class="test-name">Consolidated View</span>
+                </button>
+                <button class="test-button" onclick="openTestFile('test-brand-colors.html')" title="Test brand color implementations">
+                    <span class="test-icon">🎨</span>
+                    <span class="test-name">Brand Colors</span>
+                </button>
+                <button class="test-button" onclick="openTestFile('test-status-colors.html')" title="Test status color system">
+                    <span class="test-icon">🚦</span>
+                    <span class="test-name">Status Colors</span>
+                </button>
+            </div>
+            <div class="testing-note">
+                <small>🔧 Development tools for testing extension features</small>
             </div>
         </div>
     </div>

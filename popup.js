@@ -83,6 +83,18 @@ class VStatePopupController {
         });
       }
 
+      // Testing section functionality
+      const testingHeader = document.querySelector('.testing-header');
+      const testingToggle = document.getElementById('testing-toggle');
+      const testingContent = document.getElementById('testing-content');
+
+      if (testingHeader && testingToggle && testingContent) {
+        testingHeader.addEventListener('click', (e) => {
+          e.preventDefault();
+          this.toggleTestingSection();
+        });
+      }
+
     } catch (error) {
       console.error('Error setting up event listeners:', error);
     }
@@ -190,16 +202,20 @@ class VStatePopupController {
       const recentIncidents = incidents.slice(0, 5);
       
       if (recentIncidents.length === 0) {
+        const headerColor = sectionName === 'claude' ? '#D97706' : '#24292E';
         incidentsContent.innerHTML = `
+          <div style="padding: 10px; background: linear-gradient(135deg, ${headerColor} 0%, ${sectionName === 'claude' ? '#DC2626' : '#0D1117'} 100%); border-radius: 6px; color: white; margin-bottom: 10px;">
+            <strong style="text-shadow: 0 1px 2px rgba(0,0,0,0.3);">${sectionTitle}</strong>
+          </div>
           <div class="no-incidents">
-            <strong>${sectionTitle}</strong><br><br>
             No recent incidents - all systems operational! 🎉
           </div>
         `;
       } else {
+        const headerColor = sectionName === 'claude' ? '#D97706' : '#24292E';
         incidentsContent.innerHTML = `
-          <div style="margin-bottom: 15px;">
-            <strong style="color: #333; font-size: 14px;">${sectionTitle}</strong>
+          <div style="margin-bottom: 15px; padding: 10px; background: linear-gradient(135deg, ${headerColor} 0%, ${sectionName === 'claude' ? '#DC2626' : '#0D1117'} 100%); border-radius: 6px; color: white;">
+            <strong style="font-size: 14px; text-shadow: 0 1px 2px rgba(0,0,0,0.3);">${sectionTitle}</strong>
           </div>
           ${recentIncidents.map(incident => this.renderIncident(incident)).join('')}
         `;
@@ -207,7 +223,11 @@ class VStatePopupController {
       
     } catch (error) {
       console.error('Error loading section incidents:', error);
+      const headerColor = sectionName === 'claude' ? '#D97706' : '#24292E';
       incidentsContent.innerHTML = `
+        <div style="padding: 10px; background: linear-gradient(135deg, ${headerColor} 0%, ${sectionName === 'claude' ? '#DC2626' : '#0D1117'} 100%); border-radius: 6px; color: white; margin-bottom: 10px;">
+          <strong style="text-shadow: 0 1px 2px rgba(0,0,0,0.3);">${sectionName === 'claude' ? '🤖 Claude AI Recent Issues' : '🐙 GitHub Services Recent Issues'}</strong>
+        </div>
         <div class="no-incidents error">
           Error loading incidents for ${sectionName === 'claude' ? 'Claude AI' : 'GitHub Services'}
         </div>
@@ -704,6 +724,28 @@ class VStatePopupController {
   }
 
   /**
+   * Toggle the testing section visibility
+   */
+  toggleTestingSection() {
+    const testingToggle = document.getElementById('testing-toggle');
+    const testingContent = document.getElementById('testing-content');
+    
+    if (!testingToggle || !testingContent) return;
+    
+    const isExpanded = testingToggle.classList.contains('expanded');
+    
+    if (isExpanded) {
+      // Collapse
+      testingToggle.classList.remove('expanded');
+      testingContent.style.display = 'none';
+    } else {
+      // Expand
+      testingToggle.classList.add('expanded');
+      testingContent.style.display = 'block';
+    }
+  }
+
+  /**
    * Cleanup when popup closes
    */
   cleanup() {
@@ -722,3 +764,28 @@ document.addEventListener('DOMContentLoaded', () => {
     controller.cleanup();
   });
 });
+
+/**
+ * Global function to open test files
+ * Called by test buttons in the HTML
+ */
+function openTestFile(filename) {
+  try {
+    // Get the extension URL and construct the test file URL
+    const extensionUrl = chrome.runtime.getURL('');
+    const testUrl = extensionUrl + filename;
+    
+    // Open in a new tab
+    chrome.tabs.create({ url: testUrl });
+  } catch (error) {
+    console.error('Error opening test file:', error);
+    
+    // Fallback: try to open as a relative URL
+    try {
+      window.open(filename, '_blank');
+    } catch (fallbackError) {
+      console.error('Fallback also failed:', fallbackError);
+      alert(`Cannot open test file: ${filename}\nPlease open it manually from the extension directory.`);
+    }
+  }
+}
