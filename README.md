@@ -1,14 +1,14 @@
-# Claude Status Monitor
+# Vibe Stats - Dev Tools Status Monitor
 
-A Chrome/Edge browser extension that monitors Anthropic's Claude service status in real-time, displaying service health through a browser toolbar icon and detailed incident information in a popup interface.
+A Chrome/Edge browser extension that monitors the status of developer tools (Claude AI and GitHub Copilot) in real-time, displaying service health through animated lightning bolt indicators and detailed incident information in a popup interface.
 
 ![Claude Status Monitor](https://img.shields.io/badge/Chrome-Extension-4285F4?style=flat&logo=googlechrome&logoColor=white) ![Manifest V3](https://img.shields.io/badge/Manifest-V3-green) ![Status](https://img.shields.io/badge/Status-Production%20Ready-brightgreen)
 
 ## ✨ Features
 
-- **🔄 Real-time Status Monitoring**: Automatic status checks every 5 minutes using Chrome Alarms API
-- **🎨 Visual Status Indicators**: Custom-designed toolbar icons with sophisticated color coding
-  - 🟢 **Green**: All systems operational
+- **🔄 Real-time Status Monitoring**: Automatic status checks every 5 minutes for Claude AI and GitHub Copilot
+- **⚡ Lightning Bolt Indicators**: Custom yellow-orange lightning bolt icons optimized for high-resolution displays
+  - 🟢 **Green**: All dev tools are vibing! 🔥
   - 🟡 **Yellow**: Minor issues with affected service count badge
   - 🔴 **Red**: Major/critical issues with alert badge (!)
   - ⚪ **Gray**: Status unknown or network error
@@ -95,10 +95,10 @@ npm run build
 
 | Icon | Status | Badge | Description |
 |------|--------|-------|-------------|
-| 🟢 Green | Operational | None | All Claude services running normally |
-| 🟡 Yellow | Minor Issues | Number (1-4+) | Some services affected, shows count |
-| 🔴 Red | Major/Critical | ! or Number | Significant service disruption |
-| ⚪ Gray | Unknown | None | Cannot determine status (network/API error) |
+| ⚡ Green | Operational | None | All dev tools are vibing! 🔥 |
+| ⚡ Yellow | Minor Issues | Number (1-4+) | Some services affected, shows count |
+| ⚡ Red | Major/Critical | ! or Number | Significant service disruption |
+| ⚡ Gray | Unknown | None | Cannot determine status (network/API error) |
 
 ### 📱 Popup Interface
 

@@ -43,12 +43,12 @@ class VStatePopupController {
         });
       }
 
-      // Expandable service items
-      document.querySelectorAll('.expandable-service').forEach(service => {
-        service.addEventListener('click', (e) => {
+      // Section incident toggle buttons
+      document.querySelectorAll('.section-incidents-toggle').forEach(toggle => {
+        toggle.addEventListener('click', (e) => {
           e.preventDefault();
-          const serviceName = service.getAttribute('data-service');
-          this.toggleServiceExpansion(serviceName);
+          const sectionName = toggle.getAttribute('data-section');
+          this.toggleSectionIncidents(sectionName);
         });
       });
 
@@ -109,101 +109,109 @@ class VStatePopupController {
         return;
       }
 
-      // Navigate services with arrow keys when focused
+      // Navigate section toggles with arrow keys when focused
       if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
         const focused = document.activeElement;
-        if (focused && focused.classList.contains('expandable-service')) {
+        if (focused && focused.classList.contains('section-incidents-toggle')) {
           e.preventDefault();
-          const services = Array.from(document.querySelectorAll('.expandable-service'));
-          const currentIndex = services.indexOf(focused);
+          const toggles = Array.from(document.querySelectorAll('.section-incidents-toggle'));
+          const currentIndex = toggles.indexOf(focused);
           const nextIndex = e.key === 'ArrowDown' 
-            ? (currentIndex + 1) % services.length 
-            : (currentIndex - 1 + services.length) % services.length;
-          services[nextIndex].focus();
+            ? (currentIndex + 1) % toggles.length 
+            : (currentIndex - 1 + toggles.length) % toggles.length;
+          toggles[nextIndex].focus();
         }
       }
 
-      // Activate service expansion with Enter or Space
+      // Activate section incidents with Enter or Space
       if (e.key === 'Enter' || e.key === ' ') {
         const focused = document.activeElement;
-        if (focused && focused.classList.contains('expandable-service')) {
+        if (focused && focused.classList.contains('section-incidents-toggle')) {
           e.preventDefault();
-          const serviceName = focused.getAttribute('data-service');
-          this.toggleServiceExpansion(serviceName);
+          const sectionName = focused.getAttribute('data-section');
+          this.toggleSectionIncidents(sectionName);
         }
       }
     });
   }
 
   /**
-   * Toggle service expansion to show/hide incidents
+   * Toggle section incidents to show/hide recent issues
    */
-  toggleServiceExpansion(serviceName) {
-    const service = document.querySelector(`[data-service="${serviceName}"]`);
-    const isExpanded = this.expandedServices.has(serviceName);
+  toggleSectionIncidents(sectionName) {
+    const toggle = document.querySelector(`[data-section="${sectionName}"]`);
+    const incidentsContainer = document.getElementById(`${sectionName}-incidents`);
+    
+    if (!toggle || !incidentsContainer) return;
+    
+    const isExpanded = toggle.classList.contains('expanded');
     
     if (isExpanded) {
       // Collapse
-      this.expandedServices.delete(serviceName);
-      service.classList.remove('expanded');
-      this.hideServiceIncidents(serviceName);
+      toggle.classList.remove('expanded');
+      incidentsContainer.style.display = 'none';
     } else {
       // Expand
-      this.expandedServices.add(serviceName);
-      service.classList.add('expanded');
-      this.showServiceIncidents(serviceName);
+      toggle.classList.add('expanded');
+      incidentsContainer.style.display = 'block';
+      this.loadSectionIncidents(sectionName);
     }
   }
 
   /**
-   * Show incidents for a specific service
+   * Load incidents for a section (claude or github)
    */
-  async showServiceIncidents(serviceName) {
-    const sectionName = serviceName.startsWith('claude') ? 'claude' : 'github';
-    const incidentsContainer = document.getElementById(`${sectionName}-incidents`);
+  async loadSectionIncidents(sectionName) {
     const incidentsContent = document.getElementById(`${sectionName}-incidents-content`);
+    if (!incidentsContent) return;
     
-    if (!incidentsContainer || !incidentsContent) return;
-    
-    // Show the container
-    incidentsContainer.style.display = 'block';
+    // Show loading state
     incidentsContent.innerHTML = '<div class="loading">🔄 Loading incidents...</div>';
     
     try {
       // Get status data from storage
-      const result = await chrome.storage.local.get(['vstateStatus', 'claudeStatus', 'githubStatus', 'claudeIncidents', 'githubIncidents']);
+      const result = await chrome.storage.local.get([
+        'vstateStatus', 'claudeStatus', 'githubStatus', 
+        'claudeIncidents', 'githubIncidents'
+      ]);
       
       let incidents = [];
+      let sectionTitle = '';
+      
       if (sectionName === 'claude') {
         incidents = result.claudeIncidents || [];
-      } else {
+        sectionTitle = '🤖 Claude AI Recent Issues';
+      } else if (sectionName === 'github') {
         incidents = result.githubIncidents || [];
+        sectionTitle = '🐙 GitHub Services Recent Issues';
       }
       
-      // Filter incidents for specific service if needed
-      const filteredIncidents = this.filterIncidentsForService(incidents, serviceName);
+      // Get recent incidents (last 5)
+      const recentIncidents = incidents.slice(0, 5);
       
-      if (filteredIncidents.length === 0) {
-        incidentsContent.innerHTML = `<div class="no-incidents">No recent incidents for ${this.getServiceDisplayName(serviceName)} 🎉</div>`;
+      if (recentIncidents.length === 0) {
+        incidentsContent.innerHTML = `
+          <div class="no-incidents">
+            <strong>${sectionTitle}</strong><br><br>
+            No recent incidents - all systems operational! 🎉
+          </div>
+        `;
       } else {
-        incidentsContent.innerHTML = filteredIncidents.map(incident => this.renderIncident(incident)).join('');
+        incidentsContent.innerHTML = `
+          <div style="margin-bottom: 15px;">
+            <strong style="color: #333; font-size: 14px;">${sectionTitle}</strong>
+          </div>
+          ${recentIncidents.map(incident => this.renderIncident(incident)).join('')}
+        `;
       }
       
     } catch (error) {
-      console.error('Error loading service incidents:', error);
-      incidentsContent.innerHTML = '<div class="no-incidents error">Error loading incidents</div>';
-    }
-  }
-
-  /**
-   * Hide incidents for a specific service
-   */
-  hideServiceIncidents(serviceName) {
-    const sectionName = serviceName.startsWith('claude') ? 'claude' : 'github';
-    const incidentsContainer = document.getElementById(`${sectionName}-incidents`);
-    
-    if (incidentsContainer) {
-      incidentsContainer.style.display = 'none';
+      console.error('Error loading section incidents:', error);
+      incidentsContent.innerHTML = `
+        <div class="no-incidents error">
+          Error loading incidents for ${sectionName === 'claude' ? 'Claude AI' : 'GitHub Services'}
+        </div>
+      `;
     }
   }
 

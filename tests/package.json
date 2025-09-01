@@ -1,0 +1,18 @@
+{
+  "name": "vibe-stats-tests",
+  "version": "1.0.0",
+  "description": "Comprehensive test suite for Vibe Stats extension",
+  "scripts": {
+    "test": "node test-runner.js",
+    "test:api": "node test-runner.js --api",
+    "test:icons": "node test-runner.js --icons",
+    "test:badges": "node test-runner.js --badges",
+    "test:visual": "node test-runner.js --visual",
+    "viewer": "node -e \"console.log('Open test-viewer.html in your browser')\" && start test-viewer.html",
+    "serve": "node simple-server.js"
+  },
+  "devDependencies": {},
+  "engines": {
+    "node": ">=14.0.0"
+  }
+}

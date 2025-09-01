@@ -23,7 +23,9 @@
       "Bash(start generate-lightning-icons.html)",
       "Bash(start create-lightning-icons.html)",
       "Bash(start convert-lightning-icons.html)",
-      "Bash(copy:*)"
+      "Bash(copy:*)",
+      "Bash(start create-improved-lightning-icons.html)",
+      "Bash(move create-improved-lightning-icons.html icon_dev)"
     ],
     "deny": [],
     "ask": []

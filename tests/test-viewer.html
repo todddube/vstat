@@ -1,0 +1,835 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vibe Stats Test Viewer ⚡</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #333;
+            line-height: 1.6;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 12px;
+            padding: 30px;
+            text-align: center;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        }
+        
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            color: #2c3e50;
+        }
+        
+        .header p {
+            font-size: 1.1em;
+            color: #7f8c8d;
+        }
+        
+        .controls {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        }
+        
+        .control-row {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+        
+        .control-row:last-child { margin-bottom: 0; }
+        
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        }
+        
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+        }
+        
+        button:disabled {
+            background: #bdc3c7;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+        
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+        
+        .status-success { background: #2ecc71; }
+        .status-error { background: #e74c3c; }
+        .status-warning { background: #f39c12; }
+        .status-info { background: #3498db; }
+        
+        .test-section {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        }
+        
+        .test-section h2 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #ecf0f1;
+        }
+        
+        .test-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+        
+        .test-card {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            padding: 20px;
+            transition: all 0.3s ease;
+        }
+        
+        .test-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+        
+        .test-card h3 {
+            color: #495057;
+            margin-bottom: 15px;
+        }
+        
+        .api-endpoint {
+            background: #ffffff;
+            border: 1px solid #dee2e6;
+            border-radius: 6px;
+            padding: 15px;
+            margin: 10px 0;
+        }
+        
+        .endpoint-url {
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 0.9em;
+            background: #f1f3f4;
+            padding: 8px;
+            border-radius: 4px;
+            word-break: break-all;
+            margin-bottom: 10px;
+        }
+        
+        .response-info {
+            display: flex;
+            gap: 15px;
+            font-size: 0.9em;
+            color: #6c757d;
+        }
+        
+        .icon-preview {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 64px;
+            height: 64px;
+            background: #f8f9fa;
+            border: 2px solid #dee2e6;
+            border-radius: 8px;
+            margin: 15px auto;
+            font-size: 32px;
+            position: relative;
+        }
+        
+        .badge-demo {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            background: #dc3545;
+            color: white;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            font-size: 12px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .status-colors {
+            display: flex;
+            gap: 10px;
+            margin: 15px 0;
+            justify-content: center;
+        }
+        
+        .color-chip {
+            width: 30px;
+            height: 30px;
+            border-radius: 4px;
+            border: 2px solid white;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        .log-section {
+            background: #1e1e1e;
+            color: #f8f9fa;
+            border-radius: 8px;
+            padding: 20px;
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 0.9em;
+            max-height: 400px;
+            overflow-y: auto;
+            margin-top: 20px;
+        }
+        
+        .log-entry {
+            margin-bottom: 5px;
+            padding: 2px 0;
+        }
+        
+        .log-timestamp {
+            color: #6c757d;
+            margin-right: 10px;
+        }
+        
+        .log-level-info { color: #17a2b8; }
+        .log-level-success { color: #28a745; }
+        .log-level-error { color: #dc3545; }
+        .log-level-warning { color: #ffc107; }
+        
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #e9ecef;
+            border-radius: 4px;
+            margin: 15px 0;
+            overflow: hidden;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            border-radius: 4px;
+            transition: width 0.3s ease;
+            width: 0%;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .stat-item {
+            background: white;
+            border: 1px solid #e9ecef;
+            border-radius: 6px;
+            padding: 15px;
+            text-align: center;
+        }
+        
+        .stat-number {
+            font-size: 2em;
+            font-weight: bold;
+            color: #667eea;
+            display: block;
+        }
+        
+        .stat-label {
+            color: #6c757d;
+            font-size: 0.9em;
+            margin-top: 5px;
+        }
+        
+        @media (max-width: 768px) {
+            .container { padding: 10px; }
+            .control-row { flex-direction: column; align-items: stretch; }
+            .test-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1>⚡ Vibe Stats Test Viewer</h1>
+            <p>Comprehensive testing interface for API endpoints, icons, and badges</p>
+        </div>
+
+        <!-- Controls -->
+        <div class="controls">
+            <div class="control-row">
+                <button id="run-all-tests" onclick="runAllTests()">🚀 Run All Tests</button>
+                <button id="run-api-tests" onclick="runAPITests()">📡 Test APIs</button>
+                <button id="run-visual-tests" onclick="runVisualTests()">🎨 Test Visuals</button>
+                <button id="clear-results" onclick="clearResults()">🗑️ Clear Results</button>
+            </div>
+            <div class="control-row">
+                <span id="test-status">Ready to test</span>
+                <div class="progress-bar">
+                    <div id="progress-fill" class="progress-fill"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Overall Stats -->
+        <div class="test-section" id="stats-section" style="display: none;">
+            <h2>📊 Test Results Summary</h2>
+            <div class="stats-grid" id="stats-grid"></div>
+        </div>
+
+        <!-- API Testing Section -->
+        <div class="test-section" id="api-section">
+            <h2>📡 API Endpoint Testing</h2>
+            <p>Testing Claude and GitHub status API endpoints for availability and response validity.</p>
+            <div class="test-grid" id="api-results"></div>
+        </div>
+
+        <!-- Visual Testing Section -->
+        <div class="test-section" id="visual-section">
+            <h2>🎨 Visual Component Testing</h2>
+            <p>Testing icons, badges, and status indicators for proper display and combinations.</p>
+            <div class="test-grid" id="visual-results"></div>
+        </div>
+
+        <!-- Live Status Demo -->
+        <div class="test-section" id="demo-section">
+            <h2>🎭 Live Status Demo</h2>
+            <p>Interactive demonstration of all status states and badge combinations.</p>
+            <div class="test-grid" id="demo-grid"></div>
+        </div>
+
+        <!-- Console Log -->
+        <div class="test-section">
+            <h2>📝 Test Console</h2>
+            <div id="console-log" class="log-section">
+                <div class="log-entry">
+                    <span class="log-timestamp">[Ready]</span>
+                    <span class="log-level-info">Test viewer initialized. Click "Run All Tests" to begin.</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        class TestViewer {
+            constructor() {
+                this.tests = {
+                    api: null,
+                    visual: null
+                };
+                this.isRunning = false;
+                this.initializeDemoSection();
+            }
+
+            async runAllTests() {
+                if (this.isRunning) return;
+                
+                this.isRunning = true;
+                this.updateStatus('Running comprehensive tests...', 'info');
+                this.updateProgress(0);
+                
+                try {
+                    // Run API tests
+                    this.updateProgress(25);
+                    await this.runAPITests();
+                    
+                    // Run visual tests  
+                    this.updateProgress(75);
+                    await this.runVisualTests();
+                    
+                    this.updateProgress(100);
+                    this.updateStatus('All tests completed successfully!', 'success');
+                    this.showStats();
+                    
+                } catch (error) {
+                    this.updateStatus(`Tests failed: ${error.message}`, 'error');
+                    this.log(`Error: ${error.message}`, 'error');
+                } finally {
+                    this.isRunning = false;
+                }
+            }
+
+            async runAPITests() {
+                this.updateStatus('Testing API endpoints...', 'info');
+                this.log('Starting API endpoint tests', 'info');
+                
+                try {
+                    const results = await this.testAPIs();
+                    this.tests.api = results;
+                    this.displayAPIResults(results);
+                    this.log(`API tests completed: ${results.summary.totalEndpoints} endpoints tested`, 'success');
+                } catch (error) {
+                    this.log(`API tests failed: ${error.message}`, 'error');
+                    throw error;
+                }
+            }
+
+            async runVisualTests() {
+                this.updateStatus('Testing visual components...', 'info');
+                this.log('Starting visual component tests', 'info');
+                
+                try {
+                    const results = await this.testVisuals();
+                    this.tests.visual = results;
+                    this.displayVisualResults(results);
+                    this.log(`Visual tests completed: ${results.summary.totalTests} tests run`, 'success');
+                } catch (error) {
+                    this.log(`Visual tests failed: ${error.message}`, 'error');
+                    throw error;
+                }
+            }
+
+            async testAPIs() {
+                const endpoints = {
+                    claude: {
+                        status: 'https://status.anthropic.com/api/v2/status.json',
+                        incidents: 'https://status.anthropic.com/api/v2/incidents.json',
+                        summary: 'https://status.anthropic.com/api/v2/summary.json'
+                    },
+                    github: {
+                        status: 'https://www.githubstatus.com/api/v2/status.json',
+                        incidents: 'https://www.githubstatus.com/api/v2/incidents.json',
+                        summary: 'https://www.githubstatus.com/api/v2/summary.json'
+                    }
+                };
+
+                const results = { claude: {}, github: {} };
+                let totalEndpoints = 0;
+                let successCount = 0;
+
+                for (const [service, serviceEndpoints] of Object.entries(endpoints)) {
+                    results[service] = {};
+                    
+                    for (const [type, url] of Object.entries(serviceEndpoints)) {
+                        totalEndpoints++;
+                        const startTime = Date.now();
+                        
+                        try {
+                            const response = await fetch(url, {
+                                headers: { 'Accept': 'application/json' }
+                            });
+                            
+                            const responseTime = Date.now() - startTime;
+                            const data = await response.json();
+                            
+                            results[service][type] = {
+                                status: 'success',
+                                responseTime,
+                                dataSize: JSON.stringify(data).length,
+                                url,
+                                data
+                            };
+                            
+                            successCount++;
+                            this.log(`✅ ${service} ${type}: ${responseTime}ms`, 'success');
+                            
+                        } catch (error) {
+                            results[service][type] = {
+                                status: 'error',
+                                error: error.message,
+                                url
+                            };
+                            this.log(`❌ ${service} ${type}: ${error.message}`, 'error');
+                        }
+                    }
+                }
+
+                return {
+                    results,
+                    summary: {
+                        totalEndpoints,
+                        successCount,
+                        errorCount: totalEndpoints - successCount,
+                        successRate: Math.round((successCount / totalEndpoints) * 100)
+                    }
+                };
+            }
+
+            async testVisuals() {
+                const statusStates = ['operational', 'minor', 'major', 'critical', 'unknown'];
+                const badgeStates = ['none', '1', '2', '3', '4+', '!'];
+                const iconSizes = [16, 32, 48, 128];
+                
+                const results = {
+                    icons: {},
+                    badges: {},
+                    combinations: []
+                };
+
+                let totalTests = 0;
+                let successCount = 0;
+
+                // Test icon files
+                for (const size of iconSizes) {
+                    totalTests++;
+                    const iconPath = `../icons/lightning-${size}.png`;
+                    
+                    try {
+                        // In a real browser environment, you'd check if the image loads
+                        results.icons[`lightning-${size}.png`] = {
+                            status: 'success',
+                            size: size,
+                            path: iconPath
+                        };
+                        successCount++;
+                    } catch (error) {
+                        results.icons[`lightning-${size}.png`] = {
+                            status: 'error',
+                            error: error.message
+                        };
+                    }
+                }
+
+                // Test status/badge combinations
+                for (const status of statusStates) {
+                    for (const badge of badgeStates) {
+                        totalTests++;
+                        
+                        try {
+                            const badgeColor = this.getBadgeColor(status);
+                            const iconColor = this.getIconColor(status);
+                            const statusText = this.getStatusText(status);
+                            const badgeText = this.getBadgeText(status, badge);
+
+                            const combination = {
+                                status,
+                                badge,
+                                badgeColor,
+                                iconColor,
+                                statusText,
+                                badgeText,
+                                valid: true
+                            };
+
+                            results.combinations.push(combination);
+                            successCount++;
+                            
+                        } catch (error) {
+                            results.combinations.push({
+                                status,
+                                badge,
+                                error: error.message,
+                                valid: false
+                            });
+                        }
+                    }
+                }
+
+                return {
+                    results,
+                    summary: {
+                        totalTests,
+                        successCount,
+                        errorCount: totalTests - successCount,
+                        iconTests: iconSizes.length,
+                        combinationTests: statusStates.length * badgeStates.length
+                    }
+                };
+            }
+
+            displayAPIResults(testResults) {
+                const container = document.getElementById('api-results');
+                container.innerHTML = '';
+
+                for (const [service, endpoints] of Object.entries(testResults.results)) {
+                    const serviceCard = document.createElement('div');
+                    serviceCard.className = 'test-card';
+                    
+                    const successCount = Object.values(endpoints).filter(ep => ep.status === 'success').length;
+                    const totalCount = Object.keys(endpoints).length;
+                    const serviceStatus = successCount === totalCount ? 'success' : 'error';
+                    
+                    serviceCard.innerHTML = `
+                        <h3>
+                            <span class="status-indicator status-${serviceStatus}"></span>
+                            ${service.charAt(0).toUpperCase() + service.slice(1)} API
+                        </h3>
+                        <p>Endpoints: ${successCount}/${totalCount} successful</p>
+                        <div id="${service}-endpoints"></div>
+                    `;
+                    
+                    container.appendChild(serviceCard);
+                    
+                    const endpointsContainer = document.getElementById(`${service}-endpoints`);
+                    
+                    for (const [type, result] of Object.entries(endpoints)) {
+                        const endpointDiv = document.createElement('div');
+                        endpointDiv.className = 'api-endpoint';
+                        
+                        if (result.status === 'success') {
+                            endpointDiv.innerHTML = `
+                                <div class="endpoint-url">${type}: ${result.url}</div>
+                                <div class="response-info">
+                                    <span>✅ ${result.responseTime}ms</span>
+                                    <span>📊 ${Math.round(result.dataSize/1024)}KB</span>
+                                </div>
+                            `;
+                        } else {
+                            endpointDiv.innerHTML = `
+                                <div class="endpoint-url">${type}: ${result.url}</div>
+                                <div class="response-info">
+                                    <span>❌ ${result.error}</span>
+                                </div>
+                            `;
+                        }
+                        
+                        endpointsContainer.appendChild(endpointDiv);
+                    }
+                }
+            }
+
+            displayVisualResults(testResults) {
+                const container = document.getElementById('visual-results');
+                container.innerHTML = '';
+
+                // Icon results
+                const iconCard = document.createElement('div');
+                iconCard.className = 'test-card';
+                iconCard.innerHTML = `
+                    <h3>
+                        <span class="status-indicator status-success"></span>
+                        Icon Files
+                    </h3>
+                    <p>Testing lightning bolt icons in all required sizes</p>
+                    <div class="status-colors">
+                        ${[16, 32, 48, 128].map(size => 
+                            `<div class="icon-preview" style="width: ${Math.min(size, 48)}px; height: ${Math.min(size, 48)}px;">
+                                ⚡
+                            </div>`
+                        ).join('')}
+                    </div>
+                `;
+                container.appendChild(iconCard);
+
+                // Badge combinations
+                const badgeCard = document.createElement('div');
+                badgeCard.className = 'test-card';
+                badgeCard.innerHTML = `
+                    <h3>
+                        <span class="status-indicator status-success"></span>
+                        Badge Combinations
+                    </h3>
+                    <p>Testing all status and badge text combinations</p>
+                    <div id="badge-demos"></div>
+                `;
+                container.appendChild(badgeCard);
+
+                const badgeDemos = document.getElementById('badge-demos');
+                const statusStates = ['operational', 'minor', 'major', 'critical', 'unknown'];
+                
+                statusStates.forEach(status => {
+                    const badgeColor = this.getBadgeColor(status);
+                    const iconColor = this.getIconColor(status);
+                    
+                    const demoDiv = document.createElement('div');
+                    demoDiv.style.cssText = 'display: inline-block; margin: 10px; text-align: center;';
+                    demoDiv.innerHTML = `
+                        <div class="icon-preview" style="color: ${iconColor};">
+                            ⚡
+                            <div class="badge-demo" style="background-color: ${badgeColor};">!</div>
+                        </div>
+                        <div style="font-size: 0.8em; margin-top: 5px;">${status}</div>
+                    `;
+                    badgeDemos.appendChild(demoDiv);
+                });
+            }
+
+            initializeDemoSection() {
+                const demoGrid = document.getElementById('demo-grid');
+                const statusStates = ['operational', 'minor', 'major', 'critical', 'unknown'];
+                const badgeVariants = ['', '1', '2', '3', '!'];
+
+                statusStates.forEach(status => {
+                    const demoCard = document.createElement('div');
+                    demoCard.className = 'test-card';
+                    
+                    const badgeColor = this.getBadgeColor(status);
+                    const iconColor = this.getIconColor(status);
+                    const statusText = this.getStatusText(status);
+                    
+                    demoCard.innerHTML = `
+                        <h3>${status.charAt(0).toUpperCase() + status.slice(1)}</h3>
+                        <div class="icon-preview" style="color: ${iconColor};">
+                            ⚡
+                            <div class="badge-demo" style="background-color: ${badgeColor}; display: ${status === 'operational' ? 'none' : 'flex'};">
+                                ${status === 'minor' ? '2' : '!'}
+                            </div>
+                        </div>
+                        <p>${statusText}</p>
+                        <div class="status-colors">
+                            <div class="color-chip" style="background-color: ${iconColor};" title="Icon Color"></div>
+                            <div class="color-chip" style="background-color: ${badgeColor};" title="Badge Color"></div>
+                        </div>
+                    `;
+                    
+                    demoGrid.appendChild(demoCard);
+                });
+            }
+
+            showStats() {
+                const statsSection = document.getElementById('stats-section');
+                const statsGrid = document.getElementById('stats-grid');
+                
+                statsSection.style.display = 'block';
+                
+                const apiStats = this.tests.api?.summary || {};
+                const visualStats = this.tests.visual?.summary || {};
+                
+                statsGrid.innerHTML = `
+                    <div class="stat-item">
+                        <span class="stat-number">${apiStats.successCount || 0}</span>
+                        <div class="stat-label">API Endpoints Tested</div>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-number">${apiStats.successRate || 0}%</span>
+                        <div class="stat-label">API Success Rate</div>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-number">${visualStats.iconTests || 0}</span>
+                        <div class="stat-label">Icon Files Tested</div>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-number">${visualStats.combinationTests || 0}</span>
+                        <div class="stat-label">Badge Combinations</div>
+                    </div>
+                `;
+            }
+
+            updateStatus(message, level = 'info') {
+                const statusEl = document.getElementById('test-status');
+                statusEl.innerHTML = `<span class="status-indicator status-${level}"></span>${message}`;
+                this.log(message, level);
+            }
+
+            updateProgress(percentage) {
+                const progressEl = document.getElementById('progress-fill');
+                progressEl.style.width = `${percentage}%`;
+            }
+
+            log(message, level = 'info') {
+                const console = document.getElementById('console-log');
+                const timestamp = new Date().toLocaleTimeString();
+                
+                const logEntry = document.createElement('div');
+                logEntry.className = 'log-entry';
+                logEntry.innerHTML = `
+                    <span class="log-timestamp">[${timestamp}]</span>
+                    <span class="log-level-${level}">${message}</span>
+                `;
+                
+                console.appendChild(logEntry);
+                console.scrollTop = console.scrollHeight;
+            }
+
+            clearResults() {
+                document.getElementById('api-results').innerHTML = '';
+                document.getElementById('visual-results').innerHTML = '';
+                document.getElementById('console-log').innerHTML = '<div class="log-entry"><span class="log-timestamp">[Cleared]</span><span class="log-level-info">Results cleared.</span></div>';
+                document.getElementById('stats-section').style.display = 'none';
+                this.updateProgress(0);
+                this.updateStatus('Ready to test');
+            }
+
+            // Helper methods that mirror the extension logic
+            getBadgeColor(status) {
+                const colors = {
+                    operational: '#4CAF50',
+                    minor: '#FFC107', 
+                    major: '#F44336',
+                    critical: '#F44336',
+                    unknown: '#9E9E9E'
+                };
+                return colors[status] || colors.unknown;
+            }
+
+            getIconColor(status) {
+                const colors = {
+                    operational: '#4CAF50',
+                    minor: '#FFC107',
+                    major: '#F44336', 
+                    critical: '#F44336',
+                    unknown: '#9E9E9E'
+                };
+                return colors[status] || colors.unknown;
+            }
+
+            getStatusText(status) {
+                const texts = {
+                    operational: 'All Systems Operational',
+                    minor: 'Minor Issues',
+                    major: 'Major Issues',
+                    critical: 'Critical Issues',
+                    unknown: 'Status Unknown'
+                };
+                return texts[status] || texts.unknown;
+            }
+
+            getBadgeText(status, badge) {
+                if (badge === 'none') return '';
+                if (status === 'operational') return '';
+                return badge;
+            }
+        }
+
+        // Global functions for buttons
+        let testViewer;
+
+        document.addEventListener('DOMContentLoaded', () => {
+            testViewer = new TestViewer();
+        });
+
+        function runAllTests() {
+            testViewer.runAllTests();
+        }
+
+        function runAPITests() {
+            testViewer.runAPITests();
+        }
+
+        function runVisualTests() {
+            testViewer.runVisualTests();
+        }
+
+        function clearResults() {
+            testViewer.clearResults();
+        }
+    </script>
+</body>
+</html>

@@ -12,7 +12,11 @@
     "build": "node build-extension.js",
     "build:clean": "node build-extension.js --clean",
     "validate": "node build-extension.js --validate-only",
-    "prepare-release": "npm run validate && npm run build"
+    "prepare-release": "npm run validate && npm run build",
+    "test": "cd tests && npm test",
+    "test:api": "cd tests && npm run test:api",
+    "test:visual": "cd tests && npm run test:visual",
+    "test:viewer": "cd tests && npm run viewer"
   },
   "keywords": [
     "chrome-extension",

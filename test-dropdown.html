@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Service Dropdown Functionality</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .test-container {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .test-popup {
+            width: 380px;
+            max-height: 600px;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            overflow: hidden;
+            margin: 20px auto;
+            background: white;
+        }
+        h1 { color: #333; text-align: center; }
+        h2 { color: #667eea; }
+        .instructions {
+            background: #e3f2fd;
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+        }
+        .test-buttons {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+        button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+        button:hover { background: #5a6fd8; }
+        .log {
+            background: #1e1e1e;
+            color: #f0f0f0;
+            padding: 10px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 12px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body>
+    <h1>⚡ Vibe Stats Service Dropdown Test</h1>
+    
+    <div class="test-container">
+        <h2>🧪 Testing Instructions</h2>
+        <div class="instructions">
+            <strong>How to test the service dropdown functionality:</strong>
+            <ol>
+                <li><strong>Load Extension:</strong> Load the updated extension in Chrome (chrome://extensions/)</li>
+                <li><strong>Open Popup:</strong> Click the Vibe Stats icon in your browser toolbar</li>
+                <li><strong>Click Services:</strong> Click on individual services (Claude Web, Claude API, GitHub Copilot, etc.)</li>
+                <li><strong>Verify Dropdowns:</strong> Each service should show its own dropdown with incidents</li>
+                <li><strong>Test Expansion:</strong> Multiple services can be expanded simultaneously</li>
+                <li><strong>Check Collapse:</strong> Click again to collapse the service-specific incidents</li>
+            </ol>
+        </div>
+    </div>
+
+    <div class="test-container">
+        <h2>🔧 Manual Testing Checklist</h2>
+        <div class="test-buttons">
+            <button onclick="testService('claude-web')">Test Claude Web</button>
+            <button onclick="testService('claude-api')">Test Claude API</button>
+            <button onclick="testService('github-copilot')">Test GitHub Copilot</button>
+            <button onclick="testService('github-api')">Test GitHub API</button>
+            <button onclick="clearLog()">Clear Log</button>
+        </div>
+        
+        <div id="test-log" class="log">
+            <div>Ready to test service dropdowns...</div>
+            <div>Click buttons above to simulate testing different services</div>
+        </div>
+    </div>
+
+    <div class="test-container">
+        <h2>✅ Expected Behavior</h2>
+        <ul>
+            <li><strong>Service-Level Dropdowns:</strong> Each service (Claude Web, Claude API, etc.) should have its own clickable dropdown</li>
+            <li><strong>Individual Incidents:</strong> When expanded, each service shows incidents relevant to that specific service</li>
+            <li><strong>Visual Indicators:</strong> Arrow icon rotates when expanded, service is visually highlighted</li>
+            <li><strong>Multiple Expansion:</strong> Multiple services can be expanded at the same time</li>
+            <li><strong>Smooth Animation:</strong> Dropdowns should slide down/up smoothly</li>
+            <li><strong>Service-Specific Content:</strong> Each dropdown shows "Service Name Recent Issues" as header</li>
+            <li><strong>No Incidents Message:</strong> Shows "No recent incidents 🎉" when no issues found</li>
+            <li><strong>Error Handling:</strong> Gracefully handles API errors with appropriate messages</li>
+        </ul>
+    </div>
+
+    <div class="test-container">
+        <h2>🚀 New Features Implemented</h2>
+        <div style="background: #f8f9fa; padding: 15px; border-radius: 6px;">
+            <h3>✨ Service-Level Dropdowns</h3>
+            <ul>
+                <li>Each service now has its own expandable dropdown section</li>
+                <li>Clicking on "Claude Web" shows Claude Web specific incidents</li>
+                <li>Clicking on "GitHub Copilot" shows GitHub Copilot specific incidents</li>
+                <li>Individual containers are created dynamically per service</li>
+                <li>Beautiful gradient headers identify which service you're viewing</li>
+            </ul>
+
+            <h3>🎨 Visual Improvements</h3>
+            <ul>
+                <li>Service-specific incident containers with unique styling</li>
+                <li>Animated dropdown expansion with smooth slide effect</li>
+                <li>Service name prominently displayed in dropdown header</li>
+                <li>Grid layout accommodates varying dropdown heights</li>
+            </ul>
+
+            <h3>⚙️ Technical Enhancements</h3>
+            <ul>
+                <li>Dynamic container creation for each service</li>
+                <li>Service-specific incident filtering</li>
+                <li>Individual show/hide logic per service</li>
+                <li>Improved error handling and loading states</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        function testService(serviceName) {
+            const log = document.getElementById('test-log');
+            const timestamp = new Date().toLocaleTimeString();
+            
+            const serviceNames = {
+                'claude-web': 'Claude Web',
+                'claude-api': 'Claude API',
+                'claude-dashboard': 'Claude Dashboard', 
+                'claude-docs': 'Claude Docs/Support',
+                'github-copilot': 'GitHub Copilot',
+                'github-api': 'GitHub API',
+                'github-codespaces': 'GitHub Codespaces',
+                'github-actions': 'GitHub Actions'
+            };
+            
+            const displayName = serviceNames[serviceName] || serviceName;
+            
+            log.innerHTML += `
+                <div style="color: #4CAF50; margin-top: 8px;">
+                    [${timestamp}] Testing ${displayName} dropdown...
+                </div>
+                <div style="color: #FFC107; padding-left: 20px;">
+                    → Simulating click on service: ${serviceName}
+                </div>
+                <div style="color: #2196F3; padding-left: 20px;">
+                    → Should create container: ${serviceName}-incidents
+                </div>
+                <div style="color: #9C27B0; padding-left: 20px;">
+                    → Expected header: "${displayName} Recent Issues"
+                </div>
+                <div style="color: #FF5722; padding-left: 20px;">
+                    → Loading incidents for ${displayName.includes('Claude') ? 'Claude' : 'GitHub'} services...
+                </div>
+            `;
+            
+            log.scrollTop = log.scrollHeight;
+        }
+        
+        function clearLog() {
+            document.getElementById('test-log').innerHTML = `
+                <div>Log cleared - Ready for new tests</div>
+                <div>Click service buttons to simulate testing</div>
+            `;
+        }
+    </script>
+</body>
+</html>

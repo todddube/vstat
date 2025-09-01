@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Improved Lightning Icons Generator</title>
+</head>
+<body>
+    <h1>Improved Lightning Icons Generator</h1>
+    <div id="canvasContainer"></div>
+    <button onclick="generateIcons()">Generate Improved Icons</button>
+    <div id="downloadLinks"></div>
+
+    <script>
+        function createLightningPath(size) {
+            // Create a thicker, more visible lightning bolt path
+            const scale = size / 128;
+            const strokeWidth = Math.max(2, size * 0.15); // Much thicker stroke
+            
+            // More dramatic lightning bolt shape
+            const path = [
+                [64 * scale, 10 * scale],   // Top point
+                [35 * scale, 55 * scale],   // Left middle
+                [50 * scale, 55 * scale],   // Center bridge
+                [25 * scale, 118 * scale],  // Bottom left
+                [55 * scale, 73 * scale],   // Right middle
+                [40 * scale, 73 * scale],   // Center bridge
+                [64 * scale, 10 * scale]    // Back to top
+            ];
+            
+            return { path, strokeWidth };
+        }
+
+        function generateIcon(size) {
+            const canvas = document.createElement('canvas');
+            canvas.width = size;
+            canvas.height = size;
+            const ctx = canvas.getContext('2d');
+            
+            // Clear canvas
+            ctx.clearRect(0, 0, size, size);
+            
+            const { path, strokeWidth } = createLightningPath(size);
+            
+            // Create yellow-orange gradient
+            const gradient = ctx.createLinearGradient(0, 0, 0, size);
+            gradient.addColorStop(0, '#FFD700');    // Bright gold at top
+            gradient.addColorStop(0.5, '#FF8C00');  // Dark orange in middle
+            gradient.addColorStop(1, '#FF6B00');    // Deep orange at bottom
+            
+            // Draw lightning bolt with thick stroke and fill
+            ctx.beginPath();
+            ctx.moveTo(path[0][0], path[0][1]);
+            for (let i = 1; i < path.length; i++) {
+                ctx.lineTo(path[i][0], path[i][1]);
+            }
+            ctx.closePath();
+            
+            // Fill with gradient
+            ctx.fillStyle = gradient;
+            ctx.fill();
+            
+            // Add a slightly darker stroke for definition
+            ctx.strokeStyle = '#E55100';
+            ctx.lineWidth = Math.max(1, strokeWidth * 0.2);
+            ctx.lineJoin = 'round';
+            ctx.lineCap = 'round';
+            ctx.stroke();
+            
+            // Add inner highlight for more depth
+            ctx.beginPath();
+            ctx.moveTo(path[0][0], path[0][1]);
+            for (let i = 1; i < path.length; i++) {
+                ctx.lineTo(path[i][0], path[i][1]);
+            }
+            ctx.closePath();
+            
+            const highlightGradient = ctx.createLinearGradient(0, 0, 0, size * 0.3);
+            highlightGradient.addColorStop(0, 'rgba(255, 255, 255, 0.4)');
+            highlightGradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
+            ctx.fillStyle = highlightGradient;
+            ctx.fill();
+            
+            return canvas;
+        }
+
+        function generateIcons() {
+            const sizes = [16, 32, 48, 128];
+            const container = document.getElementById('canvasContainer');
+            const linksContainer = document.getElementById('downloadLinks');
+            
+            container.innerHTML = '';
+            linksContainer.innerHTML = '<h2>Download Links:</h2>';
+            
+            sizes.forEach(size => {
+                const canvas = generateIcon(size);
+                
+                // Add to display
+                const div = document.createElement('div');
+                div.style.margin = '10px';
+                div.innerHTML = `<h3>${size}x${size}px</h3>`;
+                div.appendChild(canvas);
+                container.appendChild(div);
+                
+                // Create download link
+                canvas.toBlob(blob => {
+                    const url = URL.createObjectURL(blob);
+                    const link = document.createElement('a');
+                    link.href = url;
+                    link.download = `lightning-${size}.png`;
+                    link.textContent = `Download lightning-${size}.png`;
+                    link.style.display = 'block';
+                    link.style.margin = '5px';
+                    linksContainer.appendChild(link);
+                }, 'image/png');
+            });
+        }
+
+        // Auto-generate on page load
+        window.onload = generateIcons;
+    </script>
+</body>
+</html>

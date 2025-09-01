@@ -426,23 +426,108 @@
         }
 
         .claude-section {
-            background: linear-gradient(135deg, #10B981 0%, #059669 100%);
+            background: linear-gradient(135deg, #D97706 0%, #DC2626 100%);
         }
 
         .github-section {
-            background: linear-gradient(135deg, #6366F1 0%, #4F46E5 100%);
+            background: linear-gradient(135deg, #24292E 0%, #0D1117 100%);
             animation-delay: 0.2s;
             animation-fill-mode: both;
+        }
+
+        .section-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 16px 8px 16px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
         }
 
         .section-title {
             font-size: 13px;
             font-weight: 600;
             color: white;
-            padding: 12px 16px 8px 16px;
             margin: 0;
             text-shadow: 0 1px 2px rgba(0,0,0,0.3);
-            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .section-incidents-toggle {
+            background: rgba(255,255,255,0.15);
+            color: white;
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 20px;
+            padding: 4px 10px;
+            font-size: 11px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+
+        .section-incidents-toggle:hover {
+            background: rgba(255,255,255,0.25);
+            transform: scale(1.05);
+        }
+
+        .section-incidents-toggle .expand-icon {
+            font-size: 9px;
+            transition: transform 0.2s ease;
+        }
+
+        .section-incidents-toggle.expanded .expand-icon {
+            transform: rotate(90deg);
+        }
+
+        .section-incidents-container {
+            background: rgba(255,255,255,0.95);
+            margin: 0;
+            overflow: hidden;
+            animation: slideDown 0.3s ease-out;
+        }
+
+        .claude-section .section-incidents-container {
+            border-top: 2px solid #D97706;
+        }
+
+        .github-section .section-incidents-container {
+            border-top: 2px solid #24292E;
+        }
+
+        .section-incidents-content {
+            padding: 15px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        /* Brand-specific service icon styling */
+        .claude-section .service-icon.operational { 
+            background: linear-gradient(45deg, #D97706, #F59E0B);
+            color: white;
+        }
+        .claude-section .service-icon.minor { 
+            background: linear-gradient(45deg, #DC2626, #EF4444);
+            color: white;
+        }
+        .claude-section .service-icon.major,
+        .claude-section .service-icon.critical { 
+            background: linear-gradient(45deg, #B91C1C, #DC2626);
+            color: white;
+        }
+
+        .github-section .service-icon.operational { 
+            background: linear-gradient(45deg, #24292E, #4B5563);
+            color: white;
+        }
+        .github-section .service-icon.minor { 
+            background: linear-gradient(45deg, #6B7280, #9CA3AF);
+            color: white;
+        }
+        .github-section .service-icon.major,
+        .github-section .service-icon.critical { 
+            background: linear-gradient(45deg, #1F2937, #374151);
+            color: white;
         }
 
         .claude-grid, .github-grid {
@@ -451,6 +536,7 @@
             gap: 8px;
             padding: 12px;
             background: rgba(255,255,255,0.95);
+            align-items: start;
         }
 
         .service-item {
@@ -467,15 +553,6 @@
             position: relative;
         }
 
-        .expandable-service {
-            cursor: pointer;
-        }
-
-        .expandable-service:hover {
-            background: rgba(255,255,255,1);
-            transform: translateY(-2px);
-            box-shadow: 0 4px 15px rgba(0,0,0,0.15);
-        }
 
         .service-icon {
             width: 20px;
@@ -522,16 +599,6 @@
             flex: 1;
         }
 
-        .expand-icon {
-            margin-left: auto;
-            font-size: 10px;
-            color: #666;
-            transition: transform 0.2s ease;
-        }
-
-        .expandable-service.expanded .expand-icon {
-            transform: rotate(90deg);
-        }
 
         .incidents-container {
             background: #f8f9fa;
@@ -714,6 +781,7 @@
             display: block;
         }
 
+
     </style>
 </head>
 <body>
@@ -732,64 +800,68 @@
 
     <!-- Claude Services Section -->
     <div class="claude-section">
-        <div class="section-title">🤖 Claude AI Services</div>
-        <div class="claude-grid" id="claude-grid">
-            <div class="service-item expandable-service" data-service="claude-web">
-                <div class="service-icon unknown">🌐</div>
-                <div class="service-name">Claude Web</div>
-                <div class="expand-icon">▶</div>
-            </div>
-            <div class="service-item expandable-service" data-service="claude-api">
-                <div class="service-icon unknown">⚡</div>
-                <div class="service-name">Claude API</div>
-                <div class="expand-icon">▶</div>
-            </div>
-            <div class="service-item expandable-service" data-service="claude-dashboard">
-                <div class="service-icon unknown">📊</div>
-                <div class="service-name">Dashboard</div>
-                <div class="expand-icon">▶</div>
-            </div>
-            <div class="service-item expandable-service" data-service="claude-docs">
-                <div class="service-icon unknown">�</div>
-                <div class="service-name">Docs/Support</div>
-                <div class="expand-icon">▶</div>
+        <div class="section-header">
+            <div class="section-title">🤖 Claude AI Services</div>
+            <button class="section-incidents-toggle" data-section="claude" aria-label="Toggle Claude incidents">
+                <span class="incidents-text">Recent Issues</span>
+                <span class="expand-icon">▶</span>
+            </button>
+        </div>
+        <div class="section-incidents-container" id="claude-incidents" style="display: none;">
+            <div class="section-incidents-content" id="claude-incidents-content">
+                <div class="loading">🔄 Loading Claude incidents...</div>
             </div>
         </div>
-        <div class="incidents-container" id="claude-incidents" style="display: none;">
-            <div class="incidents-content" id="claude-incidents-content">
-                <div class="loading">🔄 Loading Claude incidents...</div>
+        <div class="claude-grid" id="claude-grid">
+            <div class="service-item" data-service="claude-web">
+                <div class="service-icon unknown">🌐</div>
+                <div class="service-name">Claude Web</div>
+            </div>
+            <div class="service-item" data-service="claude-api">
+                <div class="service-icon unknown">⚡</div>
+                <div class="service-name">Claude API</div>
+            </div>
+            <div class="service-item" data-service="claude-dashboard">
+                <div class="service-icon unknown">📊</div>
+                <div class="service-name">Dashboard</div>
+            </div>
+            <div class="service-item" data-service="claude-docs">
+                <div class="service-icon unknown">📚</div>
+                <div class="service-name">Docs/Support</div>
             </div>
         </div>
     </div>
 
     <!-- GitHub Copilot Section -->
     <div class="github-section">
-        <div class="section-title">🐙 GitHub Copilot Services</div>
-        <div class="github-grid" id="github-grid">
-            <div class="service-item expandable-service" data-service="github-copilot">
-                <div class="service-icon unknown">🤖</div>
-                <div class="service-name">Copilot</div>
-                <div class="expand-icon">▶</div>
-            </div>
-            <div class="service-item expandable-service" data-service="github-api">
-                <div class="service-icon unknown">🔧</div>
-                <div class="service-name">GitHub API</div>
-                <div class="expand-icon">▶</div>
-            </div>
-            <div class="service-item expandable-service" data-service="github-codespaces">
-                <div class="service-icon unknown">☁️</div>
-                <div class="service-name">Codespaces</div>
-                <div class="expand-icon">▶</div>
-            </div>
-            <div class="service-item expandable-service" data-service="github-actions">
-                <div class="service-icon unknown">⚙️</div>
-                <div class="service-name">Actions</div>
-                <div class="expand-icon">▶</div>
+        <div class="section-header">
+            <div class="section-title">🐙 GitHub Copilot Services</div>
+            <button class="section-incidents-toggle" data-section="github" aria-label="Toggle GitHub incidents">
+                <span class="incidents-text">Recent Issues</span>
+                <span class="expand-icon">▶</span>
+            </button>
+        </div>
+        <div class="section-incidents-container" id="github-incidents" style="display: none;">
+            <div class="section-incidents-content" id="github-incidents-content">
+                <div class="loading">🔄 Loading GitHub incidents...</div>
             </div>
         </div>
-        <div class="incidents-container" id="github-incidents" style="display: none;">
-            <div class="incidents-content" id="github-incidents-content">
-                <div class="loading">🔄 Loading GitHub incidents...</div>
+        <div class="github-grid" id="github-grid">
+            <div class="service-item" data-service="github-copilot">
+                <div class="service-icon unknown">🤖</div>
+                <div class="service-name">Copilot</div>
+            </div>
+            <div class="service-item" data-service="github-api">
+                <div class="service-icon unknown">🔧</div>
+                <div class="service-name">GitHub API</div>
+            </div>
+            <div class="service-item" data-service="github-codespaces">
+                <div class="service-icon unknown">☁️</div>
+                <div class="service-name">Codespaces</div>
+            </div>
+            <div class="service-item" data-service="github-actions">
+                <div class="service-icon unknown">⚙️</div>
+                <div class="service-name">Actions</div>
             </div>
         </div>
     </div>
