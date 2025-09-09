@@ -1,14 +1,14 @@
 {
   "manifest_version": 3,
-  "name": "Vibe Stats - Dev Tools Status Monitor",
-  "version": "1.0.1",
-  "description": "Monitor Claude and GitHub Copilot status with real-time updates, recent incidents, and animated lightning bolt indicators - Your dev tools vibe check ⚡",
+  "name": "Vibe Stats - AI Dev Tools Monitor",
+  "version": "1.1.0",
+  "description": "Monitor Claude AI and GitHub Copilot status with real-time updates and AI-themed interface - Keep your dev tools vibe in check! 🤖⚡",
   "author": "Todd Dube - https://github.com/todddube",
   "minimum_chrome_version": "88",
   "permissions": [
     "storage",
     "alarms",
-    "activeTab"
+    "tabs"
   ],
   "host_permissions": [
     "https://status.anthropic.com/*",
@@ -20,19 +20,19 @@
   },
   "action": {
     "default_popup": "popup.html",
-    "default_title": "Vibe Stats - Monitor your dev tools vibe ⚡",
+    "default_title": "Vibe Stats - AI Dev Tools Monitor 🤖⚡",
     "default_icon": {
-      "16": "icons/lightning-16.png",
-      "32": "icons/lightning-32.png",
-      "48": "icons/lightning-48.png",
-      "128": "icons/lightning-128.png"
+      "16": "icons/ai-vibe-16.png",
+      "32": "icons/ai-vibe-32.png",
+      "48": "icons/ai-vibe-48.png",
+      "128": "icons/ai-vibe-128.png"
     }
   },
   "icons": {
-    "16": "icons/lightning-16.png",
-    "32": "icons/lightning-32.png",
-    "48": "icons/lightning-48.png",
-    "128": "icons/lightning-128.png"
+    "16": "icons/ai-vibe-16.png",
+    "32": "icons/ai-vibe-32.png",
+    "48": "icons/ai-vibe-48.png",
+    "128": "icons/ai-vibe-128.png"
   },
   "content_security_policy": {
     "extension_pages": "script-src 'self'; object-src 'self'"

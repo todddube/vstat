@@ -43,10 +43,10 @@ class ExtensionBuilder {
       
       // Icon files
       icons: [
-        'icons/lightning-16.png',
-        'icons/lightning-32.png',
-        'icons/lightning-48.png',
-        'icons/lightning-128.png'
+        'icons/ai-vibe-16.png',
+        'icons/ai-vibe-32.png',
+        'icons/ai-vibe-48.png',
+        'icons/ai-vibe-128.png'
       ],
       
       // Optional files

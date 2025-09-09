@@ -83,15 +83,40 @@ class VStatePopupController {
         });
       }
 
-      // Testing section functionality
-      const testingHeader = document.querySelector('.testing-header');
-      const testingToggle = document.getElementById('testing-toggle');
-      const testingContent = document.getElementById('testing-content');
-
-      if (testingHeader && testingToggle && testingContent) {
-        testingHeader.addEventListener('click', (e) => {
+      
+      // Service item click handlers for external links
+      document.querySelectorAll('.service-item[data-url]').forEach(item => {
+        item.addEventListener('click', (e) => {
           e.preventDefault();
-          this.toggleTestingSection();
+          const url = item.getAttribute('data-url');
+          if (url) {
+            chrome.tabs.create({ url: url });
+          }
+        });
+      });
+      
+      // Status link click handlers
+      document.querySelectorAll('.status-link').forEach(link => {
+        link.addEventListener('click', (e) => {
+          e.preventDefault();
+          const url = link.getAttribute('href');
+          if (url) {
+            chrome.tabs.create({ url: url });
+          }
+        });
+      });
+      
+      // Demo button click handler
+      const startDemoBtn = document.getElementById('start-demo');
+      
+      if (startDemoBtn) {
+        startDemoBtn.addEventListener('click', (e) => {
+          e.preventDefault();
+          if (this.demoTimer) {
+            this.resetDemo();
+          } else {
+            this.startStatusDemo();
+          }
         });
       }
 
@@ -723,25 +748,197 @@ class VStatePopupController {
     }
   }
 
+  
   /**
-   * Toggle the testing section visibility
+   * Start status demo - cycles through different status states
    */
-  toggleTestingSection() {
-    const testingToggle = document.getElementById('testing-toggle');
-    const testingContent = document.getElementById('testing-content');
+  startStatusDemo() {
+    const startBtn = document.getElementById('start-demo');
+    const progressBar = document.getElementById('progress-bar');
+    const demoInfo = document.getElementById('demo-info');
+    const demoStatus = document.getElementById('demo-status');
+    const testingSection = document.getElementById('testing-section');
     
-    if (!testingToggle || !testingContent) return;
+    // Demo states with issue counts for badge simulation
+    const demoStates = [
+      { status: 'operational', description: 'All systems operational - AI tools vibing!', issueCount: 0 },
+      { status: 'minor', description: 'Minor issues - 2 services affected', issueCount: 2 },
+      { status: 'major', description: 'Major issues - 4 services disrupted', issueCount: 4 },
+      { status: 'critical', description: 'Critical - 6 services down!', issueCount: 6 },
+      { status: 'unknown', description: 'Status unknown - unable to connect', issueCount: 0 }
+    ];
     
-    const isExpanded = testingToggle.classList.contains('expanded');
+    let currentStateIndex = 0;
+    let progress = 0;
+    const totalDuration = 20000; // 20 seconds
+    const stateInterval = totalDuration / demoStates.length; // 4 seconds per state
+    const progressInterval = 100; // Update every 100ms
     
-    if (isExpanded) {
-      // Collapse
-      testingToggle.classList.remove('expanded');
-      testingContent.style.display = 'none';
-    } else {
-      // Expand
-      testingToggle.classList.add('expanded');
-      testingContent.style.display = 'block';
+    // Update button and show progress
+    startBtn.disabled = true;
+    startBtn.innerHTML = '<span class="demo-icon">🔄</span><span class="demo-name">Running Demo...</span>';
+    demoStatus.style.display = 'block';
+    testingSection.classList.add('demo-active');
+    
+    // Store original status for reset
+    this.originalStatus = this.getCurrentStatus();
+    
+    const progressTimer = setInterval(() => {
+      progress += progressInterval;
+      const progressPercent = (progress / totalDuration) * 100;
+      progressBar.style.width = `${progressPercent}%`;
+      
+      // Check if we should move to next state
+      const newStateIndex = Math.floor(progress / stateInterval);
+      if (newStateIndex !== currentStateIndex && newStateIndex < demoStates.length) {
+        currentStateIndex = newStateIndex;
+        const state = demoStates[currentStateIndex];
+        this.applyDemoStatus(state.status, state.issueCount);
+        demoInfo.textContent = `${state.description} (${currentStateIndex + 1}/5)`;
+      }
+      
+      // End demo
+      if (progress >= totalDuration) {
+        clearInterval(progressTimer);
+        this.endDemo();
+      }
+    }, progressInterval);
+    
+    // Store timer for cleanup
+    this.demoTimer = progressTimer;
+    
+    // Start with first state immediately
+    this.applyDemoStatus(demoStates[0].status, demoStates[0].issueCount);
+    demoInfo.textContent = `${demoStates[0].description} (1/5)`;
+  }
+  
+  /**
+   * Reset demo to original status
+   */
+  resetDemo() {
+    if (this.demoTimer) {
+      clearInterval(this.demoTimer);
+      this.demoTimer = null;
+    }
+    
+    this.endDemo();
+    
+    // Restore original status
+    if (this.originalStatus) {
+      this.restoreOriginalStatus();
+    }
+  }
+  
+  /**
+   * End the demo and reset UI
+   */
+  endDemo() {
+    const startBtn = document.getElementById('start-demo');
+    const progressBar = document.getElementById('progress-bar');
+    const demoInfo = document.getElementById('demo-info');
+    const demoStatus = document.getElementById('demo-status');
+    const testingSection = document.getElementById('testing-section');
+    
+    startBtn.disabled = false;
+    startBtn.innerHTML = '<span class="demo-icon">🎬</span><span class="demo-name">Demo/Test</span>';
+    progressBar.style.width = '0%';
+    demoInfo.textContent = 'Demo completed! Restoring actual status...';
+    testingSection.classList.remove('demo-active');
+    
+    // Hide progress after a moment and restore status
+    setTimeout(() => {
+      demoStatus.style.display = 'none';
+      this.restoreOriginalStatus();
+    }, 2000);
+  }
+  
+  /**
+   * Apply demo status to UI elements
+   */
+  applyDemoStatus(status, issueCount = 0) {
+    // Update main status indicator
+    const statusIndicator = document.getElementById('status-indicator');
+    if (statusIndicator) {
+      statusIndicator.className = `status-indicator status-${status}`;
+    }
+    
+    // Update all service icons to show the demo status
+    document.querySelectorAll('.service-icon').forEach(icon => {
+      icon.className = `service-icon ${status}`;
+      icon.textContent = this.getServiceIcon(status);
+    });
+    
+    // Update actual extension badge and icon
+    this.updateExtensionBadge(status, issueCount);
+  }
+  
+  /**
+   * Update actual extension badge during demo
+   */
+  async updateExtensionBadge(status, issueCount = 0) {
+    try {
+      // Set badge text based on status and issue count
+      let badgeText = '';
+      if (status === 'critical' && issueCount > 0) {
+        badgeText = issueCount.toString();
+      } else if (status === 'major' && issueCount > 0) {
+        badgeText = issueCount.toString();
+      } else if (status === 'minor' && issueCount > 0) {
+        badgeText = issueCount.toString();
+      } else if (status === 'critical') {
+        badgeText = '!';
+      }
+      
+      await chrome.action.setBadgeText({ text: badgeText });
+      
+      // Set badge color
+      const badgeColors = {
+        'operational': '#10b981',
+        'minor': '#f59e0b',
+        'major': '#f97316',
+        'critical': '#ef4444',
+        'unknown': '#64748b'
+      };
+      
+      if (badgeText) {
+        await chrome.action.setBadgeBackgroundColor({ color: badgeColors[status] || '#64748b' });
+      }
+      
+      // Update title to show current demo status
+      await chrome.action.setTitle({
+        title: `Vibe Stats - DEMO: ${status.toUpperCase()}${issueCount > 0 ? ` (${issueCount} issues)` : ''}`
+      });
+      
+    } catch (error) {
+      console.log('Demo: Could not update extension badge (normal in popup context)');
+    }
+  }
+  
+  /**
+   * Get current status for restoration
+   */
+  getCurrentStatus() {
+    const statusIndicator = document.getElementById('status-indicator');
+    if (!statusIndicator) return null;
+    
+    const classes = statusIndicator.className.split(' ');
+    const statusClass = classes.find(cls => cls.startsWith('status-'));
+    return statusClass ? statusClass.replace('status-', '') : 'unknown';
+  }
+  
+  /**
+   * Restore original status after demo
+   */
+  async restoreOriginalStatus() {
+    // Reload actual status
+    await this.loadStatus();
+    
+    // Clear demo badge and restore normal title
+    try {
+      await chrome.action.setBadgeText({ text: '' });
+      await chrome.action.setTitle({ title: 'Vibe Stats - AI Dev Tools Monitor 🤖⚡' });
+    } catch (error) {
+      console.log('Could not reset extension badge (normal in popup context)');
     }
   }
 
@@ -765,27 +962,4 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 });
 
-/**
- * Global function to open test files
- * Called by test buttons in the HTML
- */
-function openTestFile(filename) {
-  try {
-    // Get the extension URL and construct the test file URL
-    const extensionUrl = chrome.runtime.getURL('');
-    const testUrl = extensionUrl + filename;
-    
-    // Open in a new tab
-    chrome.tabs.create({ url: testUrl });
-  } catch (error) {
-    console.error('Error opening test file:', error);
-    
-    // Fallback: try to open as a relative URL
-    try {
-      window.open(filename, '_blank');
-    } catch (fallbackError) {
-      console.error('Fallback also failed:', fallbackError);
-      alert(`Cannot open test file: ${filename}\nPlease open it manually from the extension directory.`);
-    }
-  }
-}
+// Removed old openTestFile function - replaced with status demo functionality

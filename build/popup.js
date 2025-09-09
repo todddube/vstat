@@ -43,12 +43,12 @@ class VStatePopupController {
         });
       }
 
-      // Expandable service items
-      document.querySelectorAll('.expandable-service').forEach(service => {
-        service.addEventListener('click', (e) => {
+      // Section incident toggle buttons
+      document.querySelectorAll('.section-incidents-toggle').forEach(toggle => {
+        toggle.addEventListener('click', (e) => {
           e.preventDefault();
-          const serviceName = service.getAttribute('data-service');
-          this.toggleServiceExpansion(serviceName);
+          const sectionName = toggle.getAttribute('data-section');
+          this.toggleSectionIncidents(sectionName);
         });
       });
 
@@ -83,6 +83,43 @@ class VStatePopupController {
         });
       }
 
+      
+      // Service item click handlers for external links
+      document.querySelectorAll('.service-item[data-url]').forEach(item => {
+        item.addEventListener('click', (e) => {
+          e.preventDefault();
+          const url = item.getAttribute('data-url');
+          if (url) {
+            chrome.tabs.create({ url: url });
+          }
+        });
+      });
+      
+      // Status link click handlers
+      document.querySelectorAll('.status-link').forEach(link => {
+        link.addEventListener('click', (e) => {
+          e.preventDefault();
+          const url = link.getAttribute('href');
+          if (url) {
+            chrome.tabs.create({ url: url });
+          }
+        });
+      });
+      
+      // Demo button click handler
+      const startDemoBtn = document.getElementById('start-demo');
+      
+      if (startDemoBtn) {
+        startDemoBtn.addEventListener('click', (e) => {
+          e.preventDefault();
+          if (this.demoTimer) {
+            this.resetDemo();
+          } else {
+            this.startStatusDemo();
+          }
+        });
+      }
+
     } catch (error) {
       console.error('Error setting up event listeners:', error);
     }
@@ -109,101 +146,117 @@ class VStatePopupController {
         return;
       }
 
-      // Navigate services with arrow keys when focused
+      // Navigate section toggles with arrow keys when focused
       if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
         const focused = document.activeElement;
-        if (focused && focused.classList.contains('expandable-service')) {
+        if (focused && focused.classList.contains('section-incidents-toggle')) {
           e.preventDefault();
-          const services = Array.from(document.querySelectorAll('.expandable-service'));
-          const currentIndex = services.indexOf(focused);
+          const toggles = Array.from(document.querySelectorAll('.section-incidents-toggle'));
+          const currentIndex = toggles.indexOf(focused);
           const nextIndex = e.key === 'ArrowDown' 
-            ? (currentIndex + 1) % services.length 
-            : (currentIndex - 1 + services.length) % services.length;
-          services[nextIndex].focus();
+            ? (currentIndex + 1) % toggles.length 
+            : (currentIndex - 1 + toggles.length) % toggles.length;
+          toggles[nextIndex].focus();
         }
       }
 
-      // Activate service expansion with Enter or Space
+      // Activate section incidents with Enter or Space
       if (e.key === 'Enter' || e.key === ' ') {
         const focused = document.activeElement;
-        if (focused && focused.classList.contains('expandable-service')) {
+        if (focused && focused.classList.contains('section-incidents-toggle')) {
           e.preventDefault();
-          const serviceName = focused.getAttribute('data-service');
-          this.toggleServiceExpansion(serviceName);
+          const sectionName = focused.getAttribute('data-section');
+          this.toggleSectionIncidents(sectionName);
         }
       }
     });
   }
 
   /**
-   * Toggle service expansion to show/hide incidents
+   * Toggle section incidents to show/hide recent issues
    */
-  toggleServiceExpansion(serviceName) {
-    const service = document.querySelector(`[data-service="${serviceName}"]`);
-    const isExpanded = this.expandedServices.has(serviceName);
+  toggleSectionIncidents(sectionName) {
+    const toggle = document.querySelector(`[data-section="${sectionName}"]`);
+    const incidentsContainer = document.getElementById(`${sectionName}-incidents`);
+    
+    if (!toggle || !incidentsContainer) return;
+    
+    const isExpanded = toggle.classList.contains('expanded');
     
     if (isExpanded) {
       // Collapse
-      this.expandedServices.delete(serviceName);
-      service.classList.remove('expanded');
-      this.hideServiceIncidents(serviceName);
+      toggle.classList.remove('expanded');
+      incidentsContainer.style.display = 'none';
     } else {
       // Expand
-      this.expandedServices.add(serviceName);
-      service.classList.add('expanded');
-      this.showServiceIncidents(serviceName);
+      toggle.classList.add('expanded');
+      incidentsContainer.style.display = 'block';
+      this.loadSectionIncidents(sectionName);
     }
   }
 
   /**
-   * Show incidents for a specific service
+   * Load incidents for a section (claude or github)
    */
-  async showServiceIncidents(serviceName) {
-    const sectionName = serviceName.startsWith('claude') ? 'claude' : 'github';
-    const incidentsContainer = document.getElementById(`${sectionName}-incidents`);
+  async loadSectionIncidents(sectionName) {
     const incidentsContent = document.getElementById(`${sectionName}-incidents-content`);
+    if (!incidentsContent) return;
     
-    if (!incidentsContainer || !incidentsContent) return;
-    
-    // Show the container
-    incidentsContainer.style.display = 'block';
+    // Show loading state
     incidentsContent.innerHTML = '<div class="loading">🔄 Loading incidents...</div>';
     
     try {
       // Get status data from storage
-      const result = await chrome.storage.local.get(['vstateStatus', 'claudeStatus', 'githubStatus', 'claudeIncidents', 'githubIncidents']);
+      const result = await chrome.storage.local.get([
+        'vstateStatus', 'claudeStatus', 'githubStatus', 
+        'claudeIncidents', 'githubIncidents'
+      ]);
       
       let incidents = [];
+      let sectionTitle = '';
+      
       if (sectionName === 'claude') {
         incidents = result.claudeIncidents || [];
-      } else {
+        sectionTitle = '🤖 Claude AI Recent Issues';
+      } else if (sectionName === 'github') {
         incidents = result.githubIncidents || [];
+        sectionTitle = '🐙 GitHub Services Recent Issues';
       }
       
-      // Filter incidents for specific service if needed
-      const filteredIncidents = this.filterIncidentsForService(incidents, serviceName);
+      // Get recent incidents (last 5)
+      const recentIncidents = incidents.slice(0, 5);
       
-      if (filteredIncidents.length === 0) {
-        incidentsContent.innerHTML = `<div class="no-incidents">No recent incidents for ${this.getServiceDisplayName(serviceName)} 🎉</div>`;
+      if (recentIncidents.length === 0) {
+        const headerColor = sectionName === 'claude' ? '#D97706' : '#24292E';
+        incidentsContent.innerHTML = `
+          <div style="padding: 10px; background: linear-gradient(135deg, ${headerColor} 0%, ${sectionName === 'claude' ? '#DC2626' : '#0D1117'} 100%); border-radius: 6px; color: white; margin-bottom: 10px;">
+            <strong style="text-shadow: 0 1px 2px rgba(0,0,0,0.3);">${sectionTitle}</strong>
+          </div>
+          <div class="no-incidents">
+            No recent incidents - all systems operational! 🎉
+          </div>
+        `;
       } else {
-        incidentsContent.innerHTML = filteredIncidents.map(incident => this.renderIncident(incident)).join('');
+        const headerColor = sectionName === 'claude' ? '#D97706' : '#24292E';
+        incidentsContent.innerHTML = `
+          <div style="margin-bottom: 15px; padding: 10px; background: linear-gradient(135deg, ${headerColor} 0%, ${sectionName === 'claude' ? '#DC2626' : '#0D1117'} 100%); border-radius: 6px; color: white;">
+            <strong style="font-size: 14px; text-shadow: 0 1px 2px rgba(0,0,0,0.3);">${sectionTitle}</strong>
+          </div>
+          ${recentIncidents.map(incident => this.renderIncident(incident)).join('')}
+        `;
       }
       
     } catch (error) {
-      console.error('Error loading service incidents:', error);
-      incidentsContent.innerHTML = '<div class="no-incidents error">Error loading incidents</div>';
-    }
-  }
-
-  /**
-   * Hide incidents for a specific service
-   */
-  hideServiceIncidents(serviceName) {
-    const sectionName = serviceName.startsWith('claude') ? 'claude' : 'github';
-    const incidentsContainer = document.getElementById(`${sectionName}-incidents`);
-    
-    if (incidentsContainer) {
-      incidentsContainer.style.display = 'none';
+      console.error('Error loading section incidents:', error);
+      const headerColor = sectionName === 'claude' ? '#D97706' : '#24292E';
+      incidentsContent.innerHTML = `
+        <div style="padding: 10px; background: linear-gradient(135deg, ${headerColor} 0%, ${sectionName === 'claude' ? '#DC2626' : '#0D1117'} 100%); border-radius: 6px; color: white; margin-bottom: 10px;">
+          <strong style="text-shadow: 0 1px 2px rgba(0,0,0,0.3);">${sectionName === 'claude' ? '🤖 Claude AI Recent Issues' : '🐙 GitHub Services Recent Issues'}</strong>
+        </div>
+        <div class="no-incidents error">
+          Error loading incidents for ${sectionName === 'claude' ? 'Claude AI' : 'GitHub Services'}
+        </div>
+      `;
     }
   }
 
@@ -695,6 +748,200 @@ class VStatePopupController {
     }
   }
 
+  
+  /**
+   * Start status demo - cycles through different status states
+   */
+  startStatusDemo() {
+    const startBtn = document.getElementById('start-demo');
+    const progressBar = document.getElementById('progress-bar');
+    const demoInfo = document.getElementById('demo-info');
+    const demoStatus = document.getElementById('demo-status');
+    const testingSection = document.getElementById('testing-section');
+    
+    // Demo states with issue counts for badge simulation
+    const demoStates = [
+      { status: 'operational', description: 'All systems operational - AI tools vibing!', issueCount: 0 },
+      { status: 'minor', description: 'Minor issues - 2 services affected', issueCount: 2 },
+      { status: 'major', description: 'Major issues - 4 services disrupted', issueCount: 4 },
+      { status: 'critical', description: 'Critical - 6 services down!', issueCount: 6 },
+      { status: 'unknown', description: 'Status unknown - unable to connect', issueCount: 0 }
+    ];
+    
+    let currentStateIndex = 0;
+    let progress = 0;
+    const totalDuration = 20000; // 20 seconds
+    const stateInterval = totalDuration / demoStates.length; // 4 seconds per state
+    const progressInterval = 100; // Update every 100ms
+    
+    // Update button and show progress
+    startBtn.disabled = true;
+    startBtn.innerHTML = '<span class="demo-icon">🔄</span><span class="demo-name">Running Demo...</span>';
+    demoStatus.style.display = 'block';
+    testingSection.classList.add('demo-active');
+    
+    // Store original status for reset
+    this.originalStatus = this.getCurrentStatus();
+    
+    const progressTimer = setInterval(() => {
+      progress += progressInterval;
+      const progressPercent = (progress / totalDuration) * 100;
+      progressBar.style.width = `${progressPercent}%`;
+      
+      // Check if we should move to next state
+      const newStateIndex = Math.floor(progress / stateInterval);
+      if (newStateIndex !== currentStateIndex && newStateIndex < demoStates.length) {
+        currentStateIndex = newStateIndex;
+        const state = demoStates[currentStateIndex];
+        this.applyDemoStatus(state.status, state.issueCount);
+        demoInfo.textContent = `${state.description} (${currentStateIndex + 1}/5)`;
+      }
+      
+      // End demo
+      if (progress >= totalDuration) {
+        clearInterval(progressTimer);
+        this.endDemo();
+      }
+    }, progressInterval);
+    
+    // Store timer for cleanup
+    this.demoTimer = progressTimer;
+    
+    // Start with first state immediately
+    this.applyDemoStatus(demoStates[0].status, demoStates[0].issueCount);
+    demoInfo.textContent = `${demoStates[0].description} (1/5)`;
+  }
+  
+  /**
+   * Reset demo to original status
+   */
+  resetDemo() {
+    if (this.demoTimer) {
+      clearInterval(this.demoTimer);
+      this.demoTimer = null;
+    }
+    
+    this.endDemo();
+    
+    // Restore original status
+    if (this.originalStatus) {
+      this.restoreOriginalStatus();
+    }
+  }
+  
+  /**
+   * End the demo and reset UI
+   */
+  endDemo() {
+    const startBtn = document.getElementById('start-demo');
+    const progressBar = document.getElementById('progress-bar');
+    const demoInfo = document.getElementById('demo-info');
+    const demoStatus = document.getElementById('demo-status');
+    const testingSection = document.getElementById('testing-section');
+    
+    startBtn.disabled = false;
+    startBtn.innerHTML = '<span class="demo-icon">🎬</span><span class="demo-name">Demo/Test</span>';
+    progressBar.style.width = '0%';
+    demoInfo.textContent = 'Demo completed! Restoring actual status...';
+    testingSection.classList.remove('demo-active');
+    
+    // Hide progress after a moment and restore status
+    setTimeout(() => {
+      demoStatus.style.display = 'none';
+      this.restoreOriginalStatus();
+    }, 2000);
+  }
+  
+  /**
+   * Apply demo status to UI elements
+   */
+  applyDemoStatus(status, issueCount = 0) {
+    // Update main status indicator
+    const statusIndicator = document.getElementById('status-indicator');
+    if (statusIndicator) {
+      statusIndicator.className = `status-indicator status-${status}`;
+    }
+    
+    // Update all service icons to show the demo status
+    document.querySelectorAll('.service-icon').forEach(icon => {
+      icon.className = `service-icon ${status}`;
+      icon.textContent = this.getServiceIcon(status);
+    });
+    
+    // Update actual extension badge and icon
+    this.updateExtensionBadge(status, issueCount);
+  }
+  
+  /**
+   * Update actual extension badge during demo
+   */
+  async updateExtensionBadge(status, issueCount = 0) {
+    try {
+      // Set badge text based on status and issue count
+      let badgeText = '';
+      if (status === 'critical' && issueCount > 0) {
+        badgeText = issueCount.toString();
+      } else if (status === 'major' && issueCount > 0) {
+        badgeText = issueCount.toString();
+      } else if (status === 'minor' && issueCount > 0) {
+        badgeText = issueCount.toString();
+      } else if (status === 'critical') {
+        badgeText = '!';
+      }
+      
+      await chrome.action.setBadgeText({ text: badgeText });
+      
+      // Set badge color
+      const badgeColors = {
+        'operational': '#10b981',
+        'minor': '#f59e0b',
+        'major': '#f97316',
+        'critical': '#ef4444',
+        'unknown': '#64748b'
+      };
+      
+      if (badgeText) {
+        await chrome.action.setBadgeBackgroundColor({ color: badgeColors[status] || '#64748b' });
+      }
+      
+      // Update title to show current demo status
+      await chrome.action.setTitle({
+        title: `Vibe Stats - DEMO: ${status.toUpperCase()}${issueCount > 0 ? ` (${issueCount} issues)` : ''}`
+      });
+      
+    } catch (error) {
+      console.log('Demo: Could not update extension badge (normal in popup context)');
+    }
+  }
+  
+  /**
+   * Get current status for restoration
+   */
+  getCurrentStatus() {
+    const statusIndicator = document.getElementById('status-indicator');
+    if (!statusIndicator) return null;
+    
+    const classes = statusIndicator.className.split(' ');
+    const statusClass = classes.find(cls => cls.startsWith('status-'));
+    return statusClass ? statusClass.replace('status-', '') : 'unknown';
+  }
+  
+  /**
+   * Restore original status after demo
+   */
+  async restoreOriginalStatus() {
+    // Reload actual status
+    await this.loadStatus();
+    
+    // Clear demo badge and restore normal title
+    try {
+      await chrome.action.setBadgeText({ text: '' });
+      await chrome.action.setTitle({ title: 'Vibe Stats - AI Dev Tools Monitor 🤖⚡' });
+    } catch (error) {
+      console.log('Could not reset extension badge (normal in popup context)');
+    }
+  }
+
   /**
    * Cleanup when popup closes
    */
@@ -714,3 +961,5 @@ document.addEventListener('DOMContentLoaded', () => {
     controller.cleanup();
   });
 });
+
+// Removed old openTestFile function - replaced with status demo functionality

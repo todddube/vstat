@@ -13,6 +13,8 @@
             line-height: 1.4;
             overflow-y: auto;
             animation: fadeIn 0.3s ease-out;
+            background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+            color: #1f2937;
         }
 
         @keyframes fadeIn {
@@ -25,12 +27,12 @@
             align-items: center;
             margin-bottom: 16px;
             padding-bottom: 12px;
-            border-bottom: 1px solid #e0e0e0;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-bottom: 1px solid #e5e7eb;
+            background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%);
             margin: -16px -16px 16px -16px;
             padding: 16px 16px 12px 16px;
-            border-radius: 10px 10px 0 0;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            border-radius: 12px 12px 0 0;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08), 0 1px 3px rgba(0, 0, 0, 0.05);
         }
 
         .vibe-stats-icon {
@@ -55,11 +57,11 @@
             margin-left: 8px;
         }
 
-        .status-operational { background-color: #4CAF50; }
-        .status-minor { background-color: #FFC107; }
-        .status-major { background-color: #F44336; }
-        .status-critical { background-color: #D32F2F; }
-        .status-unknown { background-color: #9E9E9E; }
+        .status-operational { background-color: #10b981; }
+        .status-minor { background-color: #f59e0b; }
+        .status-major { background-color: #f97316; }
+        .status-critical { background-color: #ef4444; }
+        .status-unknown { background-color: #64748b; }
 
         .last-updated {
             color: rgba(255,255,255,0.8);
@@ -75,27 +77,32 @@
         .incidents-title {
             font-weight: 600;
             margin-bottom: 12px;
-            color: #333;
+            color: #111827;
         }
 
         .incident {
-            background: #f8f9fa;
-            border-radius: 6px;
+            background: rgba(255,255,255,0.9);
+            border-radius: 8px;
             padding: 12px;
             margin-bottom: 8px;
-            border-left: 3px solid #ddd;
+            border-left: 3px solid #e2e8f0;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+            backdrop-filter: blur(10px);
         }
 
         .incident.impact-major {
-            border-left-color: #F44336;
+            border-left-color: #f97316;
+            background: rgba(249, 115, 22, 0.02);
         }
 
         .incident.impact-minor {
-            border-left-color: #FFC107;
+            border-left-color: #f59e0b;
+            background: rgba(245, 158, 11, 0.02);
         }
 
         .incident.impact-critical {
-            border-left-color: #D32F2F;
+            border-left-color: #ef4444;
+            background: rgba(239, 68, 68, 0.02);
         }
 
         .incident-name {
@@ -131,18 +138,18 @@
         .incident-update {
             margin-top: 8px;
             font-size: 12px;
-            color: #666;
+            color: #4b5563;
             line-height: 1.3;
         }
 
         .incident-date {
             font-size: 11px;
-            color: #999;
+            color: #6b7280;
             margin-top: 4px;
         }
 
         .no-incidents {
-            color: #666;
+            color: #4b5563;
             font-style: italic;
             text-align: center;
             padding: 20px;
@@ -150,29 +157,29 @@
 
         .loading {
             text-align: center;
-            color: #666;
+            color: #4b5563;
             padding: 20px;
         }
 
         .refresh-btn {
-            background: rgba(255,255,255,0.25);
+            background: rgba(255,255,255,0.15);
             color: white;
-            border: 1px solid rgba(255,255,255,0.4);
+            border: 1px solid rgba(255,255,255,0.25);
             border-radius: 20px;
             padding: 6px 14px;
             font-size: 12px;
             cursor: pointer;
             float: right;
             margin-top: -4px;
-            transition: all 0.3s ease;
-            backdrop-filter: blur(10px);
+            transition: all 0.2s ease;
+            backdrop-filter: blur(12px);
             font-weight: 500;
         }
 
         .refresh-btn:hover:not(:disabled) {
-            background: rgba(255,255,255,0.35);
-            transform: scale(1.05);
-            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+            background: rgba(255,255,255,0.2);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
         }
 
         .refresh-btn:disabled {
@@ -216,6 +223,16 @@
                 opacity: 1;
             }
         }
+        
+        @keyframes demoGlow {
+            0% { box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08); }
+            50% { box-shadow: 0 8px 40px rgba(0, 0, 0, 0.15); }
+            100% { box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08); }
+        }
+        
+        .demo-active {
+            animation: demoGlow 2s ease-in-out infinite;
+        }
 
         @keyframes lightning-glow {
             0% { filter: drop-shadow(0 0 2px #FFD700); }
@@ -233,9 +250,9 @@
         }
 
         .about-btn {
-            background: rgba(255,255,255,0.2);
+            background: rgba(255,255,255,0.1);
             color: white;
-            border: 1px solid rgba(255,255,255,0.3);
+            border: 1px solid rgba(255,255,255,0.2);
             border-radius: 20px;
             padding: 6px 12px;
             font-size: 12px;
@@ -243,14 +260,14 @@
             float: right;
             margin-top: -4px;
             margin-right: 10px;
-            transition: all 0.3s ease;
-            backdrop-filter: blur(10px);
+            transition: all 0.2s ease;
+            backdrop-filter: blur(12px);
         }
 
         .about-btn:hover {
-            background: rgba(255,255,255,0.3);
-            transform: scale(1.05);
-            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+            background: rgba(255,255,255,0.15);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
         }
 
         .about-modal {
@@ -347,17 +364,17 @@
             font-size: 18px;
             font-weight: 600;
             margin: 0 0 4px 0;
-            color: #333;
+            color: #111827;
         }
 
         .about-version {
-            color: #666;
+            color: #4b5563;
             font-size: 14px;
             margin: 0;
         }
 
         .about-description {
-            color: #555;
+            color: #374151;
             font-size: 14px;
             line-height: 1.5;
             margin: 16px 0;
@@ -371,13 +388,13 @@
         }
 
         .about-author-label {
-            color: #666;
+            color: #4b5563;
             font-size: 12px;
             margin-bottom: 4px;
         }
 
         .about-author-link {
-            color: #007bff;
+            color: #374151;
             text-decoration: none;
             font-weight: 500;
         }
@@ -387,12 +404,12 @@
         }
 
         .services-overview {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #9ca3af 0%, #6b7280 100%);
             border-radius: 12px;
             padding: 16px;
             margin-bottom: 16px;
             border: none;
-            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.2);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
         }
 
         .overview-title {
@@ -426,11 +443,11 @@
         }
 
         .claude-section {
-            background: linear-gradient(135deg, #D97706 0%, #DC2626 100%);
+            background: linear-gradient(135deg, #9ca3af 0%, #6b7280 100%);
         }
 
         .github-section {
-            background: linear-gradient(135deg, #24292E 0%, #0D1117 100%);
+            background: linear-gradient(135deg, #4b5563 0%, #374151 100%);
             animation-delay: 0.2s;
             animation-fill-mode: both;
         }
@@ -503,24 +520,29 @@
 
         /* Universal status-based service icon styling */
         .service-icon.operational { 
-            background: linear-gradient(45deg, #10B981, #34D399);
+            background: linear-gradient(45deg, #10b981, #059669);
             color: white;
+            box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
         }
         .service-icon.minor { 
-            background: linear-gradient(45deg, #F59E0B, #FBBF24);
+            background: linear-gradient(45deg, #f59e0b, #d97706);
             color: white;
+            box-shadow: 0 2px 8px rgba(245, 158, 11, 0.3);
         }
         .service-icon.major { 
-            background: linear-gradient(45deg, #F97316, #FB923C);
+            background: linear-gradient(45deg, #f97316, #ea580c);
             color: white;
+            box-shadow: 0 2px 8px rgba(249, 115, 22, 0.3);
         }
         .service-icon.critical { 
-            background: linear-gradient(45deg, #EF4444, #F87171);
+            background: linear-gradient(45deg, #ef4444, #dc2626);
             color: white;
+            box-shadow: 0 2px 8px rgba(239, 68, 68, 0.3);
         }
         .service-icon.unknown { 
-            background: linear-gradient(45deg, #6B7280, #9CA3AF);
+            background: linear-gradient(45deg, #64748b, #475569);
             color: white;
+            box-shadow: 0 2px 8px rgba(100, 116, 139, 0.3);
         }
 
         .claude-grid, .github-grid {
@@ -537,13 +559,20 @@
             align-items: center;
             padding: 10px 12px;
             border-radius: 8px;
-            background: rgba(255,255,255,0.95);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255,255,255,0.3);
+            background: rgba(255,255,255,0.9);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255,255,255,0.4);
             transition: all 0.3s ease;
             font-size: 12px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
             position: relative;
+            cursor: pointer;
+        }
+        
+        .service-item:hover {
+            background: rgba(255,255,255,0.95);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 16px rgba(0,0,0,0.12);
         }
 
 
@@ -565,11 +594,27 @@
 
         .service-name {
             font-weight: 600;
-            color: #374151;
+            color: #1f2937;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
             flex: 1;
+            transition: color 0.2s ease;
+        }
+        
+        .service-item:hover .service-name {
+            color: #374151;
+        }
+        
+        .status-link {
+            color: inherit;
+            text-decoration: none;
+            transition: all 0.2s ease;
+        }
+        
+        .status-link:hover {
+            color: rgba(255,255,255,0.8);
+            text-shadow: 0 0 8px rgba(255,255,255,0.5);
         }
 
 
@@ -622,7 +667,7 @@
         .incident-name {
             font-weight: 600;
             margin-bottom: 4px;
-            color: #333;
+            color: #111827;
             font-size: 13px;
         }
 
@@ -757,107 +802,154 @@
         /* Testing/Development Section */
         .testing-section {
             margin-top: 16px;
-            background: linear-gradient(135deg, #374151 0%, #1F2937 100%);
+            background: linear-gradient(135deg, #64748b 0%, #475569 100%);
             border-radius: 12px;
             overflow: hidden;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+        }
+
+
+        .demo-controls {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 16px;
+            justify-content: center;
+        }
+
+        .demo-button {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 16px;
+            background: rgba(255,255,255,0.9);
+            border: 1px solid rgba(255,255,255,0.3);
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 12px;
+            font-weight: 500;
+            color: #374151;
             box-shadow: 0 2px 8px rgba(0,0,0,0.1);
         }
 
-        .testing-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 12px 16px;
-            cursor: pointer;
-            transition: background 0.2s ease;
+        .demo-button:hover {
+            background: rgba(255,255,255,1);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 16px rgba(0,0,0,0.15);
         }
 
-        .testing-header:hover {
-            background: rgba(255,255,255,0.05);
+        .demo-button.primary {
+            background: linear-gradient(45deg, #374151, #1f2937);
+            color: white;
+            border-color: transparent;
+            font-size: 13px;
+            padding: 10px 20px;
         }
 
-        .testing-title {
-            font-size: 12px;
+        .demo-button.primary:hover {
+            background: linear-gradient(45deg, #1f2937, #111827);
+        }
+
+        .demo-button.primary:disabled {
+            background: linear-gradient(45deg, #9ca3af, #6b7280);
+        }
+
+        .demo-button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+
+        .demo-icon {
+            font-size: 14px;
+        }
+
+        .demo-name {
             font-weight: 600;
-            color: white;
-            text-shadow: 0 1px 2px rgba(0,0,0,0.3);
         }
 
-        .testing-toggle {
+        .demo-status {
+            flex: 1;
+            padding: 8px 12px;
             background: rgba(255,255,255,0.1);
-            color: white;
+            border-radius: 20px;
             border: 1px solid rgba(255,255,255,0.2);
-            border-radius: 50%;
-            width: 24px;
-            height: 24px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: all 0.3s ease;
-            font-size: 10px;
         }
 
-        .testing-toggle:hover {
+        .demo-progress {
+            width: 100%;
+            height: 4px;
             background: rgba(255,255,255,0.2);
-            transform: scale(1.1);
+            border-radius: 2px;
+            margin-bottom: 8px;
+            overflow: hidden;
         }
 
-        .testing-toggle.expanded .expand-icon {
-            transform: rotate(90deg);
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #374151, #1f2937);
+            border-radius: 2px;
+            width: 0%;
+            transition: width 0.3s ease;
         }
 
-        .testing-content {
-            background: rgba(255,255,255,0.95);
-            animation: slideDown 0.3s ease-out;
+        .demo-info {
+            color: rgba(255,255,255,0.9);
+            font-size: 11px;
+            text-align: left;
+            font-weight: 500;
+            margin-top: 4px;
         }
 
-        .testing-grid {
+        .demo-legend {
+            padding: 12px 15px;
+            background: rgba(255,255,255,0.03);
+            border-top: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .demo-legend h4 {
+            color: rgba(255,255,255,0.9);
+            font-size: 11px;
+            margin: 0 0 8px 0;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .legend-items {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 8px;
-            padding: 12px;
+            gap: 4px;
         }
 
-        .test-button {
+        .legend-item {
             display: flex;
-            flex-direction: column;
             align-items: center;
-            padding: 10px 8px;
-            background: white;
-            border: 1px solid #e0e0e0;
-            border-radius: 6px;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            font-size: 11px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            gap: 6px;
+            font-size: 10px;
+            color: rgba(255,255,255,0.8);
         }
 
-        .test-button:hover {
-            background: #f8f9fa;
-            transform: translateY(-1px);
-            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
-            border-color: #667eea;
+        .legend-color {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            flex-shrink: 0;
         }
 
-        .test-icon {
-            font-size: 16px;
-            margin-bottom: 4px;
-        }
-
-        .test-name {
-            font-weight: 600;
-            color: #374151;
-            text-align: center;
-            line-height: 1.2;
-        }
-
-        .testing-note {
-            text-align: center;
-            padding: 8px 12px 12px;
-            color: #6b7280;
-            border-top: 1px solid #e5e7eb;
-            background: #f9fafb;
+        .legend-color.operational { background: #10b981; }
+        .legend-color.minor { background: #f59e0b; }
+        .legend-color.major { background: #f97316; }
+        .legend-color.critical { background: #ef4444; }
+        .legend-color.unknown { background: #64748b; }
+        
+        /* External link indicator */
+        .status-link::after {
+            content: "↗";
+            font-size: 0.8em;
+            opacity: 0.6;
+            margin-left: 4px;
         }
 
     </style>
@@ -879,7 +971,9 @@
     <!-- Claude Services Section -->
     <div class="claude-section">
         <div class="section-header">
-            <div class="section-title">🤖 Claude AI Services</div>
+            <div class="section-title">
+                <a href="https://status.anthropic.com" target="_blank" class="status-link">🤖 Claude AI Services</a>
+            </div>
             <button class="section-incidents-toggle" data-section="claude" aria-label="Toggle Claude incidents">
                 <span class="incidents-text">Recent Issues</span>
                 <span class="expand-icon">▶</span>
@@ -891,19 +985,19 @@
             </div>
         </div>
         <div class="claude-grid" id="claude-grid">
-            <div class="service-item" data-service="claude-web">
+            <div class="service-item" data-service="claude-web" data-url="https://claude.ai">
                 <div class="service-icon unknown">🌐</div>
                 <div class="service-name">Claude Web</div>
             </div>
-            <div class="service-item" data-service="claude-api">
+            <div class="service-item" data-service="claude-api" data-url="https://console.anthropic.com">
                 <div class="service-icon unknown">⚡</div>
                 <div class="service-name">Claude API</div>
             </div>
-            <div class="service-item" data-service="claude-dashboard">
+            <div class="service-item" data-service="claude-dashboard" data-url="https://console.anthropic.com">
                 <div class="service-icon unknown">📊</div>
                 <div class="service-name">Dashboard</div>
             </div>
-            <div class="service-item" data-service="claude-docs">
+            <div class="service-item" data-service="claude-docs" data-url="https://docs.anthropic.com">
                 <div class="service-icon unknown">❓</div>
                 <div class="service-name">Docs/Support</div>
             </div>
@@ -913,7 +1007,9 @@
     <!-- GitHub Copilot Section -->
     <div class="github-section">
         <div class="section-header">
-            <div class="section-title">🐙 GitHub Copilot Services</div>
+            <div class="section-title">
+                <a href="https://www.githubstatus.com" target="_blank" class="status-link">🐙 GitHub Copilot Services</a>
+            </div>
             <button class="section-incidents-toggle" data-section="github" aria-label="Toggle GitHub incidents">
                 <span class="incidents-text">Recent Issues</span>
                 <span class="expand-icon">▶</span>
@@ -925,19 +1021,19 @@
             </div>
         </div>
         <div class="github-grid" id="github-grid">
-            <div class="service-item" data-service="github-copilot">
+            <div class="service-item" data-service="github-copilot" data-url="https://github.com/features/copilot">
                 <div class="service-icon unknown">🤖</div>
                 <div class="service-name">Copilot</div>
             </div>
-            <div class="service-item" data-service="github-api">
+            <div class="service-item" data-service="github-api" data-url="https://docs.github.com/en/rest">
                 <div class="service-icon unknown">🔧</div>
                 <div class="service-name">GitHub API</div>
             </div>
-            <div class="service-item" data-service="github-codespaces">
+            <div class="service-item" data-service="github-codespaces" data-url="https://github.com/features/codespaces">
                 <div class="service-icon unknown">☁️</div>
                 <div class="service-name">Codespaces</div>
             </div>
-            <div class="service-item" data-service="github-actions">
+            <div class="service-item" data-service="github-actions" data-url="https://github.com/features/actions">
                 <div class="service-icon unknown">⚙️</div>
                 <div class="service-name">Actions</div>
             </div>
@@ -970,35 +1066,18 @@
         </div>
     </div>
 
-    <!-- Testing/Development Section -->
+    <!-- Demo/Testing Section -->
     <div class="testing-section" id="testing-section">
-        <div class="testing-header">
-            <span class="testing-title">🧪 Development Testing</span>
-            <button class="testing-toggle" id="testing-toggle" aria-label="Toggle testing panel">
-                <span class="expand-icon">▶</span>
+        <div class="demo-controls">
+            <button class="demo-button primary" id="start-demo" title="Run 20-second demo showing all status states and badges">
+                <span class="demo-icon">🎬</span>
+                <span class="demo-name">Demo/Test</span>
             </button>
-        </div>
-        <div class="testing-content" id="testing-content" style="display: none;">
-            <div class="testing-grid">
-                <button class="test-button" onclick="openTestFile('test-dropdown.html')" title="Test individual service dropdowns">
-                    <span class="test-icon">🔽</span>
-                    <span class="test-name">Service Dropdowns</span>
-                </button>
-                <button class="test-button" onclick="openTestFile('test-consolidated-dropdowns.html')" title="Test consolidated section dropdowns">
-                    <span class="test-icon">📋</span>
-                    <span class="test-name">Consolidated View</span>
-                </button>
-                <button class="test-button" onclick="openTestFile('test-brand-colors.html')" title="Test brand color implementations">
-                    <span class="test-icon">🎨</span>
-                    <span class="test-name">Brand Colors</span>
-                </button>
-                <button class="test-button" onclick="openTestFile('test-status-colors.html')" title="Test status color system">
-                    <span class="test-icon">🚦</span>
-                    <span class="test-name">Status Colors</span>
-                </button>
-            </div>
-            <div class="testing-note">
-                <small>🔧 Development tools for testing extension features</small>
+            <div class="demo-status" id="demo-status" style="display: none;">
+                <div class="demo-progress">
+                    <div class="progress-bar" id="progress-bar"></div>
+                </div>
+                <div class="demo-info" id="demo-info">Running demo...</div>
             </div>
         </div>
     </div>

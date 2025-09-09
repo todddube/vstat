@@ -494,10 +494,10 @@ class VStateMonitor {
 
   getIconPath(color) {
     return {
-      "16": `icons/lightning-16.png`,
-      "32": `icons/lightning-32.png`,
-      "48": `icons/lightning-48.png`,
-      "128": `icons/lightning-128.png`
+      "16": `icons/ai-vibe-16.png`,
+      "32": `icons/ai-vibe-32.png`,
+      "48": `icons/ai-vibe-48.png`,
+      "128": `icons/ai-vibe-128.png`
     };
   }
 

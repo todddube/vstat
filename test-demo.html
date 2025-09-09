@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Demo/Test Functionality Test</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+            margin: 20px;
+            line-height: 1.6;
+        }
+        .demo-preview {
+            max-width: 400px;
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            overflow: hidden;
+            margin: 20px 0;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
+        .demo-section {
+            background: linear-gradient(135deg, #4338ca 0%, #3730a3 100%);
+            padding: 16px;
+        }
+        .demo-button {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 10px 20px;
+            background: linear-gradient(45deg, #10b981, #059669);
+            color: white;
+            border: none;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .demo-button:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+        }
+        .demo-button:disabled {
+            background: linear-gradient(45deg, #6b7280, #4b5563);
+            cursor: not-allowed;
+        }
+        .progress-container {
+            margin-top: 15px;
+            display: none;
+        }
+        .progress-bar-bg {
+            width: 100%;
+            height: 4px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 2px;
+            overflow: hidden;
+        }
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #10b981, #059669);
+            border-radius: 2px;
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+        .demo-info {
+            color: rgba(255,255,255,0.9);
+            font-size: 11px;
+            margin-top: 8px;
+            font-weight: 500;
+        }
+        .status-display {
+            margin: 20px 0;
+            padding: 15px;
+            border-radius: 8px;
+            background: #f8f9fa;
+            border-left: 4px solid #ddd;
+        }
+        .status-icon {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            margin-right: 8px;
+            border-radius: 6px;
+            text-align: center;
+            line-height: 20px;
+            font-weight: bold;
+            color: white;
+        }
+        .status-operational { background: linear-gradient(45deg, #10b981, #059669); }
+        .status-minor { background: linear-gradient(45deg, #f59e0b, #d97706); }
+        .status-major { background: linear-gradient(45deg, #f97316, #ea580c); }
+        .status-critical { background: linear-gradient(45deg, #ef4444, #dc2626); }
+        .status-unknown { background: linear-gradient(45deg, #64748b, #475569); }
+        .badge-display {
+            display: inline-block;
+            background: #ef4444;
+            color: white;
+            padding: 2px 6px;
+            border-radius: 10px;
+            font-size: 10px;
+            font-weight: bold;
+            margin-left: 10px;
+        }
+    </style>
+</head>
+<body>
+    <h1>🎬 Demo/Test Functionality Preview</h1>
+    
+    <p>This demonstrates how the new streamlined Demo/Test button will work in your extension:</p>
+    
+    <div class="demo-preview">
+        <div class="demo-section">
+            <button class="demo-button" id="demoBtn" onclick="startDemo()">
+                <span id="demoIcon">🎬</span>
+                <span id="demoText">Demo/Test</span>
+            </button>
+            <div class="progress-container" id="progressContainer">
+                <div class="progress-bar-bg">
+                    <div class="progress-bar" id="progressBar"></div>
+                </div>
+                <div class="demo-info" id="demoInfo">Starting demo...</div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="status-display" id="statusDisplay">
+        <h3>Current Status Preview:</h3>
+        <div id="statusPreview">
+            <span class="status-icon operational" id="statusIcon">?</span>
+            <span id="statusText">Ready for demo</span>
+            <span class="badge-display" id="badgePreview" style="display: none;">0</span>
+        </div>
+    </div>
+    
+    <div class="status-display">
+        <h3>Demo Features:</h3>
+        <ul>
+            <li>✅ <strong>Single "Demo/Test" button</strong> - No expandable section</li>
+            <li>✅ <strong>20-second cycle</strong> through all 5 status states</li>
+            <li>✅ <strong>Real browser extension badge updates</strong> with issue counts</li>
+            <li>✅ <strong>Progress bar</strong> shows demo progression</li>
+            <li>✅ <strong>Status descriptions</strong> with issue counts (1/5, 2/5, etc.)</li>
+            <li>✅ <strong>AI icon color changes</strong> for each status state</li>
+            <li>✅ <strong>Automatic restoration</strong> of actual status after demo</li>
+        </ul>
+    </div>
+    
+    <div class="status-display">
+        <h3>Demo Status Cycle:</h3>
+        <ol>
+            <li><span class="status-icon operational">✓</span> <strong>Operational</strong> - All systems vibing! (0 issues)</li>
+            <li><span class="status-icon minor">⚠</span> <strong>Minor Issues</strong> - 2 services affected</li>
+            <li><span class="status-icon major">⚡</span> <strong>Major Issues</strong> - 4 services disrupted</li>
+            <li><span class="status-icon critical">✕</span> <strong>Critical</strong> - 6 services down!</li>
+            <li><span class="status-icon unknown">?</span> <strong>Unknown</strong> - Unable to connect (0 issues)</li>
+        </ol>
+    </div>
+
+    <script>
+        let demoRunning = false;
+        let demoTimer;
+        
+        const statusStates = [
+            { status: 'operational', icon: '✓', text: 'All systems operational - AI tools vibing!', issues: 0 },
+            { status: 'minor', icon: '⚠', text: 'Minor issues - 2 services affected', issues: 2 },
+            { status: 'major', icon: '⚡', text: 'Major issues - 4 services disrupted', issues: 4 },
+            { status: 'critical', icon: '✕', text: 'Critical - 6 services down!', issues: 6 },
+            { status: 'unknown', icon: '?', text: 'Status unknown - unable to connect', issues: 0 }
+        ];
+        
+        function startDemo() {
+            if (demoRunning) {
+                resetDemo();
+                return;
+            }
+            
+            demoRunning = true;
+            const btn = document.getElementById('demoBtn');
+            const progress = document.getElementById('progressContainer');
+            const progressBar = document.getElementById('progressBar');
+            const demoInfo = document.getElementById('demoInfo');
+            const demoIcon = document.getElementById('demoIcon');
+            const demoText = document.getElementById('demoText');
+            
+            // Update button
+            btn.disabled = true;
+            demoIcon.textContent = '🔄';
+            demoText.textContent = 'Running Demo...';
+            progress.style.display = 'block';
+            
+            let currentState = 0;
+            let progress_val = 0;
+            const totalDuration = 20000;
+            const stateInterval = totalDuration / statusStates.length;
+            const progressInterval = 100;
+            
+            // Start with first state
+            updateStatusDisplay(statusStates[0], 1);
+            
+            demoTimer = setInterval(() => {
+                progress_val += progressInterval;
+                const progressPercent = (progress_val / totalDuration) * 100;
+                progressBar.style.width = progressPercent + '%';
+                
+                // Check if we should move to next state
+                const newState = Math.floor(progress_val / stateInterval);
+                if (newState !== currentState && newState < statusStates.length) {
+                    currentState = newState;
+                    updateStatusDisplay(statusStates[currentState], currentState + 1);
+                }
+                
+                // End demo
+                if (progress_val >= totalDuration) {
+                    clearInterval(demoTimer);
+                    endDemo();
+                }
+            }, progressInterval);
+        }
+        
+        function updateStatusDisplay(state, stateNum) {
+            const statusIcon = document.getElementById('statusIcon');
+            const statusText = document.getElementById('statusText');
+            const demoInfo = document.getElementById('demoInfo');
+            const badgePreview = document.getElementById('badgePreview');
+            
+            statusIcon.className = `status-icon ${state.status}`;
+            statusIcon.textContent = state.icon;
+            statusText.textContent = state.text;
+            demoInfo.textContent = `${state.text} (${stateNum}/5)`;
+            
+            // Show badge if there are issues
+            if (state.issues > 0) {
+                badgePreview.textContent = state.issues;
+                badgePreview.style.display = 'inline-block';
+            } else {
+                badgePreview.style.display = 'none';
+            }
+        }
+        
+        function resetDemo() {
+            if (demoTimer) {
+                clearInterval(demoTimer);
+            }
+            endDemo();
+        }
+        
+        function endDemo() {
+            demoRunning = false;
+            const btn = document.getElementById('demoBtn');
+            const progress = document.getElementById('progressContainer');
+            const progressBar = document.getElementById('progressBar');
+            const demoInfo = document.getElementById('demoInfo');
+            const demoIcon = document.getElementById('demoIcon');
+            const demoText = document.getElementById('demoText');
+            
+            btn.disabled = false;
+            demoIcon.textContent = '🎬';
+            demoText.textContent = 'Demo/Test';
+            progressBar.style.width = '0%';
+            demoInfo.textContent = 'Demo completed! Restoring actual status...';
+            
+            setTimeout(() => {
+                progress.style.display = 'none';
+                // Reset to initial state
+                updateStatusDisplay({ status: 'operational', icon: '?', text: 'Ready for demo', issues: 0 }, 0);
+            }, 2000);
+        }
+    </script>
+</body>
+</html>
