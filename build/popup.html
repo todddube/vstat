@@ -24,7 +24,7 @@
 
         .header {
             display: flex;
-            align-items: center;
+            flex-direction: column;
             margin-bottom: 16px;
             padding-bottom: 12px;
             border-bottom: 1px solid #e5e7eb;
@@ -33,6 +33,27 @@
             padding: 16px 16px 12px 16px;
             border-radius: 12px 12px 0 0;
             box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08), 0 1px 3px rgba(0, 0, 0, 0.05);
+        }
+
+        .header-title-row {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            margin-bottom: 12px;
+        }
+
+        .header-controls-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            width: 100%;
+        }
+
+        .header-buttons {
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
 
         .vibe-stats-icon {
@@ -44,9 +65,11 @@
         .status-title {
             font-weight: 600;
             margin: 0;
+            margin-left: 8px;
             font-size: 16px;
             color: white;
             text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+            text-align: center;
         }
 
         .status-indicator {
@@ -66,8 +89,8 @@
         .last-updated {
             color: rgba(255,255,255,0.8);
             font-size: 12px;
-            margin-top: 4px;
             text-shadow: 0 1px 1px rgba(0,0,0,0.3);
+            flex: 1;
         }
 
         .incidents-section {
@@ -169,11 +192,12 @@
             padding: 6px 14px;
             font-size: 12px;
             cursor: pointer;
-            float: right;
-            margin-top: -4px;
             transition: all 0.2s ease;
             backdrop-filter: blur(12px);
             font-weight: 500;
+            height: 32px;
+            display: flex;
+            align-items: center;
         }
 
         .refresh-btn:hover:not(:disabled) {
@@ -249,6 +273,34 @@
             animation: lightning-glow 2s ease-in-out infinite;
         }
 
+        .header-btn {
+            background: rgba(255,255,255,0.15);
+            color: white;
+            border: 1px solid rgba(255,255,255,0.25);
+            border-radius: 20px;
+            padding: 6px 14px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            backdrop-filter: blur(12px);
+            font-weight: 500;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .header-btn:hover:not(:disabled) {
+            background: rgba(255,255,255,0.2);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+
+        .header-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
         .about-btn {
             background: rgba(255,255,255,0.1);
             color: white;
@@ -257,11 +309,11 @@
             padding: 6px 12px;
             font-size: 12px;
             cursor: pointer;
-            float: right;
-            margin-top: -4px;
-            margin-right: 10px;
             transition: all 0.2s ease;
             backdrop-filter: blur(12px);
+            height: 32px;
+            display: flex;
+            align-items: center;
         }
 
         .about-btn:hover {
@@ -956,16 +1008,27 @@
 </head>
 <body>
     <div class="header">
-        <img src="icons/lightning-32.png" alt="Vibe Stats status icon" class="vibe-stats-icon" id="status-icon">
-        <div>
+        <div class="header-title-row">
+            <img src="icons/ai-vibe-32.png" alt="Vibe Stats status icon" class="vibe-stats-icon" id="status-icon">
             <h3 class="status-title">
                 Vibe Stats ⚡ Dev Tools Monitor
                 <span class="status-indicator" id="status-indicator" role="img"></span>
             </h3>
-            <div class="last-updated" id="last-updated" aria-live="polite">Loading...</div>
         </div>
-        <button class="about-btn" id="about-btn" aria-label="About Vibe Stats extension" title="About">About</button>
-        <button class="refresh-btn" id="refresh-btn" aria-label="Refresh status data" title="Refresh status (Ctrl+R)">Refresh</button>
+        <div class="header-controls-row">
+            <div class="last-updated" id="last-updated" aria-live="polite">Loading...</div>
+            <div class="header-buttons">
+                <button class="header-btn refresh-btn" id="refresh-btn" aria-label="Refresh status data" title="Refresh status (Ctrl+R)">
+                    🔄 Refresh
+                </button>
+                <button class="header-btn demo-btn" id="demo-btn" aria-label="Run demo test" title="Run 20-second demo test">
+                    🎬 Demo
+                </button>
+                <button class="header-btn about-btn" id="about-btn" aria-label="About Vibe Stats extension" title="About">
+                    ℹ️ About
+                </button>
+            </div>
+        </div>
     </div>
 
     <!-- Claude Services Section -->
@@ -1045,7 +1108,7 @@
         <div class="about-content">
             <button class="about-close" id="about-close" aria-label="Close about dialog">&times;</button>
             <div class="about-header">
-                <img src="icons/lightning-48.png" alt="Vibe Stats Icon" class="about-icon">
+                <img src="icons/ai-vibe-48.png" alt="Vibe Stats Icon" class="about-icon">
                 <h2 class="about-title" id="about-title">Vibe Stats ⚡</h2>
                 <p class="about-version" id="about-version">Version 1.0.1</p>
             </div>
@@ -1066,21 +1129,6 @@
         </div>
     </div>
 
-    <!-- Demo/Testing Section -->
-    <div class="testing-section" id="testing-section">
-        <div class="demo-controls">
-            <button class="demo-button primary" id="start-demo" title="Run 20-second demo showing all status states and badges">
-                <span class="demo-icon">🎬</span>
-                <span class="demo-name">Demo/Test</span>
-            </button>
-            <div class="demo-status" id="demo-status" style="display: none;">
-                <div class="demo-progress">
-                    <div class="progress-bar" id="progress-bar"></div>
-                </div>
-                <div class="demo-info" id="demo-info">Running demo...</div>
-            </div>
-        </div>
-    </div>
 
     <script src="popup.js"></script>
 </body>

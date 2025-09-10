@@ -29,7 +29,8 @@
       "Bash(start create-ai-vibe-icons.html)",
       "Bash(start generate-ai-icons.html)",
       "Bash(start icon_generator.html)",
-      "Bash(start test-demo.html)"
+      "Bash(start test-demo.html)",
+      "Bash(tree:*)"
     ],
     "deny": [],
     "ask": []

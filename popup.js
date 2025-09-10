@@ -107,7 +107,7 @@ class VStatePopupController {
       });
       
       // Demo button click handler
-      const startDemoBtn = document.getElementById('start-demo');
+      const startDemoBtn = document.getElementById('demo-btn');
       
       if (startDemoBtn) {
         startDemoBtn.addEventListener('click', (e) => {
@@ -352,13 +352,13 @@ class VStatePopupController {
 
     // Update Claude service icons based on status data
     const claudeServices = {
-      'claude-web': 'claude.ai',
-      'claude-api': 'API',
-      'claude-dashboard': 'Console',
-      'claude-docs': 'Documentation'
+      'claude-web': ['claude.ai', 'claude frontend', 'claude.ai website', 'web interface'],
+      'claude-api': ['API', 'claude api', 'anthropic api', 'api.anthropic.com'],
+      'claude-dashboard': ['Console', 'anthropic console', 'console.anthropic.com', 'dashboard'],
+      'claude-docs': ['Documentation', 'docs', 'support', 'docs.anthropic.com', 'documentation site', 'help center']
     };
 
-    Object.entries(claudeServices).forEach(([serviceId, componentName]) => {
+    Object.entries(claudeServices).forEach(([serviceId, componentNames]) => {
       const serviceEl = document.querySelector(`[data-service="${serviceId}"]`);
       if (!serviceEl) return;
 
@@ -368,12 +368,26 @@ class VStatePopupController {
       // Find matching component in Claude status
       let status = 'unknown';
       if (claudeStatus.components) {
-        const component = claudeStatus.components.find(comp => 
-          comp.name.toLowerCase().includes(componentName.toLowerCase()) ||
-          componentName.toLowerCase().includes(comp.name.toLowerCase())
-        );
+        // Debug: Log component names for troubleshooting
+        if (serviceId === 'claude-docs') {
+          console.log('Claude components available:', claudeStatus.components.map(c => c.name));
+          console.log('Looking for:', componentNames);
+        }
+        
+        const component = claudeStatus.components.find(comp => {
+          const compName = comp.name.toLowerCase();
+          return componentNames.some(name => 
+            compName.includes(name.toLowerCase()) ||
+            name.toLowerCase().includes(compName)
+          );
+        });
         if (component) {
           status = this.mapComponentStatus(component.status);
+          if (serviceId === 'claude-docs') {
+            console.log('Found matching component:', component.name, 'Status:', component.status, 'Mapped to:', status);
+          }
+        } else if (serviceId === 'claude-docs') {
+          console.log('No matching component found for claude-docs');
         }
       }
 
@@ -390,13 +404,13 @@ class VStatePopupController {
 
     // Update GitHub service icons based on status data
     const githubServices = {
-      'github-copilot': 'Copilot',
-      'github-api': 'API',
-      'github-codespaces': 'Codespaces',
-      'github-actions': 'Actions'
+      'github-copilot': ['Copilot', 'github copilot', 'copilot for business', 'copilot for individuals'],
+      'github-api': ['API', 'github api', 'rest api', 'graphql api', 'api requests'],
+      'github-codespaces': ['Codespaces', 'github codespaces', 'cloud development environment'],
+      'github-actions': ['Actions', 'github actions', 'workflows', 'ci/cd']
     };
 
-    Object.entries(githubServices).forEach(([serviceId, componentName]) => {
+    Object.entries(githubServices).forEach(([serviceId, componentNames]) => {
       const serviceEl = document.querySelector(`[data-service="${serviceId}"]`);
       if (!serviceEl) return;
 
@@ -406,10 +420,13 @@ class VStatePopupController {
       // Find matching component in GitHub status
       let status = 'unknown';
       if (githubStatus.components) {
-        const component = githubStatus.components.find(comp => 
-          comp.name.toLowerCase().includes(componentName.toLowerCase()) ||
-          componentName.toLowerCase().includes(comp.name.toLowerCase())
-        );
+        const component = githubStatus.components.find(comp => {
+          const compName = comp.name.toLowerCase();
+          return componentNames.some(name => 
+            compName.includes(name.toLowerCase()) ||
+            name.toLowerCase().includes(compName)
+          );
+        });
         if (component) {
           status = this.mapComponentStatus(component.status);
         }
@@ -454,7 +471,7 @@ class VStatePopupController {
       }
       
       if (statusIcon) {
-        statusIcon.src = `icons/lightning-32.png`;
+        statusIcon.src = `icons/ai-vibe-32.png`;
         statusIcon.alt = `Vibe Stats status: ${this.getStatusText(status)} ⚡`;
         
         // Add pulse animation for non-operational statuses
@@ -753,11 +770,7 @@ class VStatePopupController {
    * Start status demo - cycles through different status states
    */
   startStatusDemo() {
-    const startBtn = document.getElementById('start-demo');
-    const progressBar = document.getElementById('progress-bar');
-    const demoInfo = document.getElementById('demo-info');
-    const demoStatus = document.getElementById('demo-status');
-    const testingSection = document.getElementById('testing-section');
+    const startBtn = document.getElementById('demo-btn');
     
     // Demo states with issue counts for badge simulation
     const demoStates = [
@@ -769,47 +782,34 @@ class VStatePopupController {
     ];
     
     let currentStateIndex = 0;
-    let progress = 0;
-    const totalDuration = 20000; // 20 seconds
-    const stateInterval = totalDuration / demoStates.length; // 4 seconds per state
-    const progressInterval = 100; // Update every 100ms
+    const totalDuration = 15000; // 15 seconds
+    const stateInterval = totalDuration / demoStates.length; // 3 seconds per state
     
-    // Update button and show progress
+    // Update button
     startBtn.disabled = true;
-    startBtn.innerHTML = '<span class="demo-icon">🔄</span><span class="demo-name">Running Demo...</span>';
-    demoStatus.style.display = 'block';
-    testingSection.classList.add('demo-active');
+    startBtn.innerHTML = '🔄 Running Demo...';
     
     // Store original status for reset
     this.originalStatus = this.getCurrentStatus();
     
-    const progressTimer = setInterval(() => {
-      progress += progressInterval;
-      const progressPercent = (progress / totalDuration) * 100;
-      progressBar.style.width = `${progressPercent}%`;
-      
-      // Check if we should move to next state
-      const newStateIndex = Math.floor(progress / stateInterval);
-      if (newStateIndex !== currentStateIndex && newStateIndex < demoStates.length) {
-        currentStateIndex = newStateIndex;
+    const demoTimer = setInterval(() => {
+      // Move to next state
+      if (currentStateIndex < demoStates.length) {
         const state = demoStates[currentStateIndex];
         this.applyDemoStatus(state.status, state.issueCount);
-        demoInfo.textContent = `${state.description} (${currentStateIndex + 1}/5)`;
-      }
-      
-      // End demo
-      if (progress >= totalDuration) {
-        clearInterval(progressTimer);
+        currentStateIndex++;
+      } else {
+        // End demo
+        clearInterval(demoTimer);
         this.endDemo();
       }
-    }, progressInterval);
+    }, stateInterval);
     
     // Store timer for cleanup
-    this.demoTimer = progressTimer;
+    this.demoTimer = demoTimer;
     
     // Start with first state immediately
     this.applyDemoStatus(demoStates[0].status, demoStates[0].issueCount);
-    demoInfo.textContent = `${demoStates[0].description} (1/5)`;
   }
   
   /**
@@ -833,21 +833,13 @@ class VStatePopupController {
    * End the demo and reset UI
    */
   endDemo() {
-    const startBtn = document.getElementById('start-demo');
-    const progressBar = document.getElementById('progress-bar');
-    const demoInfo = document.getElementById('demo-info');
-    const demoStatus = document.getElementById('demo-status');
-    const testingSection = document.getElementById('testing-section');
+    const startBtn = document.getElementById('demo-btn');
     
     startBtn.disabled = false;
-    startBtn.innerHTML = '<span class="demo-icon">🎬</span><span class="demo-name">Demo/Test</span>';
-    progressBar.style.width = '0%';
-    demoInfo.textContent = 'Demo completed! Restoring actual status...';
-    testingSection.classList.remove('demo-active');
+    startBtn.innerHTML = '🎬 Demo';
     
-    // Hide progress after a moment and restore status
+    // Restore status after a moment
     setTimeout(() => {
-      demoStatus.style.display = 'none';
       this.restoreOriginalStatus();
     }, 2000);
   }

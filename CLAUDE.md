@@ -4,9 +4,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-**Vibe Stats** is a Chrome/Edge browser extension that monitors the status of developer tools (Claude AI and GitHub Copilot) in real-time. The extension displays service health through animated lightning bolt indicators and provides detailed incident information through a popup interface.
+**Vibe Stats** is a Chrome/Edge browser extension that monitors the status of developer tools (Claude AI and GitHub Copilot) in real-time. The extension displays service health through AI-themed vibe indicators and provides detailed incident information through a popup interface.
 
-This project has been rebranded from "Claude Status Monitor" to "Vibe Stats - Dev Tools Status Monitor" to encompass both Claude and GitHub Copilot monitoring.
+This project has evolved from "Claude Status Monitor" to "Vibe Stats - AI Dev Tools Monitor" to encompass both Claude and GitHub Copilot monitoring with an AI-themed interface.
 
 ## Commands
 
@@ -30,10 +30,9 @@ npm run prepare-release
 # Run all tests (if tests directory exists)
 npm test
 
-# Visual testing commands (if available)
+# Visual testing commands
 npm run test:visual
-npm run visual:viewer
-npm run visual:validate
+npm run test:viewer
 ```
 
 ## Architecture
@@ -54,8 +53,8 @@ npm run visual:validate
 - Keyboard navigation and accessibility support
 
 **Icon System**
-- Lightning bolt themed icons in 4 sizes: 16px, 32px, 48px, 128px
-- Single icon set with color changes via CSS filters or badge indicators
+- AI-themed vibe icons in 4 sizes: 16px, 32px, 48px, 128px
+- Single icon set with color changes via CSS filters or badge indicators  
 - Badge text shows affected service counts or alert indicators
 
 ### Status Monitoring Logic
@@ -110,7 +109,7 @@ The `build-extension.js` script:
 
 ### Required Files for Extension
 **Core files**: `manifest.json`, `background.js`, `popup.js`, `popup.html`
-**Icons**: `icons/lightning-16.png`, `icons/lightning-32.png`, `icons/lightning-48.png`, `icons/lightning-128.png`
+**Icons**: `icons/ai-vibe-16.png`, `icons/ai-vibe-32.png`, `icons/ai-vibe-48.png`, `icons/ai-vibe-128.png`
 
 ## Code Conventions
 
@@ -140,6 +139,40 @@ The `build-extension.js` script:
 
 ### Storage Schema
 Key storage items: `vstateStatus`, `claudeStatus`, `githubStatus`, `claudeIncidents`, `githubIncidents`, `lastUpdated`, `lastError`
+
+## Project Structure
+
+### Core Extension Files
+```
+vstat/
+├── manifest.json              # Extension configuration (Manifest V3)
+├── background.js              # Service worker with VStateMonitor class
+├── popup.html                 # Popup interface HTML
+├── popup.js                   # VStatePopupController class
+├── icons/                     # AI-themed vibe icons (16px to 128px)
+│   ├── ai-vibe-16.png         # Toolbar icon
+│   ├── ai-vibe-32.png         # Standard icon  
+│   ├── ai-vibe-48.png         # Large icon
+│   └── ai-vibe-128.png        # Extension page icon
+└── build-extension.js         # Production build script
+```
+
+### Development & Testing Structure
+```
+├── tests/                     # Comprehensive test suite
+│   ├── package.json           # Test dependencies and scripts
+│   ├── test-runner.js         # Main test runner
+│   ├── api-tester.js          # API integration tests
+│   ├── visual-tester.js       # Visual component tests
+│   ├── test-viewer.html       # Interactive test interface
+│   └── README.md              # Testing documentation
+├── dev/                       # Development tools and assets
+│   ├── icon-generator/        # AI-vibe icon generation tool
+│   └── README.md              # Development tools documentation
+├── build/                     # Temporary build output
+├── dist/                      # Production zip files
+└── docs/                      # Documentation (if needed)
+```
 
 ## Troubleshooting
 

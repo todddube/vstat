@@ -1,13 +1,13 @@
 # Vibe Stats - Dev Tools Status Monitor
 
-A Chrome/Edge browser extension that monitors the status of developer tools (Claude AI and GitHub Copilot) in real-time, displaying service health through animated lightning bolt indicators and detailed incident information in a popup interface.
+A Chrome/Edge browser extension that monitors the status of developer tools (Claude AI and GitHub Copilot) in real-time, displaying service health through AI-themed vibe indicators and detailed incident information in a popup interface.
 
 ![Claude Status Monitor](https://img.shields.io/badge/Chrome-Extension-4285F4?style=flat&logo=googlechrome&logoColor=white) ![Manifest V3](https://img.shields.io/badge/Manifest-V3-green) ![Status](https://img.shields.io/badge/Status-Production%20Ready-brightgreen)
 
 ## ✨ Features
 
 - **🔄 Real-time Status Monitoring**: Automatic status checks every 5 minutes for Claude AI and GitHub Copilot
-- **⚡ Lightning Bolt Indicators**: Custom yellow-orange lightning bolt icons optimized for high-resolution displays
+- **🤖 AI-Themed Vibe Indicators**: Custom AI-themed vibe icons optimized for high-resolution displays
   - 🟢 **Green**: All dev tools are vibing! 🔥
   - 🟡 **Yellow**: Minor issues with affected service count badge
   - 🔴 **Red**: Major/critical issues with alert badge (!)
@@ -138,13 +138,14 @@ vstat/
 ├── ⚙️ background.js              # Service worker (dual-service monitoring)
 ├── 🎨 popup.html                 # Popup interface HTML
 ├── 📱 popup.js                   # Popup interface logic
-├── ⚡ icons/                     # Lightning bolt icons (16px to 128px)
-│   ├── lightning-16.png          # Toolbar icon (small)
-│   ├── lightning-32.png          # Standard icon
-│   ├── lightning-48.png          # Large icon
-│   └── lightning-128.png         # Extension page icon
-├── 🎨 icon_dev/                  # Icon development tools
-│   └── create-improved-lightning-icons.html  # Icon generator
+├── 🤖 icons/                     # AI-themed vibe icons (16px to 128px)
+│   ├── ai-vibe-16.png            # Toolbar icon (small)
+│   ├── ai-vibe-32.png            # Standard icon
+│   ├── ai-vibe-48.png            # Large icon
+│   └── ai-vibe-128.png           # Extension page icon
+├── 🛠️ dev/                       # Development tools and assets
+│   ├── icon-generator/           # AI-vibe icon generation tool
+│   └── README.md                 # Development tools documentation
 ├── 🧪 tests/                     # Comprehensive test suite
 │   ├── unit/                     # Unit tests for components
 │   ├── integration/              # Integration tests
@@ -162,7 +163,7 @@ vstat/
 - **VStateMonitor Class**: Handles dual-service monitoring (Claude + GitHub Copilot)
 - **API Integration**: Fetches from both Anthropic and GitHub status endpoints
 - **Smart Retry Logic**: Exponential backoff for failed requests
-- **Lightning Icon Management**: Updates browser lightning bolt icons and badges
+- **AI Vibe Icon Management**: Updates browser AI-themed vibe icons and badges
 - **Efficient Storage**: Uses Chrome storage API for data persistence
 
 #### Popup Interface (`popup.js` + `popup.html`)
@@ -171,11 +172,11 @@ vstat/
 - **Accessibility**: Full keyboard navigation and screen reader support
 - **Error Handling**: Graceful degradation and user feedback
 
-#### Lightning Bolt Icon System
-- **Four Status States**: Green, Yellow-Orange, Red, Gray lightning bolts
-- **High-Resolution Optimized**: Thick, visible design for modern displays
+#### AI-Themed Vibe Icon System
+- **Four Status States**: Green, Yellow, Red, Gray AI-themed vibe icons
+- **High-Resolution Optimized**: Clear, modern design for contemporary displays
 - **Multiple Sizes**: 16px, 32px, 48px, 128px for different contexts
-- **Yellow-Orange Theme**: Vibrant gradient from bright gold to deep orange
+- **AI Theme**: Modern gradient design reflecting AI/dev tools aesthetic
 - **Badge Integration**: Dynamic count badges and alert indicators
 
 ## 🧪 Testing
@@ -233,7 +234,7 @@ npm run prepare-release
 
 ### Build Output
 - **📁 `./build/`**: Temporary directory with processed extension files
-- **📦 `./dist/claude-status-monitor-v1.0.0-YYYY-MM-DD.zip`**: Production zip for Chrome Web Store
+- **📦 `./dist/vibe-stats-v1.1.0-YYYY-MM-DD.zip`**: Production zip for Chrome Web Store
 - **📊 Build Report**: Detailed statistics and next steps
 
 ### Chrome Web Store Submission
@@ -310,26 +311,28 @@ npm run prepare-release
 
 ### Icon Development
 
-The extension uses custom yellow-orange lightning bolt icons optimized for high-resolution displays. Icon development tools are located in the `icon_dev/` folder:
+The extension uses custom AI-themed vibe icons optimized for high-resolution displays. Icon development tools are located in the `dev/icon-generator/` folder:
 
-#### Lightning Bolt Icon Generator
+#### AI Vibe Icon Generator
 ```bash
 # Open the HTML icon generator in your browser
-start icon_dev/create-improved-lightning-icons.html
+start dev/icon-generator/create-ai-vibe-icons.html
 # Or double-click the file to open in default browser
 ```
 
+**See `dev/README.md` for detailed usage instructions.**
+
 #### Icon Features
-- **Lightning Bolt Design**: Energy and speed aesthetic for dev tools monitoring
-- **Yellow-Orange Gradient**: Bright gold to deep orange for maximum visibility
-- **High-Resolution Optimized**: Thick strokes (15% of icon size) for crisp display
-- **Enhanced Contrast**: Inner highlights and stroke outlines for definition
+- **AI-Themed Design**: Modern aesthetic reflecting AI and dev tools monitoring
+- **Contemporary Gradient**: AI-themed colors for clear visibility
+- **High-Resolution Optimized**: Clean design optimized for modern displays
+- **Enhanced Contrast**: Clear definition and modern styling
 - **Four Sizes**: 16px (toolbar), 32px (standard), 48px (large), 128px (extension page)
 
 #### Icon Development Workflow
-1. Open `icon_dev/create-improved-lightning-icons.html` in browser
+1. Open `dev/icon-generator/create-ai-vibe-icons.html` in browser
 2. Icons are auto-generated with download links
-3. Download all four sizes (lightning-16.png through lightning-128.png)  
+3. Download all four sizes (ai-vibe-16.png through ai-vibe-128.png)  
 4. Replace existing files in `icons/` folder
 5. Reload extension in Chrome to see changes
 
