@@ -30,7 +30,9 @@
       "Bash(start generate-ai-icons.html)",
       "Bash(start icon_generator.html)",
       "Bash(start test-demo.html)",
-      "Bash(tree:*)"
+      "Bash(tree:*)",
+      "Bash(start chrome-web-store-generator.html)",
+      "Bash(start dev/screenshot-resizer.html)"
     ],
     "deny": [],
     "ask": []

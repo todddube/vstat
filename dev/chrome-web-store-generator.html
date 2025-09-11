@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chrome Web Store Assets - Vibe Stats</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; background: #f5f5f5; }
+        .container { max-width: 1200px; margin: 0 auto; background: white; padding: 20px; border-radius: 8px; }
+        .asset { margin: 30px 0; border: 1px solid #ddd; padding: 20px; border-radius: 8px; }
+        canvas { border: 1px solid #ccc; margin: 10px 0; }
+        .btn { background: #4285f4; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; margin: 5px; }
+        .btn:hover { background: #3367d6; }
+        .generate { background: #0f9d58; padding: 15px 30px; font-size: 16px; }
+        h3 { color: #333; margin-bottom: 5px; }
+        .specs { color: #666; font-size: 14px; margin-bottom: 15px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Chrome Web Store Assets Generator</h1>
+        <p>Generate the 3 required assets for Chrome Web Store submission</p>
+        
+        <button class="btn generate" onclick="generateAll()">🚀 Generate All Assets</button>
+        
+        <!-- Large Promotional Tile -->
+        <div class="asset">
+            <h3>1. Large Promotional Tile</h3>
+            <div class="specs">Size: 440×280px - Main promotional image</div>
+            <canvas id="promo440" width="440" height="280"></canvas>
+            <button class="btn" onclick="download('promo440', 'vibe-stats-promo-440x280.png')">Download</button>
+        </div>
+
+        <!-- Screenshot -->
+        <div class="asset">
+            <h3>2. Screenshot</h3>
+            <div class="specs">Size: 1280×800px - Product screenshot</div>
+            <canvas id="screenshot1280" width="1280" height="800"></canvas>
+            <button class="btn" onclick="download('screenshot1280', 'vibe-stats-screenshot-1280x800.png')">Download</button>
+        </div>
+
+        <!-- Small Promotional Tile -->
+        <div class="asset">
+            <h3>3. Small Promotional Tile</h3>
+            <div class="specs">Size: 128×128px - Small promotional tile</div>
+            <canvas id="promo128" width="128" height="128"></canvas>
+            <button class="btn" onclick="download('promo128', 'vibe-stats-promo-128x128.png')">Download</button>
+        </div>
+    </div>
+
+    <script>
+        let sourceImg = null;
+
+        // Load source image
+        window.onload = () => {
+            const img = new Image();
+            img.onload = () => sourceImg = img;
+            img.src = 'vstat_screenshot.jpg';
+        };
+
+        function generateAll() {
+            if (!sourceImg) return alert('Loading image...');
+            
+            generate440x280();
+            generate1280x800(); 
+            generate128x128();
+            
+            alert('All assets generated! Click download buttons.');
+        }
+
+        function generate440x280() {
+            const canvas = document.getElementById('promo440');
+            const ctx = canvas.getContext('2d');
+            
+            // Gradient background
+            const grad = ctx.createLinearGradient(0, 0, 440, 280);
+            grad.addColorStop(0, '#667eea');
+            grad.addColorStop(1, '#764ba2');
+            ctx.fillStyle = grad;
+            ctx.fillRect(0, 0, 440, 280);
+
+            // Title
+            ctx.fillStyle = 'white';
+            ctx.font = 'bold 28px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('Vibe Stats', 220, 50);
+            
+            ctx.font = '16px Arial';
+            ctx.fillText('⚡ Dev Tools Monitor', 220, 75);
+
+            // Screenshot preview
+            if (sourceImg) {
+                const scale = Math.min(280/sourceImg.width, 160/sourceImg.height);
+                const w = sourceImg.width * scale;
+                const h = sourceImg.height * scale;
+                ctx.shadowColor = 'rgba(0,0,0,0.3)';
+                ctx.shadowBlur = 8;
+                ctx.drawImage(sourceImg, (440-w)/2, 100, w, h);
+                ctx.shadowColor = 'transparent';
+            }
+
+            // Bottom text
+            ctx.font = '12px Arial';
+            ctx.fillStyle = 'rgba(255,255,255,0.9)';
+            ctx.fillText('Monitor Claude AI & GitHub Copilot', 220, 265);
+        }
+
+        function generate1280x800() {
+            const canvas = document.getElementById('screenshot1280');
+            const ctx = canvas.getContext('2d');
+            
+            // Background
+            const grad = ctx.createLinearGradient(0, 0, 1280, 800);
+            grad.addColorStop(0, '#f8fafc');
+            grad.addColorStop(1, '#e2e8f0');
+            ctx.fillStyle = grad;
+            ctx.fillRect(0, 0, 1280, 800);
+
+            // Title
+            ctx.fillStyle = '#1e293b';
+            ctx.font = 'bold 42px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('Vibe Stats - Dev Tools Monitor', 640, 70);
+
+            ctx.font = '22px Arial';
+            ctx.fillStyle = '#64748b';
+            ctx.fillText('Real-time status monitoring for your dev tools', 640, 110);
+
+            // Main screenshot
+            if (sourceImg) {
+                const scale = Math.min(700/sourceImg.width, 450/sourceImg.height);
+                const w = sourceImg.width * scale;
+                const h = sourceImg.height * scale;
+                ctx.shadowColor = 'rgba(0,0,0,0.2)';
+                ctx.shadowBlur = 15;
+                ctx.drawImage(sourceImg, (1280-w)/2, 160, w, h);
+                ctx.shadowColor = 'transparent';
+            }
+
+            // Features
+            ctx.fillStyle = '#475569';
+            ctx.font = '16px Arial';
+            ctx.textAlign = 'left';
+            const features = ['🎯 Real-time monitoring', '⚡ 5-min updates', '🔔 Status alerts', '📊 Incident details'];
+            features.forEach((f, i) => ctx.fillText(f, 200 + i*220, 700));
+        }
+
+        function generate128x128() {
+            const canvas = document.getElementById('promo128');
+            const ctx = canvas.getContext('2d');
+            
+            // Gradient background
+            const grad = ctx.createRadialGradient(64, 64, 0, 64, 64, 64);
+            grad.addColorStop(0, '#a855f7');
+            grad.addColorStop(1, '#6366f1');
+            ctx.fillStyle = grad;
+            ctx.fillRect(0, 0, 128, 128);
+
+            // App icon style
+            ctx.fillStyle = 'white';
+            ctx.font = 'bold 20px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('VS', 64, 40);
+
+            // Status dots
+            const colors = ['#10b981', '#f59e0b', '#ef4444'];
+            colors.forEach((color, i) => {
+                ctx.fillStyle = color;
+                ctx.beginPath();
+                ctx.arc(30 + i*34, 70, 6, 0, 2*Math.PI);
+                ctx.fill();
+            });
+
+            ctx.fillStyle = 'rgba(255,255,255,0.9)';
+            ctx.font = '9px Arial';
+            ctx.fillText('DEV TOOLS', 64, 100);
+        }
+
+        function download(canvasId, filename) {
+            const canvas = document.getElementById(canvasId);
+            const link = document.createElement('a');
+            link.download = filename;
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+        }
+    </script>
+</body>
+</html>
