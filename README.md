@@ -4,6 +4,8 @@ A Chrome/Edge browser extension that monitors the status of developer tools (Cla
 
 ![Claude Status Monitor](https://img.shields.io/badge/Chrome-Extension-4285F4?style=flat&logo=googlechrome&logoColor=white) ![Manifest V3](https://img.shields.io/badge/Manifest-V3-green) ![Status](https://img.shields.io/badge/Status-Production%20Ready-brightgreen)
 
+📄 **[Privacy Policy](privacy.md)** - Learn about our data collection and privacy practices
+
 ## ✨ Features
 
 - **🔄 Real-time Status Monitoring**: Automatic status checks every 5 minutes for Claude AI and GitHub Copilot
