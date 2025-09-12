@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "Vibe Stats - AI Dev Tools Monitor",
   "version": "1.1.0",
-  "description": "Monitor Claude AI and GitHub Copilot status with real-time updates and AI-themed interface - Keep your dev tools vibe in check! 🤖⚡",
+  "description": "Monitor Claude AI, GitHub Copilot, and Azure DevOps status with real-time updates and AI-themed interface - Keep your dev tools vibe in check! 🤖☁️⚡",
   "author": "Todd Dube - https://github.com/todddube",
   "minimum_chrome_version": "88",
   "permissions": [
@@ -11,7 +11,8 @@
   ],
   "host_permissions": [
     "https://status.anthropic.com/*",
-    "https://www.githubstatus.com/*"
+    "https://www.githubstatus.com/*",
+    "https://status.dev.azure.com/*"
   ],
   "background": {
     "service_worker": "background.js",

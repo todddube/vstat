@@ -1,12 +1,14 @@
 # Vibe Stats - Dev Tools Status Monitor
 
-A Chrome/Edge browser extension that monitors the status of developer tools (Claude AI and GitHub Copilot) in real-time, displaying service health through AI-themed vibe indicators and detailed incident information in a popup interface.
+A Chrome/Edge browser extension that monitors the status of developer tools (Claude AI, GitHub Copilot, and Azure DevOps) in real-time, displaying service health through AI-themed vibe indicators and detailed incident information in a popup interface.
 
 ![Claude Status Monitor](https://img.shields.io/badge/Chrome-Extension-4285F4?style=flat&logo=googlechrome&logoColor=white) ![Manifest V3](https://img.shields.io/badge/Manifest-V3-green) ![Status](https://img.shields.io/badge/Status-Production%20Ready-brightgreen)
 
+📄 **[Privacy Policy](privacy.md)** - Learn about our data collection and privacy practices
+
 ## ✨ Features
 
-- **🔄 Real-time Status Monitoring**: Automatic status checks every 5 minutes for Claude AI and GitHub Copilot
+- **🔄 Real-time Status Monitoring**: Automatic status checks every 5 minutes for Claude AI, GitHub Copilot, and Azure DevOps
 - **🤖 AI-Themed Vibe Indicators**: Custom AI-themed vibe icons optimized for high-resolution displays
   - 🟢 **Green**: All dev tools are vibing! 🔥
   - 🟡 **Yellow**: Minor issues with affected service count badge

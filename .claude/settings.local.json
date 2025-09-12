@@ -32,7 +32,10 @@
       "Bash(start test-demo.html)",
       "Bash(tree:*)",
       "Bash(start chrome-web-store-generator.html)",
-      "Bash(start dev/screenshot-resizer.html)"
+      "Bash(start dev/screenshot-resizer.html)",
+      "WebSearch",
+      "WebFetch(domain:azure.status.microsoft)",
+      "WebFetch(domain:status.azure.microsoft.com)"
     ],
     "deny": [],
     "ask": []

@@ -8,6 +8,10 @@ class VStatePopupController {
     this.errorRetryCount = 0;
     this.maxErrorRetries = 3;
     this.expandedServices = new Set();
+    this.fontScale = 1.0;
+    this.minFontScale = 0.7;
+    this.maxFontScale = 1.5;
+    this.fontScaleStep = 0.1;
     this.init().catch(error => {
       console.error('Failed to initialize popup:', error);
       this.showError('Failed to initialize');
@@ -19,6 +23,7 @@ class VStatePopupController {
    */
   async init() {
     try {
+      await this.loadFontScale();
       await this.loadStatus();
       this.setupEventListeners();
       this.setupKeyboardNavigation();
@@ -120,6 +125,24 @@ class VStatePopupController {
         });
       }
 
+      // Font scaling button handlers
+      const fontIncreaseBtn = document.getElementById('font-increase');
+      const fontDecreaseBtn = document.getElementById('font-decrease');
+      
+      if (fontIncreaseBtn) {
+        fontIncreaseBtn.addEventListener('click', (e) => {
+          e.preventDefault();
+          this.increaseFontSize();
+        });
+      }
+      
+      if (fontDecreaseBtn) {
+        fontDecreaseBtn.addEventListener('click', (e) => {
+          e.preventDefault();
+          this.decreaseFontSize();
+        });
+      }
+
     } catch (error) {
       console.error('Error setting up event listeners:', error);
     }
@@ -208,8 +231,8 @@ class VStatePopupController {
     try {
       // Get status data from storage
       const result = await chrome.storage.local.get([
-        'vstateStatus', 'claudeStatus', 'githubStatus', 
-        'claudeIncidents', 'githubIncidents'
+        'vstateStatus', 'claudeStatus', 'githubStatus', 'azureStatus',
+        'claudeIncidents', 'githubIncidents', 'azureIncidents'
       ]);
       
       let incidents = [];
@@ -221,15 +244,19 @@ class VStatePopupController {
       } else if (sectionName === 'github') {
         incidents = result.githubIncidents || [];
         sectionTitle = '🐙 GitHub Services Recent Issues';
+      } else if (sectionName === 'azure') {
+        incidents = result.azureIncidents || [];
+        sectionTitle = '☁️ Azure DevOps Recent Issues';
       }
       
       // Get recent incidents (last 5)
       const recentIncidents = incidents.slice(0, 5);
       
       if (recentIncidents.length === 0) {
-        const headerColor = sectionName === 'claude' ? '#D97706' : '#24292E';
+        const headerColor = this.getSectionHeaderColor(sectionName);
+        const gradientEndColor = this.getSectionGradientEndColor(sectionName);
         incidentsContent.innerHTML = `
-          <div style="padding: 10px; background: linear-gradient(135deg, ${headerColor} 0%, ${sectionName === 'claude' ? '#DC2626' : '#0D1117'} 100%); border-radius: 6px; color: white; margin-bottom: 10px;">
+          <div style="padding: 10px; background: linear-gradient(135deg, ${headerColor} 0%, ${gradientEndColor} 100%); border-radius: 6px; color: white; margin-bottom: 10px;">
             <strong style="text-shadow: 0 1px 2px rgba(0,0,0,0.3);">${sectionTitle}</strong>
           </div>
           <div class="no-incidents">
@@ -237,9 +264,10 @@ class VStatePopupController {
           </div>
         `;
       } else {
-        const headerColor = sectionName === 'claude' ? '#D97706' : '#24292E';
+        const headerColor = this.getSectionHeaderColor(sectionName);
+        const gradientEndColor = this.getSectionGradientEndColor(sectionName);
         incidentsContent.innerHTML = `
-          <div style="margin-bottom: 15px; padding: 10px; background: linear-gradient(135deg, ${headerColor} 0%, ${sectionName === 'claude' ? '#DC2626' : '#0D1117'} 100%); border-radius: 6px; color: white;">
+          <div style="margin-bottom: 15px; padding: 10px; background: linear-gradient(135deg, ${headerColor} 0%, ${gradientEndColor} 100%); border-radius: 6px; color: white;">
             <strong style="font-size: 14px; text-shadow: 0 1px 2px rgba(0,0,0,0.3);">${sectionTitle}</strong>
           </div>
           ${recentIncidents.map(incident => this.renderIncident(incident)).join('')}
@@ -248,13 +276,15 @@ class VStatePopupController {
       
     } catch (error) {
       console.error('Error loading section incidents:', error);
-      const headerColor = sectionName === 'claude' ? '#D97706' : '#24292E';
+      const headerColor = this.getSectionHeaderColor(sectionName);
+      const gradientEndColor = this.getSectionGradientEndColor(sectionName);
+      const displayName = this.getSectionDisplayName(sectionName);
       incidentsContent.innerHTML = `
-        <div style="padding: 10px; background: linear-gradient(135deg, ${headerColor} 0%, ${sectionName === 'claude' ? '#DC2626' : '#0D1117'} 100%); border-radius: 6px; color: white; margin-bottom: 10px;">
-          <strong style="text-shadow: 0 1px 2px rgba(0,0,0,0.3);">${sectionName === 'claude' ? '🤖 Claude AI Recent Issues' : '🐙 GitHub Services Recent Issues'}</strong>
+        <div style="padding: 10px; background: linear-gradient(135deg, ${headerColor} 0%, ${gradientEndColor} 100%); border-radius: 6px; color: white; margin-bottom: 10px;">
+          <strong style="text-shadow: 0 1px 2px rgba(0,0,0,0.3);">${displayName} Recent Issues</strong>
         </div>
         <div class="no-incidents error">
-          Error loading incidents for ${sectionName === 'claude' ? 'Claude AI' : 'GitHub Services'}
+          Error loading incidents for ${displayName}
         </div>
       `;
     }
@@ -281,9 +311,49 @@ class VStatePopupController {
       'github-copilot': 'GitHub Copilot',
       'github-api': 'GitHub API',
       'github-codespaces': 'GitHub Codespaces',
-      'github-actions': 'GitHub Actions'
+      'github-actions': 'GitHub Actions',
+      'azure-pipelines': 'Azure Pipelines',
+      'azure-repos': 'Azure Repos',
+      'azure-boards': 'Azure Boards',
+      'azure-artifacts': 'Azure Artifacts'
     };
     return serviceNames[serviceName] || serviceName;
+  }
+
+  /**
+   * Get section header color
+   */
+  getSectionHeaderColor(sectionName) {
+    const colors = {
+      'claude': '#D97706',
+      'github': '#24292E',
+      'azure': '#0078d4'
+    };
+    return colors[sectionName] || '#64748b';
+  }
+
+  /**
+   * Get section gradient end color
+   */
+  getSectionGradientEndColor(sectionName) {
+    const colors = {
+      'claude': '#DC2626',
+      'github': '#0D1117',
+      'azure': '#106ebe'
+    };
+    return colors[sectionName] || '#475569';
+  }
+
+  /**
+   * Get section display name
+   */
+  getSectionDisplayName(sectionName) {
+    const names = {
+      'claude': '🤖 Claude AI',
+      'github': '🐙 GitHub Services',
+      'azure': '☁️ Azure DevOps'
+    };
+    return names[sectionName] || sectionName;
   }
 
   /**
@@ -320,14 +390,16 @@ class VStatePopupController {
   async loadStatus() {
     try {
       const result = await chrome.storage.local.get([
-        'vstateStatus', 'claudeStatus', 'githubStatus', 
-        'claudeIncidents', 'githubIncidents', 'lastUpdated', 'lastError'
+        'vstateStatus', 'claudeStatus', 'githubStatus', 'azureStatus',
+        'claudeIncidents', 'githubIncidents', 'azureIncidents', 
+        'lastUpdated', 'lastError'
       ]);
 
       if (result.vstateStatus) {
         this.updateStatusDisplay(result.vstateStatus, result.lastUpdated, result.lastError);
         this.updateClaudeServices(result.claudeStatus);
         this.updateGitHubServices(result.githubStatus);
+        this.updateAzureServices(result.azureStatus);
         this.errorRetryCount = 0; // Reset error count on success
       } else {
         this.showNoData();
@@ -421,6 +493,47 @@ class VStatePopupController {
       let status = 'unknown';
       if (githubStatus.components) {
         const component = githubStatus.components.find(comp => {
+          const compName = comp.name.toLowerCase();
+          return componentNames.some(name => 
+            compName.includes(name.toLowerCase()) ||
+            name.toLowerCase().includes(compName)
+          );
+        });
+        if (component) {
+          status = this.mapComponentStatus(component.status);
+        }
+      }
+
+      iconEl.className = `service-icon ${status}`;
+      iconEl.textContent = this.getServiceIcon(status);
+    });
+  }
+
+  /**
+   * Update Azure services display
+   */
+  updateAzureServices(azureStatus) {
+    if (!azureStatus) return;
+
+    // Update Azure service icons based on status data
+    const azureServices = {
+      'azure-pipelines': ['pipelines', 'build and release', 'ci/cd'],
+      'azure-repos': ['repos', 'repositories', 'source control', 'git'],
+      'azure-boards': ['boards', 'work items', 'agile tools'],
+      'azure-artifacts': ['artifacts', 'packages', 'feeds']
+    };
+
+    Object.entries(azureServices).forEach(([serviceId, componentNames]) => {
+      const serviceEl = document.querySelector(`[data-service="${serviceId}"]`);
+      if (!serviceEl) return;
+
+      const iconEl = serviceEl.querySelector('.service-icon');
+      if (!iconEl) return;
+
+      // Find matching component in Azure status
+      let status = 'unknown';
+      if (azureStatus.components) {
+        const component = azureStatus.components.find(comp => {
           const compName = comp.name.toLowerCase();
           return componentNames.some(name => 
             compName.includes(name.toLowerCase()) ||
@@ -931,6 +1044,76 @@ class VStatePopupController {
       await chrome.action.setTitle({ title: 'Vibe Stats - AI Dev Tools Monitor 🤖⚡' });
     } catch (error) {
       console.log('Could not reset extension badge (normal in popup context)');
+    }
+  }
+
+  /**
+   * Load saved font scale from storage
+   */
+  async loadFontScale() {
+    try {
+      const result = await chrome.storage.local.get(['fontScale']);
+      if (result.fontScale !== undefined) {
+        this.fontScale = Math.max(this.minFontScale, Math.min(this.maxFontScale, result.fontScale));
+      }
+      this.applyFontScale();
+      this.updateFontScaleIndicator();
+    } catch (error) {
+      console.error('Error loading font scale:', error);
+    }
+  }
+
+  /**
+   * Save font scale to storage
+   */
+  async saveFontScale() {
+    try {
+      await chrome.storage.local.set({ fontScale: this.fontScale });
+    } catch (error) {
+      console.error('Error saving font scale:', error);
+    }
+  }
+
+  /**
+   * Apply font scale to CSS custom property
+   */
+  applyFontScale() {
+    document.documentElement.style.setProperty('--font-scale', this.fontScale.toString());
+  }
+
+  /**
+   * Update the font scale indicator display
+   */
+  updateFontScaleIndicator() {
+    const indicator = document.getElementById('font-scale-indicator');
+    if (indicator) {
+      indicator.textContent = `${Math.round(this.fontScale * 100)}%`;
+    }
+  }
+
+  /**
+   * Increase font size
+   */
+  async increaseFontSize() {
+    if (this.fontScale < this.maxFontScale) {
+      this.fontScale = Math.min(this.maxFontScale, this.fontScale + this.fontScaleStep);
+      this.fontScale = Math.round(this.fontScale * 10) / 10; // Round to 1 decimal place
+      this.applyFontScale();
+      this.updateFontScaleIndicator();
+      await this.saveFontScale();
+    }
+  }
+
+  /**
+   * Decrease font size
+   */
+  async decreaseFontSize() {
+    if (this.fontScale > this.minFontScale) {
+      this.fontScale = Math.max(this.minFontScale, this.fontScale - this.fontScaleStep);
+      this.fontScale = Math.round(this.fontScale * 10) / 10; // Round to 1 decimal place
+      this.applyFontScale();
+      this.updateFontScaleIndicator();
+      await this.saveFontScale();
     }
   }
 
