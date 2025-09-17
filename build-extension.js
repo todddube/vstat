@@ -232,12 +232,17 @@ class ExtensionBuilder {
   /**
    * Create zip file
    */
-  createZip(manifest) {
+  createZip(manifest, options = {}) {
     console.log(colorize('📦 Creating zip file...', 'cyan'));
-    
+
     const version = manifest.version;
     const timestamp = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
-    const zipName = `vibe-stats-v${version}-${timestamp}.zip`;
+
+    // For release builds, use cleaner naming
+    const zipName = options.isRelease ?
+      `vibe-stats-v${version}.zip` :
+      `vibe-stats-v${version}-${timestamp}.zip`;
+
     const zipPath = path.join(this.distDir, zipName);
     
     try {
@@ -287,31 +292,39 @@ class ExtensionBuilder {
   /**
    * Generate build report
    */
-  generateBuildReport(manifest, buildStats, zipInfo) {
+  generateBuildReport(manifest, buildStats, zipInfo, options = {}) {
     console.log(colorize('\n📋 Build Report', 'bright'));
     console.log(colorize('='.repeat(50), 'blue'));
-    
+
     console.log(colorize('📦 Extension Details:', 'cyan'));
     console.log(`   Name: ${manifest.name}`);
     console.log(`   Version: ${manifest.version}`);
     console.log(`   Description: ${manifest.description}`);
     console.log(`   Manifest Version: ${manifest.manifest_version}`);
-    
+
     console.log(colorize('\n📊 Build Statistics:', 'cyan'));
     console.log(`   Files: ${buildStats.fileCount}`);
     console.log(`   Build Size: ${buildStats.sizeKB} KB`);
     console.log(`   Zip Size: ${(zipInfo.zipSize / 1024).toFixed(2)} KB`);
     console.log(`   Compression: ${((1 - zipInfo.zipSize / buildStats.totalSize) * 100).toFixed(1)}%`);
-    
+
     console.log(colorize('\n📁 Output Files:', 'cyan'));
     console.log(`   Build Directory: ${this.buildDir}`);
     console.log(`   Zip File: ${zipInfo.zipPath}`);
-    
-    console.log(colorize('\n🚀 Next Steps:', 'cyan'));
-    console.log('   1. Test the extension by loading the build directory');
-    console.log('   2. Upload the zip file to Chrome Web Store');
-    console.log('   3. Review the extension in the Chrome Web Store dashboard');
-    
+
+    if (options.isRelease) {
+      console.log(colorize('\n🚀 Release Build Next Steps:', 'cyan'));
+      console.log('   1. This is a release build - ready for GitHub Action');
+      console.log('   2. GitHub Action will create release and tag');
+      console.log('   3. Download zip from GitHub release for Chrome Web Store');
+      console.log('   4. Submit to Chrome Web Store Developer Dashboard');
+    } else {
+      console.log(colorize('\n🚀 Development Build Next Steps:', 'cyan'));
+      console.log('   1. Test the extension by loading the build directory');
+      console.log('   2. Upload the zip file to Chrome Web Store');
+      console.log('   3. Review the extension in the Chrome Web Store dashboard');
+    }
+
     console.log(colorize('\n✅ Build completed successfully!', 'green'));
   }
 
@@ -352,13 +365,13 @@ class ExtensionBuilder {
       const buildStats = this.calculateBuildSize();
       
       // Create zip
-      const zipInfo = this.createZip(manifest);
-      
+      const zipInfo = this.createZip(manifest, options);
+
       // Generate report
       const buildTime = ((Date.now() - startTime) / 1000).toFixed(2);
       console.log(colorize(`\n⏱️  Build completed in ${buildTime}s`, 'blue'));
-      
-      this.generateBuildReport(manifest, buildStats, zipInfo);
+
+      this.generateBuildReport(manifest, buildStats, zipInfo, options);
       
       // Cleanup if requested
       this.cleanup(options.keepBuild !== false);
@@ -399,11 +412,13 @@ ${colorize('Usage:', 'cyan')}
 ${colorize('Options:', 'cyan')}
   ${colorize('--help', 'green')}          Show this help message
   ${colorize('--clean', 'green')}         Remove build directory after creating zip
+  ${colorize('--release', 'green')}       Create release build (clean naming)
   ${colorize('--validate-only', 'green')} Only validate files, don't build
 
 ${colorize('Examples:', 'cyan')}
   node build-extension.js              # Build extension zip
   node build-extension.js --clean      # Build and clean up
+  node build-extension.js --release     # Release build
   node build-extension.js --validate-only  # Just validate files
 
 ${colorize('Output:', 'cyan')}
@@ -436,7 +451,8 @@ async function main() {
   }
   
   const options = {
-    keepBuild: !args.includes('--clean')
+    keepBuild: !args.includes('--clean'),
+    isRelease: args.includes('--release')
   };
   
   const result = await builder.build(options);

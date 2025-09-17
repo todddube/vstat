@@ -6,13 +6,21 @@
   "license": ".-.",
   "repository": {
     "type": "git",
-    "url": "https://github.com/todddube/clstat.git"
+    "url": "https://github.com/todddube/vstat"
   },
   "scripts": {
     "build": "node build-extension.js",
     "build:clean": "node build-extension.js --clean",
+    "build:release": "node build-extension.js --release",
     "validate": "node build-extension.js --validate-only",
-    "prepare-release": "npm run validate && npm run build",
+    "prepare-release": "npm run validate && npm run build:clean",
+    "release:patch": "npm run prepare-release && echo 'Ready for GitHub Action release (patch)'",
+    "release:minor": "npm run prepare-release && echo 'Ready for GitHub Action release (minor)'",
+    "release:major": "npm run prepare-release && echo 'Ready for GitHub Action release (major)'",
+    "version:check": "node sync-version.js check",
+    "version:sync": "node sync-version.js sync-to-manifest",
+    "version:set": "node sync-version.js set",
+    "version:bump": "node sync-version.js bump",
     "test": "cd tests && npm test",
     "test:api": "cd tests && npm run test:api",
     "test:visual": "cd tests && npm run test:visual",

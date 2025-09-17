@@ -247,6 +247,126 @@ npm run prepare-release
 
 **📖 [Complete Build Documentation](BUILD.md)**
 
+## 🚀 Release Management
+
+### Automated Release Workflow
+
+The project includes a GitHub Action for automated releases that handles version bumping, building, tagging, and creating GitHub releases.
+
+#### Quick Release Commands
+
+```bash
+# Check version sync status
+npm run version:check
+
+# Sync versions (manifest.json is source of truth)
+npm run version:sync
+
+# Prepare for release (build and validate)
+npm run prepare-release
+
+# Ready for GitHub Action release
+npm run release:patch    # For patch releases (1.0.0 → 1.0.1)
+npm run release:minor    # For minor releases (1.0.0 → 1.1.0)
+npm run release:major    # For major releases (1.0.0 → 2.0.0)
+```
+
+#### GitHub Action Release Process
+
+The automated release workflow is triggered manually from the GitHub Actions tab:
+
+1. **Go to GitHub Actions**: Navigate to the Actions tab in your repository
+2. **Select Release Workflow**: Choose "Release Build and Deploy"
+3. **Run Workflow**: Click "Run workflow" and specify:
+   - **Version Type**: patch, minor, or major
+   - **Release Notes**: Optional custom notes for the release
+
+#### What the GitHub Action Does
+
+The automated workflow performs these steps:
+
+1. **📋 Version Management**:
+   - Reads current version from `manifest.json`
+   - Bumps version according to semver (patch/minor/major)
+   - Updates both `manifest.json` and `package.json`
+
+2. **🔍 Validation & Build**:
+   - Validates all extension files
+   - Runs the build process with `npm run build:clean`
+   - Creates production-ready zip file
+
+3. **📝 Git Operations**:
+   - Commits version changes to repository
+   - Creates and pushes git tag (e.g., `v1.2.3`)
+   - Pushes changes to main branch
+
+4. **🚀 GitHub Release**:
+   - Creates GitHub release with changelog
+   - Attaches extension zip file and manifest
+   - Generates Chrome Web Store submission notes
+
+5. **📦 Chrome Web Store Prep**:
+   - Provides submission checklist
+   - Includes store description template
+   - Ready-to-upload zip file
+
+#### Manual Version Management
+
+For more granular control, use the version sync utilities:
+
+```bash
+# Set specific version
+npm run version:set 1.2.3
+
+# Bump version types
+npm run version:bump patch   # 1.0.0 → 1.0.1
+npm run version:bump minor   # 1.0.0 → 1.1.0
+npm run version:bump major   # 1.0.0 → 2.0.0
+
+# Check if manifest.json and package.json are in sync
+npm run version:check
+
+# Sync package.json to manifest.json version
+npm run version:sync
+```
+
+#### Release Workflow Best Practices
+
+1. **Pre-Release Checklist**:
+   - ✅ All tests pass: `npm test`
+   - ✅ Visual tests validate: `npm run test:visual`
+   - ✅ Build succeeds: `npm run prepare-release`
+   - ✅ Extension loads and works in Chrome
+
+2. **Release Types**:
+   - **Patch**: Bug fixes, small improvements
+   - **Minor**: New features, significant enhancements
+   - **Major**: Breaking changes, major redesigns
+
+3. **Post-Release**:
+   - ✅ Download zip from GitHub release
+   - ✅ Submit to Chrome Web Store Developer Dashboard
+   - ✅ Test released version in clean browser profile
+
+#### Release Files Structure
+
+After a GitHub Action release, you'll find:
+
+```
+📦 GitHub Release Assets:
+├── 📁 vibe-stats-v1.2.3.zip      # Ready for Chrome Web Store
+├── 📄 manifest.json              # Updated manifest file
+└── 📝 Release Notes               # Automated changelog
+
+🌐 Chrome Web Store Submission:
+├── 📋 Submission checklist
+├── 📝 Store description template
+└── 🔗 Developer dashboard link
+```
+
+**📖 [Complete Build Documentation](BUILD.md)**
+**🚀 [Detailed Release Guide](RELEASE.md)**
+
 ## 🔗 API Integration
 
 ### Dual-Service API Integration
@@ -405,6 +525,7 @@ Advanced users can modify settings by editing:
 ## 📚 Documentation Index
 
 - **📖 [BUILD.md](BUILD.md)** - Complete build system documentation and Chrome Web Store submission guide
+- **🚀 [RELEASE.md](RELEASE.md)** - Comprehensive release workflow and automated deployment guide
 - **🧪 [tests/README.md](tests/README.md)** - Comprehensive testing guide with automated and visual testing
 - **🎨 [tests/VISUAL_TESTING.md](tests/VISUAL_TESTING.md)** - Visual testing tools and interactive test viewer
 - **📱 [tests/visual-test-viewer.html](tests/visual-test-viewer.html)** - Interactive browser-based testing interface
@@ -449,7 +570,8 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 **🔗 Quick Links**
 - [📦 Build Documentation](BUILD.md)
-- [🧪 Testing Guide](tests/README.md) 
+- [🚀 Release Guide](RELEASE.md)
+- [🧪 Testing Guide](tests/README.md)
 - [🎨 Visual Testing](tests/VISUAL_TESTING.md)
 - [🌐 Interactive Test Viewer](tests/visual-test-viewer.html)
 

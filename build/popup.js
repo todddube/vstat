@@ -8,10 +8,6 @@ class VStatePopupController {
     this.errorRetryCount = 0;
     this.maxErrorRetries = 3;
     this.expandedServices = new Set();
-    this.fontScale = 1.0;
-    this.minFontScale = 0.7;
-    this.maxFontScale = 1.5;
-    this.fontScaleStep = 0.1;
     this.init().catch(error => {
       console.error('Failed to initialize popup:', error);
       this.showError('Failed to initialize');
@@ -23,7 +19,6 @@ class VStatePopupController {
    */
   async init() {
     try {
-      await this.loadFontScale();
       await this.loadStatus();
       this.setupEventListeners();
       this.setupKeyboardNavigation();
@@ -125,23 +120,6 @@ class VStatePopupController {
         });
       }
 
-      // Font scaling button handlers
-      const fontIncreaseBtn = document.getElementById('font-increase');
-      const fontDecreaseBtn = document.getElementById('font-decrease');
-      
-      if (fontIncreaseBtn) {
-        fontIncreaseBtn.addEventListener('click', (e) => {
-          e.preventDefault();
-          this.increaseFontSize();
-        });
-      }
-      
-      if (fontDecreaseBtn) {
-        fontDecreaseBtn.addEventListener('click', (e) => {
-          e.preventDefault();
-          this.decreaseFontSize();
-        });
-      }
 
     } catch (error) {
       console.error('Error setting up event listeners:', error);
@@ -1047,75 +1025,6 @@ class VStatePopupController {
     }
   }
 
-  /**
-   * Load saved font scale from storage
-   */
-  async loadFontScale() {
-    try {
-      const result = await chrome.storage.local.get(['fontScale']);
-      if (result.fontScale !== undefined) {
-        this.fontScale = Math.max(this.minFontScale, Math.min(this.maxFontScale, result.fontScale));
-      }
-      this.applyFontScale();
-      this.updateFontScaleIndicator();
-    } catch (error) {
-      console.error('Error loading font scale:', error);
-    }
-  }
-
-  /**
-   * Save font scale to storage
-   */
-  async saveFontScale() {
-    try {
-      await chrome.storage.local.set({ fontScale: this.fontScale });
-    } catch (error) {
-      console.error('Error saving font scale:', error);
-    }
-  }
-
-  /**
-   * Apply font scale to CSS custom property
-   */
-  applyFontScale() {
-    document.documentElement.style.setProperty('--font-scale', this.fontScale.toString());
-  }
-
-  /**
-   * Update the font scale indicator display
-   */
-  updateFontScaleIndicator() {
-    const indicator = document.getElementById('font-scale-indicator');
-    if (indicator) {
-      indicator.textContent = `${Math.round(this.fontScale * 100)}%`;
-    }
-  }
-
-  /**
-   * Increase font size
-   */
-  async increaseFontSize() {
-    if (this.fontScale < this.maxFontScale) {
-      this.fontScale = Math.min(this.maxFontScale, this.fontScale + this.fontScaleStep);
-      this.fontScale = Math.round(this.fontScale * 10) / 10; // Round to 1 decimal place
-      this.applyFontScale();
-      this.updateFontScaleIndicator();
-      await this.saveFontScale();
-    }
-  }
-
-  /**
-   * Decrease font size
-   */
-  async decreaseFontSize() {
-    if (this.fontScale > this.minFontScale) {
-      this.fontScale = Math.max(this.minFontScale, this.fontScale - this.fontScaleStep);
-      this.fontScale = Math.round(this.fontScale * 10) / 10; // Round to 1 decimal place
-      this.applyFontScale();
-      this.updateFontScaleIndicator();
-      await this.saveFontScale();
-    }
-  }
 
   /**
    * Cleanup when popup closes

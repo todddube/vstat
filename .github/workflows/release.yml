@@ -1,0 +1,356 @@
+name: Release Build and Deploy
+
+on:
+  workflow_dispatch:
+    inputs:
+      version_type:
+        description: 'Version bump type'
+        required: true
+        default: 'patch'
+        type: choice
+        options:
+          - patch
+          - minor
+          - major
+      release_notes:
+        description: 'Release notes (optional)'
+        required: false
+        type: string
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Install Dependencies
+        run: npm ci
+        continue-on-error: true
+
+      - name: Read Current Version
+        id: current_version
+        run: |
+          VERSION=$(node -p "require('./manifest.json').version")
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "Current version: $VERSION"
+
+      - name: Bump Version
+        id: version_bump
+        run: |
+          # Parse current version
+          CURRENT_VERSION="${{ steps.current_version.outputs.version }}"
+          IFS='.' read -ra VERSION_PARTS <<< "$CURRENT_VERSION"
+          MAJOR=${VERSION_PARTS[0]}
+          MINOR=${VERSION_PARTS[1]}
+          PATCH=${VERSION_PARTS[2]}
+
+          # Bump version based on input
+          case "${{ github.event.inputs.version_type }}" in
+            "major")
+              MAJOR=$((MAJOR + 1))
+              MINOR=0
+              PATCH=0
+              ;;
+            "minor")
+              MINOR=$((MINOR + 1))
+              PATCH=0
+              ;;
+            "patch")
+              PATCH=$((PATCH + 1))
+              ;;
+          esac
+
+          NEW_VERSION="$MAJOR.$MINOR.$PATCH"
+          echo "new_version=$NEW_VERSION" >> $GITHUB_OUTPUT
+          echo "New version: $NEW_VERSION"
+
+      - name: Update Version in Files
+        run: |
+          NEW_VERSION="${{ steps.version_bump.outputs.new_version }}"
+
+          # Update manifest.json
+          node -e "
+          const fs = require('fs');
+          const manifest = JSON.parse(fs.readFileSync('manifest.json', 'utf8'));
+          manifest.version = '$NEW_VERSION';
+          fs.writeFileSync('manifest.json', JSON.stringify(manifest, null, 2) + '\n');
+          console.log('Updated manifest.json to version $NEW_VERSION');
+          "
+
+          # Update package.json
+          node -e "
+          const fs = require('fs');
+          const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
+          pkg.version = '$NEW_VERSION';
+          fs.writeFileSync('package.json', JSON.stringify(pkg, null, 2) + '\n');
+          console.log('Updated package.json to version $NEW_VERSION');
+          "
+
+      - name: Validate Extension Files
+        run: npm run validate
+
+      - name: Build Extension
+        run: npm run build:clean
+
+      - name: Verify Build Artifacts
+        run: |
+          if [ ! -d "dist" ]; then
+            echo "❌ Build failed: dist directory not found"
+            exit 1
+          fi
+
+          # Find the zip file
+          ZIP_FILE=$(find dist -name "vibe-stats-v*.zip" | head -1)
+          if [ -z "$ZIP_FILE" ]; then
+            echo "❌ Build failed: No zip file found in dist directory"
+            exit 1
+          fi
+
+          echo "✅ Build successful: $ZIP_FILE"
+          echo "zip_file=$ZIP_FILE" >> $GITHUB_ENV
+
+          # Get file size
+          SIZE=$(stat -f%z "$ZIP_FILE" 2>/dev/null || stat -c%s "$ZIP_FILE")
+          SIZE_KB=$((SIZE / 1024))
+          echo "📦 Extension size: ${SIZE_KB}KB"
+
+      - name: Generate Release Notes
+        id: release_notes
+        run: |
+          NEW_VERSION="${{ steps.version_bump.outputs.new_version }}"
+          PREVIOUS_VERSION="${{ steps.current_version.outputs.version }}"
+          CUSTOM_NOTES="${{ github.event.inputs.release_notes }}"
+          BUILD_DATE=$(date '+%Y-%m-%d %H:%M:%S UTC')
+          VERSION_TYPE="${{ github.event.inputs.version_type }}"
+
+          # Create comprehensive release notes
+          cat > release_notes.md << EOF
+          ## 🚀 Vibe Stats v${NEW_VERSION} ⚡
+
+          > **${VERSION_TYPE^} Release**: ${PREVIOUS_VERSION} → ${NEW_VERSION}
+
+          ### 📋 What's New
+          ${CUSTOM_NOTES:-"- Bug fixes and improvements
+          - Performance optimizations
+          - Enhanced user experience"}
+
+          ### 🔧 Technical Details
+          - **Extension Version**: ${NEW_VERSION}
+          - **Previous Version**: ${PREVIOUS_VERSION}
+          - **Release Type**: ${VERSION_TYPE^}
+          - **Build Date**: ${BUILD_DATE}
+          - **Manifest Version**: 3 (Chrome Extensions MV3)
+          - **Minimum Chrome Version**: 88
+          - **Node.js Build**: $(node --version 2>/dev/null || echo "N/A")
+
+          ### 🤖 Monitored Services
+          - **Claude AI** - Anthropic's AI assistant platform
+          - **GitHub Copilot** - AI-powered code completion
+          - **Azure DevOps** - Microsoft's development platform
+
+          ### 📦 Installation Options
+
+          #### Option 1: Chrome Web Store *(Recommended)*
+          *This release will be submitted to the Chrome Web Store for automatic updates.*
+
+          #### Option 2: Manual Installation
+          1. Download the \`vibe-stats-v${NEW_VERSION}.zip\` file from assets below
+          2. Extract the contents
+          3. Go to \`chrome://extensions/\`
+          4. Enable "Developer mode" (toggle in top-right)
+          5. Click "Load unpacked" and select the extracted folder
+          6. Pin the extension to your toolbar for easy access
+
+          ### 🚀 Release Process
+          This release was created using our automated GitHub Action workflow:
+          - ✅ Automated version bumping
+          - ✅ Comprehensive build validation
+          - ✅ Extension packaging for Chrome Web Store
+          - ✅ Git tagging and release creation
+          - ✅ Asset generation and attachment
+
+          ### 🔗 Related Links
+          - [📖 Documentation](https://github.com/${{ github.repository }}/blob/main/README.md)
+          - [🚀 Release Guide](https://github.com/${{ github.repository }}/blob/main/RELEASE.md)
+          - [🧪 Testing Guide](https://github.com/${{ github.repository }}/blob/main/tests/README.md)
+          - [🌐 Chrome Web Store](https://chrome.google.com/webstore/category/extensions)
+
+          ---
+
+          💡 **Keep your dev tools vibe in check!** Real-time status monitoring for your essential development services.
+
+          🤖 *Generated with [Claude Code](https://claude.ai/code)*
+          Co-Authored-By: Claude <noreply@anthropic.com>
+          EOF
+
+          # Set output for use in release
+          echo "notes_file=release_notes.md" >> $GITHUB_OUTPUT
+
+      - name: Commit Version Changes
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add manifest.json package.json
+          git commit -m "🚀 Release v${{ steps.version_bump.outputs.new_version }}
+
+          - Bump version to ${{ steps.version_bump.outputs.new_version }}
+          - Automated release build and deployment
+
+          🤖 Generated with Claude Code"
+
+      - name: Push Changes
+        run: |
+          git push origin main
+
+      - name: Create Git Tag
+        run: |
+          NEW_VERSION="${{ steps.version_bump.outputs.new_version }}"
+          CUSTOM_NOTES="${{ github.event.inputs.release_notes }}"
+
+          # Create tag with detailed message
+          TAG_MESSAGE="Release v${NEW_VERSION}
+
+          🚀 Vibe Stats Extension Release v${NEW_VERSION}
+
+          ${CUSTOM_NOTES:-"- Bug fixes and improvements"}
+
+          📦 Release includes:
+          - Extension build ready for Chrome Web Store
+          - Updated manifest and package versions
+          - Automated build and validation
+
+          🤖 Generated with Claude Code
+          Co-Authored-By: Claude <noreply@anthropic.com>"
+
+          git tag -a "v${NEW_VERSION}" -m "$TAG_MESSAGE"
+          echo "✅ Created git tag: v${NEW_VERSION}"
+
+      - name: Push Git Tag
+        run: |
+          git push origin "v${{ steps.version_bump.outputs.new_version }}"
+          echo "✅ Pushed git tag: v${{ steps.version_bump.outputs.new_version }}"
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: "v${{ steps.version_bump.outputs.new_version }}"
+          name: "🚀 Vibe Stats v${{ steps.version_bump.outputs.new_version }} ⚡ - ${{ github.event.inputs.version_type }} Release"
+          body_path: release_notes.md
+          files: |
+            ${{ env.zip_file }}
+            manifest.json
+            package.json
+          draft: false
+          prerelease: false
+          make_latest: true
+          generate_release_notes: true
+          append_body: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create Chrome Web Store Comment
+        run: |
+          NEW_VERSION="${{ steps.version_bump.outputs.new_version }}"
+          cat > chrome_store_notes.md << EOF
+          ## Chrome Web Store Submission Notes
+
+          **Version**: ${NEW_VERSION}
+          **Upload File**: \`$(basename ${{ env.zip_file }})\`
+
+          ### Submission Checklist:
+          - [ ] Download the release zip file
+          - [ ] Go to [Chrome Web Store Developer Dashboard](https://chrome.google.com/webstore/devconsole)
+          - [ ] Upload the new version
+          - [ ] Update store listing if needed
+          - [ ] Submit for review
+
+          ### Store Description Update (if needed):
+          \`\`\`
+          Monitor Claude AI, GitHub Copilot, and Azure DevOps status with real-time updates and AI-themed interface. Keep your dev tools vibe in check! 🤖☁️⚡
+
+          Features:
+          • Real-time status monitoring for Claude AI, GitHub Copilot, and Azure DevOps
+          • AI-themed vibe indicators with lightning bolt animations
+          • Detailed incident information and recent service updates
+          • Smart notification system with badge indicators
+          • Lightweight and fast - updates every 5 minutes
+          • Privacy-focused - no data collection or tracking
+
+          Perfect for developers who rely on these essential AI and cloud development tools.
+          \`\`\`
+          EOF
+
+          echo "📝 Chrome Web Store submission notes created"
+          echo "📦 Release artifacts ready for upload"
+
+      - name: Build Summary
+        run: |
+          NEW_VERSION="${{ steps.version_bump.outputs.new_version }}"
+          PREVIOUS_VERSION="${{ steps.current_version.outputs.version }}"
+          VERSION_TYPE="${{ github.event.inputs.version_type }}"
+          CUSTOM_NOTES="${{ github.event.inputs.release_notes }}"
+          BUILD_FILE=$(basename ${{ env.zip_file }})
+          BUILD_DATE=$(date '+%Y-%m-%d %H:%M:%S UTC')
+
+          echo "## 🚀 Release Build Complete!" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 📋 Release Details" >> $GITHUB_STEP_SUMMARY
+          echo "- **New Version**: \`${NEW_VERSION}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- **Previous Version**: \`${PREVIOUS_VERSION}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- **Release Type**: ${VERSION_TYPE^}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Build Date**: ${BUILD_DATE}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Build File**: \`${BUILD_FILE}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- **Git Tag**: \`v${NEW_VERSION}\`" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          if [ -n "$CUSTOM_NOTES" ]; then
+            echo "### 📝 Release Notes" >> $GITHUB_STEP_SUMMARY
+            echo "$CUSTOM_NOTES" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+          fi
+
+          echo "### ✅ Completed Tasks" >> $GITHUB_STEP_SUMMARY
+          echo "1. ✅ Version bumped and files updated" >> $GITHUB_STEP_SUMMARY
+          echo "2. ✅ Extension built and validated" >> $GITHUB_STEP_SUMMARY
+          echo "3. ✅ Git tag created and pushed" >> $GITHUB_STEP_SUMMARY
+          echo "4. ✅ GitHub release created with assets" >> $GITHUB_STEP_SUMMARY
+          echo "5. ✅ Chrome Web Store submission guide generated" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          echo "### 🚀 Next Steps" >> $GITHUB_STEP_SUMMARY
+          echo "1. 📦 Download zip file from GitHub release" >> $GITHUB_STEP_SUMMARY
+          echo "2. 🌐 Submit to Chrome Web Store Developer Dashboard" >> $GITHUB_STEP_SUMMARY
+          echo "3. 📊 Monitor release deployment and user adoption" >> $GITHUB_STEP_SUMMARY
+          echo "4. 🧪 Test extension in clean browser profile" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          echo "### 🔗 Important Links" >> $GITHUB_STEP_SUMMARY
+          echo "- [📦 GitHub Release](https://github.com/${{ github.repository }}/releases/tag/v${NEW_VERSION})" >> $GITHUB_STEP_SUMMARY
+          echo "- [🌐 Chrome Web Store Dashboard](https://chrome.google.com/webstore/devconsole)" >> $GITHUB_STEP_SUMMARY
+          echo "- [📖 Release Documentation](https://github.com/${{ github.repository }}/blob/main/RELEASE.md)" >> $GITHUB_STEP_SUMMARY
+          echo "- [🧪 Testing Guide](https://github.com/${{ github.repository }}/blob/main/tests/README.md)" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          echo "### 📊 Build Statistics" >> $GITHUB_STEP_SUMMARY
+          echo "- **Workflow**: Release Build and Deploy" >> $GITHUB_STEP_SUMMARY
+          echo "- **Runner**: ubuntu-latest" >> $GITHUB_STEP_SUMMARY
+          echo "- **Node Version**: $(node --version)" >> $GITHUB_STEP_SUMMARY
+          echo "- **Git Commit**: \`$(git rev-parse --short HEAD)\`" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          echo "---" >> $GITHUB_STEP_SUMMARY
+          echo "🤖 *Release created with automated GitHub Action workflow*" >> $GITHUB_STEP_SUMMARY
