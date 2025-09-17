@@ -35,7 +35,9 @@
       "Bash(start dev/screenshot-resizer.html)",
       "WebSearch",
       "WebFetch(domain:azure.status.microsoft)",
-      "WebFetch(domain:status.azure.microsoft.com)"
+      "WebFetch(domain:status.azure.microsoft.com)",
+      "Bash(npm run version:check:*)",
+      "Bash(npm run about:check:*)"
     ],
     "deny": [],
     "ask": []

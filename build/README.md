@@ -328,6 +328,9 @@ npm run version:check
 
 # Sync package.json to manifest.json version
 npm run version:sync
+
+# Check About popup version consistency
+npm run about:check
 ```
 
 #### Release Workflow Best Practices

@@ -21,6 +21,8 @@
     "version:sync": "node sync-version.js sync-to-manifest",
     "version:set": "node sync-version.js set",
     "version:bump": "node sync-version.js bump",
+    "version:validate": "node sync-version.js check && npm run about:check && npm run validate",
+    "about:check": "node check-about-version.js",
     "test": "cd tests && npm test",
     "test:api": "cd tests && npm run test:api",
     "test:visual": "cd tests && npm run test:visual",

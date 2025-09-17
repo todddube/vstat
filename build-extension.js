@@ -158,34 +158,98 @@ class ExtensionBuilder {
   }
 
   /**
-   * Validate manifest.json
+   * Validate manifest.json and version consistency
    */
   validateManifest() {
     console.log(colorize('📄 Validating manifest.json...', 'cyan'));
-    
+
     const manifestPath = path.join(this.buildDir, 'manifest.json');
     const manifestContent = fs.readFileSync(manifestPath, 'utf8');
-    
+
     try {
       const manifest = JSON.parse(manifestContent);
-      
+
       // Check required fields
       const requiredFields = ['manifest_version', 'name', 'version', 'description'];
       const missingFields = requiredFields.filter(field => !manifest[field]);
-      
+
       if (missingFields.length > 0) {
         throw new Error(`Missing required manifest fields: ${missingFields.join(', ')}`);
       }
-      
+
       console.log(colorize(`✅ Extension: ${manifest.name} v${manifest.version}`, 'green'));
       console.log(colorize(`✅ Manifest version: ${manifest.manifest_version}`, 'green'));
-      
+
+      // Validate version consistency
+      this.validateVersionConsistency(manifest);
+
       return manifest;
     } catch (error) {
       console.log(colorize('❌ Invalid manifest.json:', 'red'));
       console.log(colorize(`   ${error.message}`, 'red'));
       throw error;
     }
+  }
+
+  /**
+   * Validate version consistency across files
+   */
+  validateVersionConsistency(manifest) {
+    console.log(colorize('🔍 Validating version consistency...', 'cyan'));
+
+    const manifestVersion = manifest.version;
+
+    // Check package.json version if it exists
+    const packagePath = path.join(this.buildDir, 'package.json');
+    if (fs.existsSync(packagePath)) {
+      try {
+        const packageContent = fs.readFileSync(packagePath, 'utf8');
+        const packageJson = JSON.parse(packageContent);
+
+        if (packageJson.version !== manifestVersion) {
+          console.log(colorize(`⚠️  Version mismatch: manifest.json (${manifestVersion}) vs package.json (${packageJson.version})`, 'yellow'));
+          console.log(colorize('   Consider running: npm run version:sync', 'yellow'));
+        } else {
+          console.log(colorize(`✅ Package.json version matches: ${manifestVersion}`, 'green'));
+        }
+      } catch (error) {
+        console.log(colorize('⚠️  Could not validate package.json version', 'yellow'));
+      }
+    }
+
+    // Check for hardcoded versions in HTML files
+    const htmlFiles = ['popup.html'];
+    htmlFiles.forEach(htmlFile => {
+      const htmlPath = path.join(this.buildDir, htmlFile);
+      if (fs.existsSync(htmlPath)) {
+        const htmlContent = fs.readFileSync(htmlPath, 'utf8');
+
+        // Look for hardcoded version patterns
+        const versionPatterns = [
+          /Version\s+\d+\.\d+\.\d+/g,
+          /version.*\d+\.\d+\.\d+/gi
+        ];
+
+        let foundHardcodedVersions = false;
+        versionPatterns.forEach(pattern => {
+          const matches = htmlContent.match(pattern);
+          if (matches) {
+            matches.forEach(match => {
+              // Skip if it's the loading placeholder
+              if (!match.includes('Loading version')) {
+                console.log(colorize(`⚠️  Potential hardcoded version in ${htmlFile}: ${match}`, 'yellow'));
+                console.log(colorize('   Consider using dynamic version loading from manifest', 'yellow'));
+                foundHardcodedVersions = true;
+              }
+            });
+          }
+        });
+
+        if (!foundHardcodedVersions) {
+          console.log(colorize(`✅ No hardcoded versions found in ${htmlFile}`, 'green'));
+        }
+      }
+    });
   }
 
   /**

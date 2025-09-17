@@ -69,6 +69,9 @@ class VersionSync {
     console.log(`   Manifest version: ${manifestVersion}`);
     console.log(`   Package version:  ${packageVersion}`);
 
+    // Check for hardcoded versions in HTML files
+    this.checkHtmlVersions(manifestVersion);
+
     return {
       manifest,
       packageJson,
@@ -76,6 +79,53 @@ class VersionSync {
       packageVersion,
       inSync: manifestVersion === packageVersion
     };
+  }
+
+  /**
+   * Check for hardcoded versions in HTML files
+   */
+  checkHtmlVersions(expectedVersion) {
+    console.log(colorize('🔍 Checking HTML files for hardcoded versions...', 'cyan'));
+
+    const htmlFiles = ['popup.html'];
+    let foundIssues = false;
+
+    htmlFiles.forEach(htmlFile => {
+      const htmlPath = path.join(this.rootDir, htmlFile);
+      if (fs.existsSync(htmlPath)) {
+        try {
+          const htmlContent = fs.readFileSync(htmlPath, 'utf8');
+
+          // Look for hardcoded version patterns
+          const versionPatterns = [
+            /Version\s+\d+\.\d+\.\d+/g,
+            /version.*\d+\.\d+\.\d+/gi
+          ];
+
+          versionPatterns.forEach(pattern => {
+            const matches = htmlContent.match(pattern);
+            if (matches) {
+              matches.forEach(match => {
+                // Skip if it's the loading placeholder
+                if (!match.includes('Loading version')) {
+                  console.log(colorize(`⚠️  Hardcoded version in ${htmlFile}: ${match}`, 'yellow'));
+                  console.log(colorize(`   Expected: Dynamic loading from manifest (${expectedVersion})`, 'yellow'));
+                  foundIssues = true;
+                }
+              });
+            }
+          });
+
+          if (!foundIssues) {
+            console.log(colorize(`✅ ${htmlFile} uses dynamic version loading`, 'green'));
+          }
+        } catch (error) {
+          console.log(colorize(`⚠️  Could not check ${htmlFile}: ${error.message}`, 'yellow'));
+        }
+      }
+    });
+
+    return !foundIssues;
   }
 
   /**

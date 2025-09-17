@@ -100,8 +100,10 @@ jobs:
           console.log('Updated package.json to version $NEW_VERSION');
           "
 
-      - name: Validate Extension Files
-        run: npm run validate
+      - name: Validate Extension Files and Versions
+        run: |
+          echo "🔍 Validating extension files and version consistency..."
+          npm run version:validate
 
       - name: Build Extension
         run: npm run build:clean
