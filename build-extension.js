@@ -356,7 +356,7 @@ class ExtensionBuilder {
   /**
    * Generate build report
    */
-  generateBuildReport(manifest, buildStats, zipInfo, options = {}) {
+  generateBuildReport(manifest, buildStats, zipInfo, options = {}, releaseInfo = null) {
     console.log(colorize('\n📋 Build Report', 'bright'));
     console.log(colorize('='.repeat(50), 'blue'));
 
@@ -376,12 +376,29 @@ class ExtensionBuilder {
     console.log(`   Build Directory: ${this.buildDir}`);
     console.log(`   Zip File: ${zipInfo.zipPath}`);
 
-    if (options.isRelease) {
+    if (releaseInfo) {
+      console.log(colorize('\n🎉 GitHub Release:', 'cyan'));
+      console.log(`   Version: ${releaseInfo.version}`);
+      console.log(`   Release URL: ${releaseInfo.releaseUrl}`);
+      console.log(`   Tag: v${releaseInfo.version}`);
+    }
+
+    if (options.createRelease) {
       console.log(colorize('\n🚀 Release Build Next Steps:', 'cyan'));
-      console.log('   1. This is a release build - ready for GitHub Action');
-      console.log('   2. GitHub Action will create release and tag');
-      console.log('   3. Download zip from GitHub release for Chrome Web Store');
-      console.log('   4. Submit to Chrome Web Store Developer Dashboard');
+      if (releaseInfo) {
+        console.log('   1. ✅ GitHub release created successfully');
+        console.log('   2. Download zip from GitHub release for Chrome Web Store');
+        console.log('   3. Submit to Chrome Web Store Developer Dashboard');
+      } else {
+        console.log('   1. ⚠️  GitHub release creation failed');
+        console.log('   2. Manually create release or check GitHub CLI setup');
+        console.log('   3. Upload the zip file to Chrome Web Store');
+      }
+    } else if (options.isRelease) {
+      console.log(colorize('\n🚀 Release Build Next Steps:', 'cyan'));
+      console.log('   1. This is a release build - ready for manual upload');
+      console.log('   2. Use --create-release flag to automate GitHub release');
+      console.log('   3. Upload zip to Chrome Web Store Developer Dashboard');
     } else {
       console.log(colorize('\n🚀 Development Build Next Steps:', 'cyan'));
       console.log('   1. Test the extension by loading the build directory');
@@ -404,57 +421,208 @@ class ExtensionBuilder {
   }
 
   /**
+   * Validate GitHub CLI and authentication
+   */
+  validateGitHubCLI() {
+    try {
+      execSync('gh --version', { stdio: 'pipe' });
+      execSync('gh auth status', { stdio: 'pipe' });
+      return true;
+    } catch (error) {
+      return false;
+    }
+  }
+
+  /**
+   * Get current version and bump it
+   */
+  bumpVersion(currentVersion, bumpType) {
+    const [major, minor, patch] = currentVersion.split('.').map(Number);
+
+    switch (bumpType) {
+      case 'patch':
+        return `${major}.${minor}.${patch + 1}`;
+      case 'minor':
+        return `${major}.${minor + 1}.0`;
+      case 'major':
+        return `${major + 1}.0.0`;
+      default:
+        throw new Error(`Invalid bump type: ${bumpType}. Use patch, minor, or major.`);
+    }
+  }
+
+  /**
+   * Update version in package.json and manifest.json
+   */
+  updateVersionFiles(newVersion) {
+    console.log(colorize(`📝 Updating version to ${newVersion}...`, 'cyan'));
+
+    // Update package.json
+    const packagePath = path.join(this.rootDir, 'package.json');
+    if (fs.existsSync(packagePath)) {
+      const packageContent = fs.readFileSync(packagePath, 'utf8');
+      const packageJson = JSON.parse(packageContent);
+      packageJson.version = newVersion;
+      fs.writeFileSync(packagePath, JSON.stringify(packageJson, null, 2) + '\n');
+    }
+
+    // Update manifest.json
+    const manifestPath = path.join(this.rootDir, 'manifest.json');
+    const manifestContent = fs.readFileSync(manifestPath, 'utf8');
+    const manifest = JSON.parse(manifestContent);
+    manifest.version = newVersion;
+    fs.writeFileSync(manifestPath, JSON.stringify(manifest, null, 2) + '\n');
+
+    console.log(colorize(`✅ Updated files to version ${newVersion}`, 'green'));
+  }
+
+  /**
+   * Create GitHub release with tag
+   */
+  async createGitHubRelease(manifest, buildStats, zipInfo, bumpType) {
+    console.log(colorize('🎉 Creating GitHub release...', 'cyan'));
+
+    try {
+      // Get current version and bump it
+      const currentVersion = manifest.version;
+      const newVersion = this.bumpVersion(currentVersion, bumpType);
+
+      // Update version files
+      this.updateVersionFiles(newVersion);
+
+      // Commit version changes
+      execSync('git add package.json manifest.json');
+      execSync(`git commit -m "Bump version to ${newVersion}
+
+🤖 Generated with [Claude Code](https://claude.ai/code)
+
+Co-Authored-By: Claude <noreply@anthropic.com>"`);
+
+      // Create tag
+      execSync(`git tag -a v${newVersion} -m "Release version ${newVersion}"`);
+
+      // Push changes and tags
+      execSync('git push origin main');
+      execSync('git push origin --tags');
+
+      // Generate release notes
+      const releaseNotes = `## Vibe Stats v${newVersion} ⚡
+
+${manifest.description}
+
+### 📦 Extension Details
+- **Version**: ${newVersion}
+- **Size**: ${buildStats.sizeKB} KB (${buildStats.fileCount} files)
+- **Manifest Version**: ${manifest.manifest_version}
+
+### 🚀 Installation
+1. Download the \`vibe-stats-v${newVersion}.zip\` file from this release
+2. Open Chrome/Edge and navigate to \`chrome://extensions/\`
+3. Enable "Developer mode"
+4. Click "Load unpacked" and select the extracted extension folder
+5. The extension icon will appear in your browser toolbar
+
+### 🔧 Development
+- Monitor Claude AI and GitHub Copilot status in real-time
+- AI-themed vibe indicators with smart status aggregation
+- Auto-refresh every 5 minutes with manual refresh option
+- Detailed incident reporting and status history
+
+### 📊 Build Statistics
+- Files: ${buildStats.fileCount}
+- Uncompressed: ${buildStats.sizeKB} KB
+- Compressed: ${(zipInfo.zipSize / 1024).toFixed(2)} KB
+- Compression: ${((1 - zipInfo.zipSize / buildStats.totalSize) * 100).toFixed(1)}%
+
+---
+
+🤖 *Generated with [Claude Code](https://claude.ai/code)*`;
+
+      // Create GitHub release with file upload
+      execSync(`gh release create v${newVersion} "${zipInfo.zipPath}" --title "Vibe Stats v${newVersion}" --notes "${releaseNotes.replace(/"/g, '\\"').replace(/\n/g, '\\n')}"`, { stdio: 'inherit' });
+
+      // Get release URL
+      const releaseUrl = execSync(`gh release view v${newVersion} --json url --jq .url`, { encoding: 'utf8' }).trim();
+
+      console.log(colorize(`✅ Created GitHub release v${newVersion}`, 'green'));
+      console.log(colorize(`🔗 Release URL: ${releaseUrl}`, 'blue'));
+
+      return { version: newVersion, releaseUrl };
+    } catch (error) {
+      console.log(colorize('❌ Failed to create GitHub release:', 'red'));
+      console.log(colorize(error.message, 'red'));
+      throw error;
+    }
+  }
+
+  /**
    * Main build process
    */
   async build(options = {}) {
     const startTime = Date.now();
-    
+
     console.log(colorize('🚀 Starting Vibe Stats Extension Build ⚡', 'bright'));
     console.log(colorize('='.repeat(60), 'blue'));
-    
+
     try {
       // Initialize
       this.initDirectories();
-      
+
       // Validate required files
       this.validateRequiredFiles();
-      
+
       // Copy files
       this.copyFiles();
-      
+
       // Validate manifest
       const manifest = this.validateManifest();
-      
+
       // Calculate build stats
       const buildStats = this.calculateBuildSize();
-      
+
       // Create zip
       const zipInfo = this.createZip(manifest, options);
+
+      // Handle GitHub release if requested
+      let releaseInfo = null;
+      if (options.createRelease && options.bumpType) {
+        if (!this.validateGitHubCLI()) {
+          console.log(colorize('⚠️  GitHub CLI not available or not authenticated. Skipping release creation.', 'yellow'));
+          console.log(colorize('   Install GitHub CLI and run: gh auth login', 'yellow'));
+        } else {
+          try {
+            releaseInfo = await this.createGitHubRelease(manifest, buildStats, zipInfo, options.bumpType);
+          } catch (error) {
+            console.log(colorize('⚠️  Release creation failed, but build succeeded', 'yellow'));
+          }
+        }
+      }
 
       // Generate report
       const buildTime = ((Date.now() - startTime) / 1000).toFixed(2);
       console.log(colorize(`\n⏱️  Build completed in ${buildTime}s`, 'blue'));
 
-      this.generateBuildReport(manifest, buildStats, zipInfo, options);
-      
+      this.generateBuildReport(manifest, buildStats, zipInfo, options, releaseInfo);
+
       // Cleanup if requested
       this.cleanup(options.keepBuild !== false);
-      
+
       return {
         success: true,
         manifest,
         buildStats,
         zipInfo,
+        releaseInfo,
         buildTime: parseFloat(buildTime)
       };
-      
+
     } catch (error) {
       console.log(colorize('\n❌ Build failed:', 'red'));
       console.log(colorize(`   ${error.message}`, 'red'));
-      
+
       // Cleanup on failure
       this.cleanup(false);
-      
+
       return {
         success: false,
         error: error.message
@@ -474,16 +642,34 @@ ${colorize('Usage:', 'cyan')}
   node build-extension.js [options]
 
 ${colorize('Options:', 'cyan')}
-  ${colorize('--help', 'green')}          Show this help message
-  ${colorize('--clean', 'green')}         Remove build directory after creating zip
-  ${colorize('--release', 'green')}       Create release build (clean naming)
-  ${colorize('--validate-only', 'green')} Only validate files, don't build
+  ${colorize('--help', 'green')}             Show this help message
+  ${colorize('--clean', 'green')}            Remove build directory after creating zip
+  ${colorize('--release', 'green')}          Create release build (clean naming)
+  ${colorize('--validate-only', 'green')}    Only validate files, don't build
+  ${colorize('--create-release <type>', 'green')} Create GitHub release (patch|minor|major)
 
 ${colorize('Examples:', 'cyan')}
-  node build-extension.js              # Build extension zip
-  node build-extension.js --clean      # Build and clean up
-  node build-extension.js --release     # Release build
-  node build-extension.js --validate-only  # Just validate files
+  node build-extension.js                    # Build extension zip
+  node build-extension.js --clean            # Build and clean up
+  node build-extension.js --release          # Release build
+  node build-extension.js --validate-only    # Just validate files
+  node build-extension.js --create-release patch  # Build and create patch release
+  node build-extension.js --create-release minor  # Build and create minor release
+
+${colorize('GitHub Release:', 'cyan')}
+  The --create-release option will:
+  1. Bump version (patch/minor/major)
+  2. Update package.json and manifest.json
+  3. Build extension zip
+  4. Commit version changes
+  5. Create Git tag
+  6. Push to GitHub
+  7. Create GitHub release with zip attachment
+
+${colorize('Prerequisites for GitHub Release:', 'cyan')}
+  - Clean working directory (no uncommitted changes)
+  - GitHub CLI installed and authenticated (gh auth login)
+  - Push access to the repository
 
 ${colorize('Output:', 'cyan')}
   Build files: ./build/
@@ -493,14 +679,14 @@ ${colorize('Output:', 'cyan')}
 
 async function main() {
   const args = process.argv.slice(2);
-  
+
   if (args.includes('--help') || args.includes('-h')) {
     printUsage();
     return;
   }
-  
+
   const builder = new ExtensionBuilder();
-  
+
   if (args.includes('--validate-only')) {
     console.log(colorize('🔍 Validation Mode', 'bright'));
     try {
@@ -513,14 +699,45 @@ async function main() {
     }
     return;
   }
-  
+
+  // Check for create-release option
+  let createRelease = false;
+  let bumpType = null;
+  const createReleaseIndex = args.findIndex(arg => arg === '--create-release');
+  if (createReleaseIndex !== -1) {
+    createRelease = true;
+    bumpType = args[createReleaseIndex + 1];
+
+    if (!bumpType || !['patch', 'minor', 'major'].includes(bumpType)) {
+      console.log(colorize('❌ Invalid or missing bump type for --create-release', 'red'));
+      console.log(colorize('   Use: --create-release patch|minor|major', 'yellow'));
+      process.exit(1);
+    }
+
+    // Check working directory is clean
+    try {
+      const status = execSync('git status --porcelain', { encoding: 'utf8' });
+      if (status.trim()) {
+        console.log(colorize('❌ Working directory is not clean:', 'red'));
+        console.log(status);
+        console.log(colorize('Please commit or stash changes before creating a release.', 'yellow'));
+        process.exit(1);
+      }
+    } catch (error) {
+      console.log(colorize('❌ Failed to check git status. Ensure you are in a git repository.', 'red'));
+      process.exit(1);
+    }
+  }
+
   const options = {
     keepBuild: !args.includes('--clean'),
-    isRelease: args.includes('--release')
+    isRelease: args.includes('--release') || createRelease,
+    createRelease,
+    bumpType
   };
-  
+
   const result = await builder.build(options);
-  
+
   if (!result.success) {
     process.exit(1);
   }
