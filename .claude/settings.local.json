@@ -37,7 +37,12 @@
       "WebFetch(domain:azure.status.microsoft)",
       "WebFetch(domain:status.azure.microsoft.com)",
       "Bash(npm run version:check:*)",
-      "Bash(npm run about:check:*)"
+      "Bash(npm run about:check:*)",
+      "Bash(gh:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(npm run:*)",
+      "Bash(git rm:*)"
     ],
     "deny": [],
     "ask": []
