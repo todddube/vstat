@@ -1,6 +1,6 @@
 {
   "name": "vibe-stats",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "Monitor Claude and GitHub Copilot status with animated lightning bolt indicators and real-time updates",
   "author": "Todd Dube",
   "license": ".-.",
