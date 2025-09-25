@@ -141,7 +141,7 @@ jobs:
           cat > release_notes.md << 'EOF'
 ## 🚀 Vibe Stats v$NEW_VERSION ⚡
 
-> **$VERSION_TYPE_TITLE Release**: $PREVIOUS_VERSION → $NEW_VERSION
+> **$VERSION_TYPE_TITLE Release**: $PREVIOUS_VERSION to $NEW_VERSION
 
 ### 📋 What's New
 $RELEASE_NOTES_CONTENT
