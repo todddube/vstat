@@ -84,19 +84,21 @@ jobs:
           node -e "
           const fs = require('fs');
           const manifest = JSON.parse(fs.readFileSync('manifest.json', 'utf8'));
-          manifest.version = '$NEW_VERSION';
+          manifest.version = process.env.NEW_VERSION;
           fs.writeFileSync('manifest.json', JSON.stringify(manifest, null, 2) + '\n');
-          console.log('Updated manifest.json to version $NEW_VERSION');
+          console.log('Updated manifest.json to version ' + process.env.NEW_VERSION);
           "
 
           # Update package.json
           node -e "
           const fs = require('fs');
           const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
-          pkg.version = '$NEW_VERSION';
+          pkg.version = process.env.NEW_VERSION;
           fs.writeFileSync('package.json', JSON.stringify(pkg, null, 2) + '\n');
-          console.log('Updated package.json to version $NEW_VERSION');
+          console.log('Updated package.json to version ' + process.env.NEW_VERSION);
           "
+        env:
+          NEW_VERSION: ${{ steps.version_bump.outputs.new_version }}
 
       - name: Validate Extension Files and Versions
         run: |
@@ -123,8 +125,8 @@ jobs:
           echo "✅ Build successful: $ZIP_FILE"
           echo "zip_file=$ZIP_FILE" >> $GITHUB_ENV
 
-          # Get file size
-          SIZE=$(stat -f%z "$ZIP_FILE" 2>/dev/null || stat -c%s "$ZIP_FILE")
+          # Get file size (Linux format for ubuntu-latest)
+          SIZE=$(stat -c%s "$ZIP_FILE")
           SIZE_KB=$((SIZE / 1024))
           echo "📦 Extension size: ${SIZE_KB}KB"
 
@@ -145,8 +147,8 @@ jobs:
             RELEASE_NOTES_CONTENT="$CUSTOM_NOTES"
           else
             RELEASE_NOTES_CONTENT="- Bug fixes and improvements
-- Performance optimizations
-- Enhanced user experience"
+          - Performance optimizations
+          - Enhanced user experience"
           fi
 
           # Create comprehensive release notes using direct variable expansion
@@ -194,9 +196,9 @@ This release was created using our automated GitHub Action workflow:
 - ✅ Asset generation and attachment
 
 ### 🔗 Related Links
-- [📖 Documentation](https://github.com/\${{ github.repository }}/blob/main/README.md)
-- [🚀 Release Guide](https://github.com/\${{ github.repository }}/blob/main/RELEASE.md)
-- [🧪 Testing Guide](https://github.com/\${{ github.repository }}/blob/main/tests/README.md)
+- [📖 Documentation](https://github.com/${{ github.repository }}/blob/main/README.md)
+- [🚀 Release Guide](https://github.com/${{ github.repository }}/blob/main/RELEASE.md)
+- [🧪 Testing Guide](https://github.com/${{ github.repository }}/blob/main/tests/README.md)
 - [🌐 Chrome Web Store](https://chrome.google.com/webstore/category/extensions)
 
 ---
