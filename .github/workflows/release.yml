@@ -137,23 +137,35 @@ jobs:
           BUILD_DATE=$(date '+%Y-%m-%d %H:%M:%S UTC')
           VERSION_TYPE="${{ github.event.inputs.version_type }}"
 
-          # Create comprehensive release notes
-          cat > release_notes.md << 'EOF'
-## 🚀 Vibe Stats v$NEW_VERSION ⚡
+          # Set up variables for release notes
+          VERSION_TYPE_TITLE=$(echo "${VERSION_TYPE}" | sed 's/./\U&/')
+          NODE_VERSION=$(node --version 2>/dev/null || echo "N/A")
 
-> **$VERSION_TYPE_TITLE Release**: $PREVIOUS_VERSION to $NEW_VERSION
+          if [ -n "$CUSTOM_NOTES" ]; then
+            RELEASE_NOTES_CONTENT="$CUSTOM_NOTES"
+          else
+            RELEASE_NOTES_CONTENT="- Bug fixes and improvements
+- Performance optimizations
+- Enhanced user experience"
+          fi
+
+          # Create comprehensive release notes using direct variable expansion
+          cat > release_notes.md << EOF
+## 🚀 Vibe Stats v${NEW_VERSION} ⚡
+
+> **${VERSION_TYPE_TITLE} Release**: ${PREVIOUS_VERSION} to ${NEW_VERSION}
 
 ### 📋 What's New
-$RELEASE_NOTES_CONTENT
+${RELEASE_NOTES_CONTENT}
 
 ### 🔧 Technical Details
-- **Extension Version**: $NEW_VERSION
-- **Previous Version**: $PREVIOUS_VERSION
-- **Release Type**: $VERSION_TYPE_TITLE
-- **Build Date**: $BUILD_DATE
+- **Extension Version**: ${NEW_VERSION}
+- **Previous Version**: ${PREVIOUS_VERSION}
+- **Release Type**: ${VERSION_TYPE_TITLE}
+- **Build Date**: ${BUILD_DATE}
 - **Manifest Version**: 3 (Chrome Extensions MV3)
 - **Minimum Chrome Version**: 88
-- **Node.js Build**: $NODE_VERSION
+- **Node.js Build**: ${NODE_VERSION}
 
 ### 🤖 Monitored Services
 - **Claude AI** - Anthropic's AI assistant platform
@@ -166,9 +178,9 @@ $RELEASE_NOTES_CONTENT
 *This release will be submitted to the Chrome Web Store for automatic updates.*
 
 #### Option 2: Manual Installation
-1. Download the `vibe-stats-v$NEW_VERSION.zip` file from assets below
+1. Download the \`vibe-stats-v${NEW_VERSION}.zip\` file from assets below
 2. Extract the contents
-3. Go to `chrome://extensions/`
+3. Go to \`chrome://extensions/\`
 4. Enable "Developer mode" (toggle in top-right)
 5. Click "Load unpacked" and select the extracted folder
 6. Pin the extension to your toolbar for easy access
@@ -182,9 +194,9 @@ This release was created using our automated GitHub Action workflow:
 - ✅ Asset generation and attachment
 
 ### 🔗 Related Links
-- [📖 Documentation](https://github.com/${{ github.repository }}/blob/main/README.md)
-- [🚀 Release Guide](https://github.com/${{ github.repository }}/blob/main/RELEASE.md)
-- [🧪 Testing Guide](https://github.com/${{ github.repository }}/blob/main/tests/README.md)
+- [📖 Documentation](https://github.com/\${{ github.repository }}/blob/main/README.md)
+- [🚀 Release Guide](https://github.com/\${{ github.repository }}/blob/main/RELEASE.md)
+- [🧪 Testing Guide](https://github.com/\${{ github.repository }}/blob/main/tests/README.md)
 - [🌐 Chrome Web Store](https://chrome.google.com/webstore/category/extensions)
 
 ---
@@ -194,26 +206,6 @@ This release was created using our automated GitHub Action workflow:
 🤖 *Generated with [Claude Code](https://claude.ai/code)*
 Co-Authored-By: Claude <noreply@anthropic.com>
 EOF
-
-          # Now substitute variables in the template
-          VERSION_TYPE_TITLE=$(echo "${VERSION_TYPE}" | sed 's/.*/\u&/')
-          NODE_VERSION=$(node --version 2>/dev/null || echo "N/A")
-
-          if [ -n "$CUSTOM_NOTES" ]; then
-            RELEASE_NOTES_CONTENT="$CUSTOM_NOTES"
-          else
-            RELEASE_NOTES_CONTENT="- Bug fixes and improvements
-- Performance optimizations
-- Enhanced user experience"
-          fi
-
-          # Replace variables in the file
-          sed -i "s/\$NEW_VERSION/${NEW_VERSION}/g" release_notes.md
-          sed -i "s/\$PREVIOUS_VERSION/${PREVIOUS_VERSION}/g" release_notes.md
-          sed -i "s/\$VERSION_TYPE_TITLE/${VERSION_TYPE_TITLE}/g" release_notes.md
-          sed -i "s/\$BUILD_DATE/${BUILD_DATE}/g" release_notes.md
-          sed -i "s/\$NODE_VERSION/${NODE_VERSION}/g" release_notes.md
-          sed -i "s|\$RELEASE_NOTES_CONTENT|${RELEASE_NOTES_CONTENT}|g" release_notes.md
 
           # Set output for use in release
           echo "notes_file=release_notes.md" >> $GITHUB_OUTPUT
