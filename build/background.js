@@ -1,0 +1,759 @@
+/**
+ * VStateMonitor class handles monitoring of Claude and GitHub Copilot service status
+ * Uses Chrome alarms API for reliable background execution
+ */
+class VStateMonitor {
+  constructor() {
+    // Claude API endpoints
+    this.claude = {
+      statusUrl: 'https://status.anthropic.com/api/v2/status.json',
+      incidentsUrl: 'https://status.anthropic.com/api/v2/incidents.json',
+      summaryUrl: 'https://status.anthropic.com/api/v2/summary.json',
+      componentsUrl: 'https://status.anthropic.com/api/v2/components.json'
+    };
+    
+    // GitHub API endpoints
+    this.github = {
+      statusUrl: 'https://www.githubstatus.com/api/v2/status.json',
+      incidentsUrl: 'https://www.githubstatus.com/api/v2/incidents.json',
+      summaryUrl: 'https://www.githubstatus.com/api/v2/summary.json',
+      componentsUrl: 'https://www.githubstatus.com/api/v2/components.json'
+    };
+    
+    // Azure API endpoints (using Azure DevOps status as proxy for Azure services)
+    this.azure = {
+      statusUrl: 'https://status.dev.azure.com/_apis/status/health?api-version=7.1-preview.1',
+      incidentsUrl: 'https://status.dev.azure.com/_apis/status/health?api-version=7.1-preview.1', // Same endpoint provides incidents
+      summaryUrl: 'https://status.dev.azure.com/_apis/status/health?api-version=7.1-preview.1'
+    };
+    
+    this.alarmName = 'vstateCheck';
+    this.intervalMinutes = 5;
+    this.maxRetries = 3;
+    this.retryDelay = 2000;
+    this.animationInterval = null;
+  }
+
+  /**
+   * Initialize the VState monitor
+   * Sets up alarms for periodic checking
+   */
+  async init() {
+    try {
+      // Clear any existing alarm and create new one
+      await chrome.alarms.clear(this.alarmName);
+      await chrome.alarms.create(this.alarmName, { 
+        periodInMinutes: this.intervalMinutes 
+      });
+      
+      // Initial status check for both services
+      await this.checkAllStatuses();
+    } catch (error) {
+      console.error('Failed to initialize VState monitor:', error);
+      this.handleError(error, 'initialization');
+    }
+  }
+
+  /**
+   * Check status for Claude, GitHub, and Azure services
+   */
+  async checkAllStatuses(retryCount = 0) {
+    try {
+      const [claudeResults, githubResults, azureResults] = await Promise.allSettled([
+        this.checkServiceStatus('claude'),
+        this.checkServiceStatus('github'),
+        this.checkServiceStatus('azure')
+      ]);
+
+      // Process results for all services
+      const claudeStatus = this.extractStatusFromResult(claudeResults, 'claude');
+      const githubStatus = this.extractStatusFromResult(githubResults, 'github');
+      const azureStatus = this.extractStatusFromResult(azureResults, 'azure');
+
+      // Combine status and determine overall state
+      const combinedStatus = this.combineStatuses(claudeStatus, githubStatus, azureStatus);
+      
+      // Store the status data
+      await this.updateVStateStatus(claudeStatus, githubStatus, azureStatus, combinedStatus);
+      await this.updateBadgeIcon(combinedStatus);
+      
+      // Store success timestamp
+      await chrome.storage.local.set({ lastSuccessfulCheck: Date.now() });
+      
+    } catch (error) {
+      console.error('Failed to check VState status (attempt', retryCount + 1, '):', error);
+      
+      if (retryCount < this.maxRetries) {
+        setTimeout(() => this.checkAllStatuses(retryCount + 1), this.retryDelay * (retryCount + 1));
+        return;
+      }
+      
+      // Final failure - set unknown status
+      await this.handleCheckFailure(error);
+    }
+  }
+
+  /**
+   * Check status for a specific service (claude, github, or azure)
+   */
+  async checkServiceStatus(serviceName) {
+    const serviceConfig = this[serviceName];
+    if (!serviceConfig) {
+      throw new Error(`Unknown service: ${serviceName}`);
+    }
+
+    // Azure uses a different API structure
+    if (serviceName === 'azure') {
+      return this.checkAzureStatus();
+    }
+
+    const [statusData, incidentsData, summaryData] = await Promise.allSettled([
+      this.fetchData(serviceConfig.statusUrl),
+      this.fetchData(serviceConfig.incidentsUrl),
+      this.fetchData(serviceConfig.summaryUrl)
+    ]);
+
+    return {
+      service: serviceName,
+      status: this.extractStatusFromResult(statusData),
+      incidents: this.extractIncidentsFromResult(incidentsData),
+      components: this.extractComponentsFromResult(summaryData)
+    };
+  }
+
+  /**
+   * Check Azure DevOps status (as proxy for Azure services)
+   */
+  async checkAzureStatus() {
+    try {
+      const statusData = await this.fetchData(this.azure.statusUrl);
+      
+      // Transform Azure DevOps response to our standard format
+      const azureStatus = this.transformAzureResponse(statusData);
+      
+      return {
+        service: 'azure',
+        status: azureStatus.status,
+        incidents: azureStatus.incidents,
+        components: azureStatus.components
+      };
+    } catch (error) {
+      console.error('Failed to fetch Azure status:', error);
+      return {
+        service: 'azure',
+        status: { indicator: 'unknown' },
+        incidents: [],
+        components: []
+      };
+    }
+  }
+
+  /**
+   * Transform Azure DevOps API response to our standard format
+   */
+  transformAzureResponse(data) {
+    // Azure DevOps API returns services with geographies and their health status
+    const services = data.services || [];
+    let worstStatus = 'operational';
+    const components = [];
+    const incidents = [];
+
+    // Check each service's geography status
+    services.forEach(service => {
+      const serviceName = service.id || service.name;
+      if (service.geographies) {
+        service.geographies.forEach(geography => {
+          const geoStatus = geography.health?.toLowerCase() || 'unknown';
+          
+          // Map Azure health status to our status levels
+          let mappedStatus = 'operational';
+          if (geoStatus.includes('unhealthy') || geoStatus.includes('critical')) {
+            mappedStatus = 'critical';
+          } else if (geoStatus.includes('degraded') || geoStatus.includes('warning')) {
+            mappedStatus = 'major';
+          } else if (geoStatus.includes('advisory')) {
+            mappedStatus = 'minor';
+          } else if (geoStatus === 'healthy') {
+            mappedStatus = 'operational';
+          } else {
+            mappedStatus = 'unknown';
+          }
+
+          // Track worst status
+          const statusPriority = { 'critical': 4, 'major': 3, 'minor': 2, 'operational': 1, 'unknown': 0 };
+          if (statusPriority[mappedStatus] > statusPriority[worstStatus]) {
+            worstStatus = mappedStatus;
+          }
+
+          // Add as component
+          components.push({
+            name: `${serviceName} - ${geography.name}`,
+            status: mappedStatus,
+            id: `azure-${serviceName}-${geography.name}`.toLowerCase().replace(/\s+/g, '-')
+          });
+
+          // Create incidents for non-healthy services
+          if (mappedStatus !== 'operational') {
+            incidents.push({
+              name: `${serviceName} issues in ${geography.name}`,
+              status: mappedStatus === 'critical' ? 'investigating' : 'monitoring',
+              impact: mappedStatus,
+              created_at: new Date().toISOString(),
+              updates: [{
+                body: `${geography.name} region experiencing ${mappedStatus} issues`,
+                created_at: new Date().toISOString(),
+                status: mappedStatus === 'critical' ? 'investigating' : 'monitoring'
+              }]
+            });
+          }
+        });
+      }
+    });
+
+    return {
+      status: { indicator: worstStatus },
+      components: components,
+      incidents: incidents
+    };
+  }
+
+  /**
+   * Combine statuses from multiple services
+   */
+  combineStatuses(claudeStatus, githubStatus, azureStatus) {
+    // Priority: critical > major > minor > operational
+    const statusPriority = {
+      'critical': 4,
+      'major': 3, 
+      'minor': 2,
+      'operational': 1,
+      'unknown': 0
+    };
+
+    const claudeLevel = statusPriority[claudeStatus?.status?.indicator] || 0;
+    const githubLevel = statusPriority[githubStatus?.status?.indicator] || 0;
+    const azureLevel = statusPriority[azureStatus?.status?.indicator] || 0;
+    
+    const maxLevel = Math.max(claudeLevel, githubLevel, azureLevel);
+    const combinedIndicator = Object.keys(statusPriority).find(key => 
+      statusPriority[key] === maxLevel
+    ) || 'unknown';
+
+    return {
+      indicator: combinedIndicator,
+      description: this.getCombinedDescription(claudeStatus, githubStatus, azureStatus, combinedIndicator),
+      claude: claudeStatus,
+      github: githubStatus,
+      azure: azureStatus
+    };
+  }
+
+  /**
+   * Get combined status description
+   */
+  getCombinedDescription(claudeStatus, githubStatus, azureStatus, indicator) {
+    const descriptions = {
+      'operational': 'All dev tools are vibing! 🔥',
+      'minor': 'Minor issues detected in your dev tools',
+      'major': 'Major issues affecting your dev tools',
+      'critical': 'Critical issues - dev tools are down!',
+      'unknown': 'Unable to determine dev tools status'
+    };
+    
+    return descriptions[indicator] || descriptions.unknown;
+  }
+
+  /**
+   * Fetch data with timeout and proper error handling
+   */
+  async fetchData(url, timeout = 10000) {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), timeout);
+    
+    try {
+      const response = await fetch(url, { 
+        signal: controller.signal,
+        cache: 'no-cache',
+        headers: {
+          'Accept': 'application/json',
+          'User-Agent': 'Claude Status Monitor Extension'
+        }
+      });
+      
+      clearTimeout(timeoutId);
+      
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+      
+      return await response.json();
+    } catch (error) {
+      clearTimeout(timeoutId);
+      if (error.name === 'AbortError') {
+        throw new Error('Request timeout');
+      }
+      throw error;
+    }
+  }
+
+  /**
+   * Extract status from Promise.allSettled result or service result
+   */
+  extractStatusFromResult(result, serviceName = null) {
+    // Handle service-specific results (from checkServiceStatus)
+    if (serviceName && result.status === 'fulfilled' && result.value) {
+      return result.value;
+    }
+    
+    // Handle individual API call results  
+    if (result.status === 'fulfilled' && result.value?.status?.indicator) {
+      return result.value.status.indicator;
+    }
+    
+    return 'unknown';
+  }
+
+  /**
+   * Extract incidents from Promise.allSettled result
+   */
+  extractIncidentsFromResult(result) {
+    if (result.status === 'fulfilled' && Array.isArray(result.value?.incidents)) {
+      return result.value.incidents;
+    }
+    return [];
+  }
+
+  /**
+   * Extract components from Promise.allSettled result
+   */
+  extractComponentsFromResult(result) {
+    if (result.status === 'fulfilled' && Array.isArray(result.value?.components)) {
+      return result.value.components;
+    }
+    return [];
+  }
+
+  /**
+   * Handle check failure with proper error tracking
+   */
+  async handleCheckFailure(error) {
+    await this.updateStatus('unknown', [], [], [], []);
+    await this.updateBadgeIcon('unknown', []);
+    await chrome.storage.local.set({ 
+      lastError: {
+        message: error.message,
+        timestamp: Date.now()
+      }
+    });
+    this.handleError(error, 'status-check');
+  }
+
+  /**
+   * Generic error handler with categorization
+   */
+  handleError(error, category) {
+    console.error(`[${category}] Error:`, error);
+    // Could integrate with crash reporting service here
+  }
+
+
+  /**
+   * Get recent active incidents (unresolved) with formatted titles
+   */
+  getRecentIncidents(incidents) {
+    return incidents
+      .filter(incident => incident.status !== 'resolved')
+      .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+      .slice(0, 5)
+      .map(incident => ({
+        name: incident.name,
+        titleWithDate: this.formatIncidentTitle(incident.name, incident.created_at),
+        status: incident.status,
+        created_at: incident.created_at,
+        shortlink: incident.shortlink,
+        impact: incident.impact,
+        updates: incident.incident_updates.slice(0, 1).map(update => ({
+          body: update.body,
+          created_at: update.created_at,
+          status: update.status
+        }))
+      }));
+  }
+
+  /**
+   * Get last 5 incidents regardless of status with formatted titles
+   */
+  getLastFiveIncidents(incidents) {
+    return incidents
+      .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+      .slice(0, 5)
+      .map(incident => ({
+        name: incident.name,
+        titleWithDate: this.formatIncidentTitle(incident.name, incident.created_at),
+        status: incident.status,
+        created_at: incident.created_at,
+        resolved_at: incident.resolved_at,
+        shortlink: incident.shortlink,
+        impact: incident.impact,
+        duration: incident.resolved_at ? 
+          this.calculateDuration(incident.created_at, incident.resolved_at) : null,
+        summary: this.generateIncidentSummary(incident),
+        updates: incident.incident_updates.slice(0, 2).map(update => ({
+          body: update.body,
+          created_at: update.created_at,
+          status: update.status
+        }))
+      }));
+  }
+
+  getHistoricalIncidents(incidents) {
+    const last24Hours = new Date(Date.now() - 24 * 60 * 60 * 1000);
+    return incidents
+      .filter(incident => new Date(incident.created_at) >= last24Hours)
+      .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+      .slice(0, 3)
+      .map(incident => ({
+        name: incident.name,
+        status: incident.status,
+        created_at: incident.created_at,
+        resolved_at: incident.resolved_at,
+        impact: incident.impact,
+        summary: this.generateIncidentSummary(incident),
+        duration: incident.resolved_at ? 
+          this.calculateDuration(incident.created_at, incident.resolved_at) : null,
+        updates: incident.incident_updates.map(update => ({
+          body: update.body,
+          created_at: update.created_at,
+          status: update.status
+        }))
+      }));
+  }
+
+  generateIncidentSummary(incident) {
+    if (!incident.incident_updates || incident.incident_updates.length === 0) {
+      return `${incident.impact || 'Minor'} impact incident affecting Claude services.`;
+    }
+    
+    const firstUpdate = incident.incident_updates[incident.incident_updates.length - 1];
+    const lastUpdate = incident.incident_updates[0];
+    
+    let summary = `${incident.impact || 'Minor'} impact: `;
+    
+    if (incident.status === 'resolved') {
+      summary += `Issue resolved. ${lastUpdate.body.slice(0, 100)}...`;
+    } else {
+      summary += `${firstUpdate.body.slice(0, 100)}...`;
+    }
+    
+    return summary;
+  }
+
+  calculateDuration(startTime, endTime) {
+    const start = new Date(startTime);
+    const end = new Date(endTime);
+    const durationMs = end - start;
+    const hours = Math.floor(durationMs / (1000 * 60 * 60));
+    const minutes = Math.floor((durationMs % (1000 * 60 * 60)) / (1000 * 60));
+    
+    if (hours > 0) {
+      return `${hours}h ${minutes}m`;
+    }
+    return `${minutes}m`;
+  }
+
+  /**
+   * Format incident title with date
+   */
+  formatIncidentTitle(name, createdAt) {
+    const date = new Date(createdAt);
+    const dateStr = date.toLocaleDateString('en-US', { 
+      month: 'short', 
+      day: 'numeric',
+      year: date.getFullYear() !== new Date().getFullYear() ? 'numeric' : undefined
+    });
+    const timeStr = date.toLocaleTimeString('en-US', { 
+      hour: 'numeric', 
+      minute: '2-digit',
+      hour12: true
+    });
+    
+    return `${dateStr} ${timeStr} - ${name}`;
+  }
+
+  /**
+   * Update VState status data in storage
+   */
+  async updateVStateStatus(claudeStatus, githubStatus, azureStatus, combinedStatus) {
+    const currentTime = new Date().toISOString();
+    
+    await chrome.storage.local.set({
+      // Combined status
+      vstateStatus: combinedStatus,
+      
+      // Individual service data
+      claudeStatus: claudeStatus,
+      githubStatus: githubStatus,
+      azureStatus: azureStatus,
+      
+      // Individual incidents
+      claudeIncidents: claudeStatus?.incidents || [],
+      githubIncidents: githubStatus?.incidents || [],
+      azureIncidents: azureStatus?.incidents || [],
+      
+      // Individual components
+      claudeComponents: claudeStatus?.components || [],
+      githubComponents: githubStatus?.components || [],
+      azureComponents: azureStatus?.components || [],
+      
+      // Timestamps
+      lastUpdated: currentTime,
+      lastSuccessfulCheck: Date.now()
+    });
+  }
+
+  async updateStatus(status, incidents, historicalIncidents, components, lastFiveIncidents) {
+    await chrome.storage.local.set({
+      status: status,
+      incidents: incidents,
+      historicalIncidents: historicalIncidents || [],
+      lastFiveIncidents: lastFiveIncidents || [],
+      components: components || [],
+      lastUpdated: new Date().toISOString()
+    });
+  }
+
+  /**
+   * Update badge icon with error handling and animation
+   */
+  async updateBadgeIcon(status, components = []) {
+    try {
+      const iconPath = this.getIconPath(status);
+      
+      await chrome.action.setIcon({ path: iconPath });
+      
+      // Start icon animation for non-operational states
+      this.handleIconAnimation(status);
+
+      // Count affected services
+      const affectedCount = this.countAffectedServices(components);
+      
+      let badgeText = '';
+      if (status === 'critical') {
+        badgeText = affectedCount > 0 ? affectedCount.toString() : '!';
+      } else if (status === 'major') {
+        badgeText = affectedCount > 0 ? affectedCount.toString() : '!';
+      } else if (status === 'minor') {
+        badgeText = affectedCount > 0 ? affectedCount.toString() : '?';
+      }
+      
+      await chrome.action.setBadgeText({ text: badgeText });
+
+      if (badgeText) {
+        await chrome.action.setBadgeBackgroundColor({
+          color: this.getBadgeColor(status)
+        });
+      }
+      
+      // Update title with status and affected count
+      const statusText = this.getStatusText(status);
+      const titleSuffix = affectedCount > 0 ? ` (${affectedCount} service${affectedCount > 1 ? 's' : ''} affected)` : '';
+      await chrome.action.setTitle({
+        title: `Vibe Stats ⚡: ${statusText}${titleSuffix}`
+      });
+      
+    } catch (error) {
+      console.error('Failed to update badge icon:', error);
+    }
+  }
+
+  /**
+   * Count services that are not operational
+   */
+  countAffectedServices(components) {
+    if (!Array.isArray(components)) return 0;
+    
+    // Key service components to track
+    const keyServices = [
+      'claude.ai', 'claude frontend', 'claude.ai website',
+      'anthropic console', 'console.anthropic.com', 'console',
+      'anthropic api', 'api.anthropic.com', 'api',
+      'claude code', 'code editor'
+    ];
+    
+    return components.filter(component => {
+      const name = component.name.toLowerCase();
+      const isKeyService = keyServices.some(service => 
+        name.includes(service) || service.includes(name)
+      );
+      const isNotOperational = component.status && 
+        component.status.toLowerCase() !== 'operational';
+      
+      return isKeyService && isNotOperational;
+    }).length;
+  }
+
+  getIconColor(status) {
+    switch (status) {
+      case 'none':
+      case 'operational':
+        return 'green';
+      case 'minor':
+        return 'yellow';
+      case 'major':
+      case 'critical':
+        return 'red';
+      default:
+        return 'gray';
+    }
+  }
+
+  getIconPath(color) {
+    return {
+      "16": `icons/ai-vibe-16.png`,
+      "32": `icons/ai-vibe-32.png`,
+      "48": `icons/ai-vibe-48.png`,
+      "128": `icons/ai-vibe-128.png`
+    };
+  }
+
+  /**
+   * Handle icon animation for different statuses
+   */
+  handleIconAnimation(status) {
+    // Clear any existing animation interval
+    if (this.animationInterval) {
+      clearInterval(this.animationInterval);
+      this.animationInterval = null;
+    }
+
+    // Start badge animation for problematic statuses instead of icon blinking
+    if (status !== 'operational' && status !== 'none') {
+      let isVisible = true;
+      
+      this.animationInterval = setInterval(async () => {
+        try {
+          if (isVisible) {
+            // Make badge flash by changing opacity
+            await chrome.action.setBadgeBackgroundColor({
+              color: [255, 0, 0, 100] // Red with low opacity
+            });
+          } else {
+            // Restore original badge color
+            await chrome.action.setBadgeBackgroundColor({
+              color: this.getBadgeColor(status)
+            });
+          }
+          isVisible = !isVisible;
+        } catch (error) {
+          console.error('Animation error:', error);
+          // If animation fails, clear the interval to prevent spam
+          if (this.animationInterval) {
+            clearInterval(this.animationInterval);
+            this.animationInterval = null;
+          }
+        }
+      }, 1000); // Flash every second
+    }
+  }
+
+  getBadgeColor(status) {
+    switch (status) {
+      case 'none':
+      case 'operational':
+        return '#4CAF50';
+      case 'minor':
+        return '#FFC107';
+      case 'major':
+      case 'critical':
+        return '#F44336';
+      default:
+        return '#9E9E9E';
+    }
+  }
+
+  /**
+   * Get human-readable status text
+   */
+  getStatusText(status) {
+    switch (status) {
+      case 'none':
+      case 'operational':
+        return 'All Systems Operational';
+      case 'minor':
+        return 'Minor Issues';
+      case 'major':
+        return 'Major Issues';
+      case 'critical':
+        return 'Critical Issues';
+      default:
+        return 'Status Unknown';
+    }
+  }
+}
+
+// Global monitor instance
+let vstateMonitor = null;
+
+// Event listeners using modern async patterns
+chrome.runtime.onInstalled.addListener(async (details) => {
+  console.log('VState extension installed/updated:', details.reason);
+  try {
+    vstateMonitor = new VStateMonitor();
+    await vstateMonitor.init();
+  } catch (error) {
+    console.error('Failed to initialize VState on install:', error);
+  }
+});
+
+chrome.runtime.onStartup.addListener(async () => {
+  console.log('VState extension startup');
+  try {
+    vstateMonitor = new VStateMonitor();
+    await vstateMonitor.init();
+  } catch (error) {
+    console.error('Failed to initialize VState on startup:', error);
+  }
+});
+
+// Handle alarm events for periodic checks
+chrome.alarms.onAlarm.addListener(async (alarm) => {
+  if (alarm.name === 'vstateCheck' && vstateMonitor) {
+    await vstateMonitor.checkAllStatuses();
+  }
+});
+
+// Service worker message handling
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  if (message.action === 'forceRefresh') {
+    (async () => {
+      try {
+        if (!vstateMonitor) {
+          vstateMonitor = new VStateMonitor();
+          await vstateMonitor.init();
+        }
+        await vstateMonitor.checkAllStatuses();
+        sendResponse({ status: 'refreshing', timestamp: Date.now() });
+      } catch (error) {
+        console.error('VState force refresh failed:', error);
+        sendResponse({ status: 'error', error: error.message });
+      }
+    })();
+    return true; // Indicates async response
+  }
+  
+  if (message.action === 'getStatus') {
+    (async () => {
+      try {
+        const data = await chrome.storage.local.get([
+          'vstateStatus', 'claudeStatus', 'githubStatus', 'azureStatus',
+          'claudeIncidents', 'githubIncidents', 'azureIncidents', 
+          'lastUpdated', 'lastError'
+        ]);
+        sendResponse({ status: 'success', data });
+      } catch (error) {
+        sendResponse({ status: 'error', error: error.message });
+      }
+    })();
+    return true; // Indicates async response
+  }
+});

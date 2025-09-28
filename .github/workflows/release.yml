@@ -38,16 +38,11 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '18'
-          cache: 'npm'
-          cache-dependency-path: tests/package-lock.json
-
-      - name: 📦 Install Test Dependencies
-        run: |
-          cd tests
-          npm ci
 
       - name: 🧪 Run Tests
-        run: npm test
+        run: |
+          cd tests
+          npm test
 
       - name: 🔍 Validate Extension Files
         run: npm run validate
@@ -90,6 +85,11 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '18'
+
+      - name: 🧪 Run Tests
+        run: |
+          cd tests
+          npm test
 
       - name: 🔍 Validate Extension
         run: npm run validate

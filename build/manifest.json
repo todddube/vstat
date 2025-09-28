@@ -1,0 +1,49 @@
+{
+  "manifest_version": 3,
+  "name": "Vibe Stats - AI Dev Tools Monitor",
+  "version": "1.0.4",
+  "description": "Monitor Claude AI and GitHub Copilot status with real-time updates and cool AI-themed vibe indicators - Keep your dev tools vibe in check! 🤖⚡🔥",
+  "author": "Todd Dube - https://github.com/todddube",
+  "minimum_chrome_version": "88",
+  "permissions": [
+    "storage",
+    "alarms"
+  ],
+  "host_permissions": [
+    "https://status.anthropic.com/*",
+    "https://www.githubstatus.com/*"
+  ],
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "Vibe Stats - AI Dev Tools Monitor 🤖⚡",
+    "default_icon": {
+      "16": "icons/ai-vibe-16.png",
+      "32": "icons/ai-vibe-32.png",
+      "48": "icons/ai-vibe-48.png",
+      "128": "icons/ai-vibe-128.png"
+    }
+  },
+  "icons": {
+    "16": "icons/ai-vibe-16.png",
+    "32": "icons/ai-vibe-32.png",
+    "48": "icons/ai-vibe-48.png",
+    "128": "icons/ai-vibe-128.png"
+  },
+  "content_security_policy": {
+    "extension_pages": "script-src 'self'; object-src 'self'"
+  },
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "icons/*.png"
+      ],
+      "matches": [
+        "<all_urls>"
+      ]
+    }
+  ]
+}

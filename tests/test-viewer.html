@@ -499,18 +499,18 @@
                 // Test icon files
                 for (const size of iconSizes) {
                     totalTests++;
-                    const iconPath = `../icons/lightning-${size}.png`;
+                    const iconPath = `../icons/ai-vibe-${size}.png`;
                     
                     try {
                         // In a real browser environment, you'd check if the image loads
-                        results.icons[`lightning-${size}.png`] = {
+                        results.icons[`ai-vibe-${size}.png`] = {
                             status: 'success',
                             size: size,
                             path: iconPath
                         };
                         successCount++;
                     } catch (error) {
-                        results.icons[`lightning-${size}.png`] = {
+                        results.icons[`ai-vibe-${size}.png`] = {
                             status: 'error',
                             error: error.message
                         };

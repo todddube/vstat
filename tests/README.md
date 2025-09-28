@@ -24,7 +24,7 @@ npm run test:viewer   # Open interactive test viewer
 - **Combined Logic**: Tests status priority and combination logic
 
 ### 🎨 Visual Component Testing
-- **Icon File Validation**: Checks all required lightning bolt icons exist
+- **Icon File Validation**: Checks all required AI vibe icons exist
 - **Badge Color Testing**: Validates badge colors for all status states
 - **Status Combinations**: Tests all status + badge text combinations
 - **Color Consistency**: Ensures consistent color scheme across components
@@ -162,10 +162,10 @@ Results can be exported to `test-results.json`:
 - **unknown** → Gray icon, no badge
 
 ### Icon Files
-- `icons/lightning-16.png` (16x16px)
-- `icons/lightning-32.png` (32x32px)  
-- `icons/lightning-48.png` (48x48px)
-- `icons/lightning-128.png` (128x128px)
+- `icons/ai-vibe-16.png` (16x16px)
+- `icons/ai-vibe-32.png` (32x32px)
+- `icons/ai-vibe-48.png` (48x48px)
+- `icons/ai-vibe-128.png` (128x128px)
 
 ## 🐛 Troubleshooting
 
@@ -181,7 +181,7 @@ curl -s https://www.githubstatus.com/api/v2/status.json
 #### Missing Icon Files
 ```bash
 # Verify icon files exist
-ls -la icons/lightning-*.png
+ls -la icons/ai-vibe-*.png
 ```
 
 #### Test Viewer Not Opening

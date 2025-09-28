@@ -51,7 +51,7 @@ class VisualTester {
     const iconsDir = path.join(__dirname, '..', 'icons');
     
     for (const size of this.iconSizes) {
-      const iconPath = path.join(iconsDir, `lightning-${size}.png`);
+      const iconPath = path.join(iconsDir, `ai-vibe-${size}.png`);
       
       try {
         // Check if file exists
@@ -62,7 +62,7 @@ class VisualTester {
           const stats = fs.statSync(iconPath);
           const fileSizeKB = Math.round(stats.size / 1024);
           
-          this.results.icons[`lightning-${size}.png`] = {
+          this.results.icons[`ai-vibe-${size}.png`] = {
             status: 'success',
             exists: true,
             size: stats.size,
@@ -70,26 +70,26 @@ class VisualTester {
             path: iconPath
           };
           
-          console.log(`    ✅ lightning-${size}.png (${fileSizeKB}KB)`);
+          console.log(`    ✅ ai-vibe-${size}.png (${fileSizeKB}KB)`);
         } else {
-          this.results.icons[`lightning-${size}.png`] = {
+          this.results.icons[`ai-vibe-${size}.png`] = {
             status: 'missing',
             exists: false,
             path: iconPath
           };
           
-          console.log(`    ❌ lightning-${size}.png - Missing`);
-          this.results.errors.push(`Missing icon file: lightning-${size}.png`);
+          console.log(`    ❌ ai-vibe-${size}.png - Missing`);
+          this.results.errors.push(`Missing icon file: ai-vibe-${size}.png`);
         }
         
       } catch (error) {
-        console.log(`    ❌ lightning-${size}.png - Error: ${error.message}`);
-        this.results.icons[`lightning-${size}.png`] = {
+        console.log(`    ❌ ai-vibe-${size}.png - Error: ${error.message}`);
+        this.results.icons[`ai-vibe-${size}.png`] = {
           status: 'error',
           error: error.message,
           path: iconPath
         };
-        this.results.errors.push(`Icon file error: lightning-${size}.png - ${error.message}`);
+        this.results.errors.push(`Icon file error: ai-vibe-${size}.png - ${error.message}`);
       }
     }
   }
@@ -329,7 +329,7 @@ class VisualTester {
 
     // Add icon previews
     for (const size of this.iconSizes) {
-      const iconResult = this.results.icons[`lightning-${size}.png`];
+      const iconResult = this.results.icons[`ai-vibe-${size}.png`];
       const status = iconResult?.status || 'missing';
       const statusClass = status === 'success' ? 'status-operational' : 'status-critical';
       
@@ -338,7 +338,7 @@ class VisualTester {
                     <div class="icon-preview">
                         ${status === 'success' ? '⚡' : '❌'}
                     </div>
-                    <h4>lightning-${size}.png</h4>
+                    <h4>ai-vibe-${size}.png</h4>
                     <p class="${statusClass}">${status.toUpperCase()}</p>
                     ${iconResult?.sizeKB ? `<p>${iconResult.sizeKB}KB</p>` : ''}
                 </div>`;
