@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Privacy Policy - Vibe Stats AI Dev Tools Monitor</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+            line-height: 1.6;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            color: #333;
+            background: #f8f9fa;
+        }
+        .container {
+            background: white;
+            padding: 40px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 { color: #2c3e50; border-bottom: 3px solid #3498db; padding-bottom: 10px; }
+        h2 { color: #2980b9; margin-top: 30px; }
+        h3 { color: #34495e; }
+        .highlight { background: #e8f4fd; padding: 15px; border-left: 4px solid #3498db; margin: 20px 0; }
+        .checkmark { color: #27ae60; font-weight: bold; }
+        .cross { color: #e74c3c; font-weight: bold; }
+        .meta { color: #7f8c8d; font-size: 0.9em; font-style: italic; }
+        ul { padding-left: 20px; }
+        li { margin: 8px 0; }
+        .section { margin: 30px 0; }
+        .footer { margin-top: 40px; padding-top: 20px; border-top: 1px solid #ecf0f1; color: #7f8c8d; text-align: center; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Privacy Policy for Vibe Stats - AI Dev Tools Monitor</h1>
+
+        <div class="meta">
+            <strong>Effective Date:</strong> September 28, 2025<br>
+            <strong>Last Updated:</strong> September 28, 2025<br>
+            <strong>Extension Version:</strong> 1.0.5
+        </div>
+
+        <div class="highlight">
+            <h3>🔒 Privacy Commitment</h3>
+            <p><strong>We do NOT collect, access, store, or transmit any personal information whatsoever.</strong></p>
+            <p>This extension is designed with privacy-first principles and Chrome Web Store compliance.</p>
+        </div>
+
+        <div class="section">
+            <h2>Overview</h2>
+            <p>Vibe Stats - AI Dev Tools Monitor ("the Extension") is a Chrome/Edge browser extension developed by Todd Dube that monitors the real-time operational status of AI developer tools (Claude AI and GitHub Copilot). This privacy policy explains our data practices in full compliance with Chrome Web Store requirements.</p>
+            <p><strong>🎯 Extension Purpose:</strong> Monitor public status APIs and display service health through AI-themed vibe indicators.</p>
+        </div>
+
+        <div class="section">
+            <h2>🚫 What We DON'T Collect</h2>
+            <p>This extension does <strong>NOT</strong> collect, access, store, or transmit:</p>
+            <ul>
+                <li><span class="cross">❌</span> Names, email addresses, or contact information</li>
+                <li><span class="cross">❌</span> Browsing history or website data</li>
+                <li><span class="cross">❌</span> Search queries or form inputs</li>
+                <li><span class="cross">❌</span> User credentials or authentication tokens</li>
+                <li><span class="cross">❌</span> Location data or device identifiers</li>
+                <li><span class="cross">❌</span> Usage analytics or behavioral tracking</li>
+                <li><span class="cross">❌</span> Cookies or cross-site tracking</li>
+                <li><span class="cross">❌</span> Content from websites you visit</li>
+                <li><span class="cross">❌</span> Information from other extensions or browser features</li>
+            </ul>
+        </div>
+
+        <div class="section">
+            <h2>📊 What We DO Collect (Local Only)</h2>
+            <h3>Service Status Information</h3>
+            <p>The extension accesses publicly available status information from:</p>
+            <ul>
+                <li><strong>Claude AI Status API:</strong> <code>https://status.anthropic.com/api/v2/</code></li>
+                <li><strong>GitHub Status API:</strong> <code>https://www.githubstatus.com/api/v2/</code></li>
+            </ul>
+
+            <h3>Data Retrieved:</h3>
+            <ul>
+                <li>Service operational status (operational, minor, major, critical)</li>
+                <li>Public incident reports and updates</li>
+                <li>Component health status</li>
+                <li>Timestamp of last successful check</li>
+            </ul>
+
+            <div class="highlight">
+                <strong>🏠 Storage Guarantee:</strong> All data is stored locally on your device using Chrome's secure storage API. No data ever leaves your device or is transmitted to external servers.
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>🔐 Chrome Web Store Permission Justifications</h2>
+
+            <h3>1. Storage Permission (<code>storage</code>)</h3>
+            <p><strong>Purpose:</strong> Cache service status data locally for performance and offline access.</p>
+            <p><strong>Data Stored:</strong> API responses, timestamps, user settings, error logs.</p>
+            <p><strong>Privacy Guarantee:</strong> All data remains on your device.</p>
+
+            <h3>2. Alarms Permission (<code>alarms</code>)</h3>
+            <p><strong>Purpose:</strong> Schedule automated status checks every 5 minutes.</p>
+            <p><strong>Data Usage:</strong> Only triggers API calls to public status endpoints.</p>
+            <p><strong>Privacy Guarantee:</strong> No user activity monitoring.</p>
+
+            <h3>3. Host Permissions</h3>
+            <p><strong>Domains:</strong> <code>status.anthropic.com</code>, <code>www.githubstatus.com</code></p>
+            <p><strong>Purpose:</strong> Read-only access to public status APIs.</p>
+            <p><strong>Data Transmitted:</strong> No user data, cookies, or personal information.</p>
+            <p><strong>Privacy Guarantee:</strong> Only accesses publicly available status information.</p>
+        </div>
+
+        <div class="section">
+            <h2>🛡️ Security & Data Protection</h2>
+            <ul>
+                <li><span class="checkmark">✅</span> All data stored using Chrome's secure, sandboxed storage API</li>
+                <li><span class="checkmark">✅</span> No cloud storage, external databases, or third-party services</li>
+                <li><span class="checkmark">✅</span> Automatic data cleanup when extension is uninstalled</li>
+                <li><span class="checkmark">✅</span> All API requests use HTTPS encryption</li>
+                <li><span class="checkmark">✅</span> Only connects to official, verified status service endpoints</li>
+                <li><span class="checkmark">✅</span> Runs within Chrome's security sandbox</li>
+                <li><span class="checkmark">✅</span> No access to other browser tabs, extensions, or system resources</li>
+            </ul>
+        </div>
+
+        <div class="section">
+            <h2>🚫 What We Don't Do</h2>
+            <ul>
+                <li><span class="cross">❌</span> No Google Analytics, tracking pixels, or telemetry</li>
+                <li><span class="cross">❌</span> No crash reporting or error tracking services</li>
+                <li><span class="cross">❌</span> No usage statistics or performance monitoring</li>
+                <li><span class="cross">❌</span> No advertising networks or social media integration</li>
+                <li><span class="cross">❌</span> No data transmission to our servers or third parties</li>
+                <li><span class="cross">❌</span> No data sales, licensing, or commercial use</li>
+                <li><span class="cross">❌</span> No registration, accounts, or login required</li>
+            </ul>
+        </div>
+
+        <div class="section">
+            <h2>👶 Children's Privacy</h2>
+            <p>This extension does not target children under 13 and does not collect personal information from users of any age. The extension is designed for software developers monitoring professional development tools.</p>
+        </div>
+
+        <div class="section">
+            <h2>🔄 Data Retention</h2>
+            <ul>
+                <li><strong>Status Data:</strong> Refreshed every 5 minutes, older data automatically replaced</li>
+                <li><strong>User Settings:</strong> Persist until extension is uninstalled or manually reset</li>
+                <li><strong>Error Logs:</strong> Overwritten with each new occurrence (no persistent storage)</li>
+                <li><strong>Complete Removal:</strong> All data automatically deleted upon extension uninstallation</li>
+            </ul>
+        </div>
+
+        <div class="section">
+            <h2>📱 Chrome Web Store Compliance Checklist</h2>
+            <div class="highlight">
+                <h3>✅ Privacy Requirements Met</h3>
+                <ul>
+                    <li><span class="checkmark">✅</span> Clear, accurate, and up-to-date privacy policy</li>
+                    <li><span class="checkmark">✅</span> Publicly accessible privacy policy URL</li>
+                    <li><span class="checkmark">✅</span> No personal data collection clearly stated</li>
+                    <li><span class="checkmark">✅</span> Transparent permission usage documentation</li>
+                    <li><span class="checkmark">✅</span> No hidden functionality or undisclosed features</li>
+                </ul>
+
+                <h3>✅ Security Requirements Met</h3>
+                <ul>
+                    <li><span class="checkmark">✅</span> HTTPS-only network communications</li>
+                    <li><span class="checkmark">✅</span> Official API endpoints only</li>
+                    <li><span class="checkmark">✅</span> Sandboxed operation within Chrome security model</li>
+                    <li><span class="checkmark">✅</span> No external servers or third-party services</li>
+                    <li><span class="checkmark">✅</span> Minimal attack surface with limited permissions</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>📞 Contact Information</h2>
+            <ul>
+                <li><strong>Developer:</strong> Todd Dube</li>
+                <li><strong>GitHub Repository:</strong> <a href="https://github.com/todddube/vstat" target="_blank">https://github.com/todddube/vstat</a></li>
+                <li><strong>Issue Tracker:</strong> <a href="https://github.com/todddube/vstat/issues" target="_blank">https://github.com/todddube/vstat/issues</a></li>
+                <li><strong>Privacy Questions:</strong> Open an issue on GitHub with "Privacy" label</li>
+            </ul>
+        </div>
+
+        <div class="section">
+            <h2>📝 Policy Updates</h2>
+            <p>Policy updates will be reflected in the "Last Updated" date above. Major changes will be announced via GitHub repository releases. Continued use of the extension constitutes acceptance of policy updates.</p>
+        </div>
+
+        <div class="footer">
+            <p><strong>🛡️ This privacy policy demonstrates our commitment to user privacy and Chrome Web Store compliance.</strong></p>
+            <p>📜 Last reviewed and verified for Chrome Web Store submission: September 28, 2025</p>
+            <p><a href="https://github.com/todddube/vstat" target="_blank">🔗 View Extension Source Code</a></p>
+        </div>
+    </div>
+</body>
+</html>

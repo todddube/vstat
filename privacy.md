@@ -2,6 +2,242 @@
 
 **Effective Date:** September 28, 2025
 **Last Updated:** September 28, 2025
+**Extension Version:** 1.0.5
+
+---
+
+## Overview
+
+Vibe Stats - AI Dev Tools Monitor ("the Extension") is a Chrome/Edge browser extension developed by Todd Dube that monitors the real-time operational status of AI developer tools (Claude AI and GitHub Copilot). This privacy policy explains our data practices in full compliance with Chrome Web Store requirements.
+
+**🎯 Extension Purpose**: Monitor public status APIs and display service health through AI-themed vibe indicators.
+
+---
+
+## 🔒 Privacy Commitment
+
+### Zero Personal Data Collection
+**We do NOT collect, access, store, or transmit any personal information whatsoever.**
+
+This includes but is not limited to:
+- ❌ Names, email addresses, or contact information
+- ❌ Browsing history or website data
+- ❌ Search queries or form inputs
+- ❌ User credentials or authentication tokens
+- ❌ Location data or device identifiers
+- ❌ Usage analytics or behavioral tracking
+- ❌ Cookies or cross-site tracking
+- ❌ Content from websites you visit
+- ❌ Information from other extensions or browser features
+
+---
+
+## 📊 Data We DO Collect (Local Only)
+
+### Service Status Information
+The extension accesses publicly available status information from:
+- **Claude AI Status API**: `https://status.anthropic.com/api/v2/`
+- **GitHub Status API**: `https://www.githubstatus.com/api/v2/`
+
+**Data Retrieved**:
+- Service operational status (operational, minor, major, critical)
+- Public incident reports and updates
+- Component health status
+- Timestamp of last successful check
+
+### Local Storage Only
+All data is stored locally on your device using Chrome's secure storage API:
+- **Status Cache**: Recent API responses to reduce network requests
+- **Settings**: User preferences for refresh intervals
+- **Error Logs**: Technical error messages for troubleshooting
+- **Timestamps**: When status checks were performed
+
+**Storage Guarantee**: No data ever leaves your device or is transmitted to external servers.
+
+---
+
+## 🔐 Chrome Web Store Permission Justifications
+
+### Required Permissions
+
+#### 1. Storage Permission (`storage`)
+**Purpose**: Cache service status data locally for performance and offline access.
+**Data Stored**: API responses, timestamps, user settings, error logs.
+**Privacy Guarantee**: All data remains on your device.
+
+#### 2. Alarms Permission (`alarms`)
+**Purpose**: Schedule automated status checks every 5 minutes.
+**Data Usage**: Only triggers API calls to public status endpoints.
+**Privacy Guarantee**: No user activity monitoring.
+
+#### 3. Host Permissions
+**Domains**: `status.anthropic.com`, `www.githubstatus.com`
+**Purpose**: Read-only access to public status APIs.
+**Data Transmitted**: No user data, cookies, or personal information.
+**Privacy Guarantee**: Only accesses publicly available status information.
+
+---
+
+## 🛡️ Security & Data Protection
+
+### Local Storage Security
+- All data stored using Chrome's secure, sandboxed storage API
+- No cloud storage, external databases, or third-party services
+- Automatic data cleanup when extension is uninstalled
+- No cross-extension or cross-site data access
+
+### Network Security
+- All API requests use HTTPS encryption
+- Only connects to official, verified status service endpoints
+- No authentication tokens or personal data transmitted
+- Minimal request headers (standard User-Agent only)
+
+### Browser Security
+- Runs within Chrome's security sandbox
+- No access to other browser tabs, extensions, or system resources
+- No ability to modify websites or inject content
+- No background processes outside of scheduled status checks
+
+---
+
+## 🚫 What We Don't Do
+
+### No Analytics or Tracking
+- No Google Analytics, tracking pixels, or telemetry
+- No crash reporting or error tracking services
+- No usage statistics or performance monitoring
+- No advertising networks or social media integration
+
+### No Data Sharing
+- No data transmission to our servers or third parties
+- No data sales, licensing, or commercial use
+- No integration with marketing or advertising platforms
+- No cross-platform data synchronization
+
+### No Personal Information
+- No registration, accounts, or login required
+- No email collection or communication
+- No demographic or behavioral profiling
+- No identification or tracking across devices
+
+---
+
+## 👶 Children's Privacy
+
+This extension does not target children under 13 and does not collect personal information from users of any age. The extension is designed for software developers monitoring professional development tools.
+
+---
+
+## 🌍 International Compliance
+
+### GDPR Compliance (EU)
+- No personal data processing occurs
+- No consent required as no personal data is collected
+- No data subject rights applicable (no personal data to access/delete)
+- No data controller or processor relationship established
+
+### CCPA Compliance (California)
+- No personal information collected or sold
+- No consumer rights applicable (no personal information processed)
+- No third-party data sharing or commercial use
+
+---
+
+## 🔄 Data Retention
+
+### Automatic Data Management
+- **Status Data**: Refreshed every 5 minutes, older data automatically replaced
+- **User Settings**: Persist until extension is uninstalled or manually reset
+- **Error Logs**: Overwritten with each new occurrence (no persistent storage)
+- **Complete Removal**: All data automatically deleted upon extension uninstallation
+
+### No Long-term Storage
+- No permanent data storage or backup systems
+- No data archival or historical tracking
+- No data recovery mechanisms needed (no personal data to recover)
+
+---
+
+## 📱 Chrome Web Store Compliance Checklist
+
+### ✅ Privacy Requirements Met
+- Clear, accurate, and up-to-date privacy policy ✅
+- Publicly accessible privacy policy URL ✅
+- No personal data collection clearly stated ✅
+- Transparent permission usage documentation ✅
+- No hidden functionality or undisclosed features ✅
+
+### ✅ Security Requirements Met
+- HTTPS-only network communications ✅
+- Official API endpoints only ✅
+- Sandboxed operation within Chrome security model ✅
+- No external servers or third-party services ✅
+- Minimal attack surface with limited permissions ✅
+
+### ✅ Data Protection Requirements Met
+- Local storage only using Chrome APIs ✅
+- No cloud storage or external databases ✅
+- Automatic data cleanup on uninstall ✅
+- No cross-extension or cross-site data access ✅
+- No authentication or user accounts required ✅
+
+---
+
+## 📞 Contact Information
+
+### Extension Support
+- **Developer**: Todd Dube
+- **GitHub Repository**: https://github.com/todddube/vstat
+- **Issue Tracker**: https://github.com/todddube/vstat/issues
+- **Privacy Questions**: Open an issue on GitHub with "Privacy" label
+
+### Official Links
+- **Extension Homepage**: https://github.com/todddube/vstat
+- **Source Code**: https://github.com/todddube/vstat (Open Source)
+- **Documentation**: https://github.com/todddube/vstat/blob/main/README.md
+
+---
+
+## 📝 Policy Updates
+
+### Change Notification
+- Policy updates will be reflected in the "Last Updated" date above
+- Major changes will be announced via GitHub repository releases
+- Continued use of the extension constitutes acceptance of policy updates
+- Users can review policy history via GitHub commit log
+
+### Version Tracking
+- This policy is versioned alongside extension releases
+- Current policy version corresponds to Extension Version 1.0.5
+- Historical policy versions available in GitHub repository history
+
+---
+
+## 🎯 Chrome Web Store Summary
+
+**For Chrome Web Store Reviewers:**
+
+1. **Zero Personal Data Collection**: Extension does not collect any personal user information
+2. **Local Storage Only**: All data stored locally using Chrome APIs, never transmitted externally
+3. **Minimal Permissions**: Only requests 3 essential permissions with clear justifications
+4. **Official APIs Only**: Only accesses public status APIs from verified service providers
+5. **Open Source**: Complete source code available for security review
+6. **Security Focused**: HTTPS-only, sandboxed operation, no authentication required
+7. **Single Purpose**: Focused solely on displaying AI developer tool status information
+8. **Policy Compliant**: Meets all Chrome Web Store privacy and security requirements
+
+**Permission Summary**:
+- `storage`: Local caching only, no external transmission
+- `alarms`: Background monitoring only, no user activity tracking
+- `host_permissions`: Read-only access to 2 official status APIs only
+
+**No Hidden Functionality**: Extension behavior is transparent, documented, and matches stated purpose.
+
+---
+
+**🛡️ This privacy policy demonstrates our commitment to user privacy and Chrome Web Store compliance.**
+
+**📜 Last reviewed and verified for Chrome Web Store submission: September 28, 2025**
 
 ## Overview
 
