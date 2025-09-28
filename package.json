@@ -1,7 +1,7 @@
 {
   "name": "vibe-stats",
   "version": "1.0.4",
-  "description": "Monitor Claude and GitHub Copilot status with animated lightning bolt indicators and real-time updates",
+  "description": "Monitor Claude AI and GitHub Copilot status with cool AI-themed vibe indicators and real-time updates",
   "author": "Todd Dube",
   "license": ".-.",
   "repository": {
@@ -13,19 +13,19 @@
     "build:clean": "node build-extension.js --clean",
     "build:release": "node build-extension.js --release",
     "validate": "node build-extension.js --validate-only",
-    "prepare-release": "npm run validate && npm run build:clean",
+    "prepare-release": "npm run version:validate && npm run build:clean",
     "release:patch": "node build-extension.js --create-release patch",
     "release:minor": "node build-extension.js --create-release minor",
     "release:major": "node build-extension.js --create-release major",
     "release:patch:manual": "npm run prepare-release && echo 'Ready for manual GitHub release (patch)'",
     "release:minor:manual": "npm run prepare-release && echo 'Ready for manual GitHub release (minor)'",
     "release:major:manual": "npm run prepare-release && echo 'Ready for manual GitHub release (major)'",
-    "version:check": "node sync-version.js check",
-    "version:sync": "node sync-version.js sync-to-manifest",
-    "version:set": "node sync-version.js set",
-    "version:bump": "node sync-version.js bump",
-    "version:validate": "node sync-version.js check && npm run about:check && npm run validate",
-    "about:check": "node check-about-version.js",
+    "version:check": "node dev/scripts/sync-version.js check",
+    "version:sync": "node dev/scripts/sync-version.js sync-to-manifest",
+    "version:set": "node dev/scripts/sync-version.js set",
+    "version:bump": "node dev/scripts/sync-version.js bump",
+    "version:validate": "node dev/scripts/sync-version.js check && npm run about:check && npm run validate",
+    "about:check": "node dev/scripts/check-about-version.js",
     "test": "cd tests && npm test",
     "test:api": "cd tests && npm run test:api",
     "test:visual": "cd tests && npm run test:visual",
@@ -39,7 +39,8 @@
     "github-copilot",
     "browser-extension",
     "dev-tools",
-    "lightning-bolt"
+    "ai-tools",
+    "vibe-icons"
   ],
   "engines": {
     "node": ">=14.0.0"

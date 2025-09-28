@@ -44,7 +44,9 @@
       "Bash(npm run:*)",
       "Bash(git rm:*)",
       "Bash(start modern-ai-icon-generator.html)",
-      "Read(//c/Users/todd/Downloads/**)"
+      "Read(//c/Users/todd/Downloads/**)",
+      "Bash(start cool-vibe-icons.html)",
+      "Bash(move cool-vibe-icons.html design/)"
     ],
     "deny": [],
     "ask": []

@@ -1,15 +1,15 @@
-# Vibe Stats - Dev Tools Status Monitor
+# Vibe Stats - AI Dev Tools Status Monitor
 
-A Chrome/Edge browser extension that monitors the status of developer tools (Claude AI, GitHub Copilot, and Azure DevOps) in real-time, displaying service health through AI-themed vibe indicators and detailed incident information in a popup interface.
+A Chrome/Edge browser extension that monitors the real-time status of AI developer tools (Claude AI and GitHub Copilot) with cool AI-themed vibe indicators and comprehensive incident reporting through an intuitive popup interface.
 
-![Claude Status Monitor](https://img.shields.io/badge/Chrome-Extension-4285F4?style=flat&logo=googlechrome&logoColor=white) ![Manifest V3](https://img.shields.io/badge/Manifest-V3-green) ![Status](https://img.shields.io/badge/Status-Production%20Ready-brightgreen)
+![Chrome Extension](https://img.shields.io/badge/Chrome-Extension-4285F4?style=flat&logo=googlechrome&logoColor=white) ![Manifest V3](https://img.shields.io/badge/Manifest-V3-green) ![Status](https://img.shields.io/badge/Status-Production%20Ready-brightgreen) ![AI Powered](https://img.shields.io/badge/AI-Powered-00d4ff?style=flat&logo=openai&logoColor=white)
 
 📄 **[Privacy Policy](privacy.md)** - Learn about our data collection and privacy practices
 
 ## ✨ Features
 
-- **🔄 Real-time Status Monitoring**: Automatic status checks every 5 minutes for Claude AI, GitHub Copilot, and Azure DevOps
-- **🤖 AI-Themed Vibe Indicators**: Custom AI-themed vibe icons optimized for high-resolution displays
+- **🔄 Real-time Status Monitoring**: Automatic status checks every 5 minutes for Claude AI and GitHub Copilot
+- **🤖 Cool AI-Themed Vibe Icons**: Modern gradient design with cyan/orange color scheme (no purple!)
   - 🟢 **Green**: All dev tools are vibing! 🔥
   - 🟡 **Yellow**: Minor issues with affected service count badge
   - 🔴 **Red**: Major/critical issues with alert badge (!)
@@ -28,8 +28,8 @@ A Chrome/Edge browser extension that monitors the status of developer tools (Cla
 1. **Install from Chrome Web Store** *(coming soon)*
 2. **Or load unpacked for development**:
    ```bash
-   git clone https://github.com/todddube/clstat.git
-   cd clstat
+   git clone https://github.com/todddube/vstat.git
+   cd vstat
    # Open chrome://extensions/ → Enable Developer Mode → Load Unpacked → Select this folder
    ```
 
@@ -37,8 +37,8 @@ A Chrome/Edge browser extension that monitors the status of developer tools (Cla
 
 ```bash
 # Clone the repository
-git clone https://github.com/todddube/clstat.git
-cd clstat
+git clone https://github.com/todddube/vstat.git
+cd vstat
 
 # Install test dependencies
 cd tests && npm install && cd ..
@@ -70,7 +70,7 @@ npm run test:visual
    - Open Chrome and navigate to `chrome://extensions/`
    - Enable **"Developer mode"** (toggle in top-right corner)
    - Click **"Load unpacked"**
-   - Select the `clstat` directory (or `build/` for production build)
+   - Select the `vstat` directory (or `build/` for production build)
    - The Claude status icon should appear in your browser toolbar
 
 3. **Pin the Extension**:
@@ -88,7 +88,7 @@ npm run build
 
 ### System Requirements
 - **Browser**: Chrome 88+ or Edge 88+ (Chromium-based)
-- **Network**: Internet connection to access `status.anthropic.com`
+- **Network**: Internet connection to access status APIs (status.anthropic.com, githubstatus.com)
 - **Permissions**: Storage and Alarms (automatically granted)
 
 ## 🎯 Usage Guide
@@ -140,14 +140,16 @@ vstat/
 ├── ⚙️ background.js              # Service worker (dual-service monitoring)
 ├── 🎨 popup.html                 # Popup interface HTML
 ├── 📱 popup.js                   # Popup interface logic
-├── 🤖 icons/                     # AI-themed vibe icons (16px to 128px)
+├── 🤖 icons/                     # Cool AI-themed vibe icons (16px to 128px)
 │   ├── ai-vibe-16.png            # Toolbar icon (small)
 │   ├── ai-vibe-32.png            # Standard icon
 │   ├── ai-vibe-48.png            # Large icon
 │   └── ai-vibe-128.png           # Extension page icon
 ├── 🛠️ dev/                       # Development tools and assets
-│   ├── icon-generator/           # AI-vibe icon generation tool
+│   ├── scripts/                  # Utility scripts (version sync, etc.)
 │   └── README.md                 # Development tools documentation
+├── 🎨 design/                    # Design assets and tools
+│   └── cool-vibe-icons.html     # Icon generator tool
 ├── 🧪 tests/                     # Comprehensive test suite
 │   ├── unit/                     # Unit tests for components
 │   ├── integration/              # Integration tests
@@ -403,8 +405,8 @@ After a GitHub Action release, you'll find:
 
 1. **Clone and Setup**:
    ```bash
-   git clone https://github.com/todddube/clstat.git
-   cd clstat
+   git clone https://github.com/todddube/vstat.git
+   cd vstat
    cd tests && npm install && cd ..
    ```
 

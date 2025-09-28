@@ -1,43 +1,72 @@
 # Privacy Policy for Vibe Stats - AI Dev Tools Monitor
 
-**Effective Date:** January 14, 2025  
-**Last Updated:** January 14, 2025
+**Effective Date:** September 28, 2025
+**Last Updated:** September 28, 2025
 
 ## Overview
 
-Vibe Stats - AI Dev Tools Monitor is a browser extension that monitors the operational status of developer tools (Claude AI and GitHub services) and displays this information to users. This privacy policy explains what data we collect, how we use it, and how we protect your privacy.
+Vibe Stats - AI Dev Tools Monitor is a Chrome/Edge browser extension that monitors the real-time operational status of AI developer tools (Claude AI and GitHub Copilot) and displays this information through cool AI-themed vibe indicators. This privacy policy explains what data we collect, how we use it, and how we protect your privacy.
+
+## Quick Privacy Summary
+
+**🔒 Zero Personal Data Collection**: We do not collect, store, or transmit any personal information.
+**🏠 Local Storage Only**: All data is stored locally on your device.
+**🔗 Official APIs Only**: We only access public status information from official service endpoints.
+**🚫 No Tracking**: No analytics, advertising, or behavioral tracking whatsoever.
 
 ## Chrome Web Store Permission Justifications
 
-### Storage Permission
-**Justification**: Required to store service status data locally in the user's browser for offline viewing and performance optimization. The extension caches API responses from status services (Claude AI and GitHub) to reduce network requests and provide faster status updates. All data is stored locally using Chrome's storage API and never transmitted to external servers.
+### Storage Permission (`storage`)
+**Justification**: Required to cache service status data locally for performance and offline access. The extension stores:
+- API responses from official status services (Claude AI and GitHub Copilot)
+- Timestamp of last successful update
+- Cached incident information for quick display
+- Extension settings and preferences
 
-### Alarms Permission  
-**Justification**: Essential for scheduling automated status checks every 5 minutes to monitor service health in the background. The extension uses Chrome's alarms API to perform periodic checks of Claude AI and GitHub status APIs, ensuring users receive timely notifications about service disruptions without manual intervention.
+**Privacy Guarantee**: All data remains on your device. Nothing is transmitted to external servers or our infrastructure.
 
-### Host Permissions (status.anthropic.com and githubstatus.com)
-**Justification**: Required to fetch publicly available service status information from official status pages. The extension makes read-only API calls to retrieve operational status, incident reports, and maintenance notifications for Claude AI (status.anthropic.com) and GitHub services (githubstatus.com). These are the only external domains accessed, and no user data is transmitted to these services.
+### Alarms Permission (`alarms`)
+**Justification**: Essential for automated background monitoring every 5 minutes. The extension uses Chrome's alarms API to:
+- Schedule periodic status checks without user intervention
+- Ensure timely detection of service disruptions
+- Update status indicators and badges automatically
+- Maintain current information even when browser is idle
 
-## What Data We Collect
+**Privacy Guarantee**: Only triggers status API calls - no user activity monitoring.
 
-### Service Status Data
-- **External API Responses**: Publicly available status information from official status APIs
-- **Status Information**: Service operational status, incident reports, component health
-- **Timestamps**: When status checks were performed and last updates occurred
+### Host Permissions (`status.anthropic.com`, `www.githubstatus.com`)
+**Justification**: Required to fetch publicly available status information from official service status pages:
+- **Claude AI Status**: `https://status.anthropic.com/api/v2/` endpoints
+- **GitHub Status**: `https://www.githubstatus.com/api/v2/` endpoints
 
-### Local Storage Data
-- **Extension Preferences**: User settings for refresh intervals and display options
-- **Cached Status Data**: Recent status information stored locally to reduce API calls
-- **Error Logs**: Technical error messages for troubleshooting (stored locally only)
+**Privacy Guarantee**: Read-only access to public APIs. No user data, cookies, or personal information transmitted.
 
-### No Personal Data Collection
-We do **NOT** collect, store, or transmit:
-- Personal identifying information
-- Browsing history or website data
-- User credentials or authentication tokens
-- Location data or device identifiers
-- Usage analytics or behavioral tracking
-- Any data from websites you visit
+## What Data We Collect and Store
+
+### ✅ Data We DO Collect (Stored Locally Only)
+
+#### Service Status Information
+- **API Responses**: Public status data from Claude AI and GitHub Copilot status pages
+- **Operational Status**: Current service health (operational, minor issues, major issues)
+- **Incident Reports**: Public incident information and updates
+- **Component Status**: Individual service component health status
+- **Timestamps**: When status checks were performed and data was last updated
+
+#### Extension Operation Data
+- **Settings**: User preferences for refresh intervals and display options
+- **Cache Data**: Recent status information to reduce API calls and improve performance
+- **Error Information**: Technical error messages for troubleshooting (never transmitted)
+
+### ❌ Data We NEVER Collect
+
+We do **NOT** collect, access, store, or transmit:
+- **Personal Information**: Names, emails, phone numbers, addresses
+- **Browsing Data**: Websites visited, search history, bookmarks
+- **Authentication Data**: Passwords, tokens, login credentials
+- **Device Information**: Hardware specs, device IDs, location data
+- **User Behavior**: Click patterns, usage analytics, interaction tracking
+- **Content Data**: Information from websites, forms, or user inputs
+- **Network Activity**: Other extension data, browser tabs, or browsing sessions
 
 ## How We Use Data
 
@@ -94,12 +123,28 @@ These are read-only requests to publicly available endpoints. No personal inform
 
 ## Chrome Web Store Compliance
 
-This extension meets Chrome Web Store privacy requirements:
-- **Minimal Permissions**: Only requests permissions essential for functionality
-- **No Data Collection**: Does not collect user personal information
-- **Transparent Practices**: Clear documentation of all data usage
-- **Secure Implementation**: HTTPS-only communications with minimal attack surface
-- **No Unauthorized Access**: Only accesses explicitly permitted domains
+This extension fully complies with Chrome Web Store privacy and security requirements:
+
+### ✅ Privacy Requirements Met
+- **Minimal Permissions**: Only requests the three permissions essential for core functionality
+- **No Personal Data Collection**: Extension does not collect any user personal information
+- **Clear Privacy Policy**: Comprehensive documentation of all data practices
+- **Transparent Operations**: Open source code available for security review
+- **No Hidden Functionality**: All features clearly documented and visible to users
+
+### ✅ Security Requirements Met
+- **HTTPS Only**: All network requests use encrypted HTTPS connections
+- **Official APIs Only**: Only connects to official, verified status service endpoints
+- **No External Servers**: Extension does not connect to our servers or third-party services
+- **Sandboxed Operation**: Runs within Chrome's security sandbox
+- **Minimal Attack Surface**: Limited permissions and network access reduce security risks
+
+### ✅ Data Protection Requirements Met
+- **Local Storage Only**: All data stored using Chrome's secure local storage APIs
+- **No Cloud Storage**: No external databases, servers, or cloud storage services
+- **Automatic Data Cleanup**: All data automatically removed when extension is uninstalled
+- **No Cross-Extension Access**: Cannot access data from other extensions or browser features
+- **No Authentication Required**: Works without user accounts, logins, or registrations
 
 ## Children's Privacy
 
@@ -125,9 +170,22 @@ For questions about this privacy policy:
 
 ---
 
-**Key Privacy Points for Chrome Web Store Review**:
-1. **No Personal Data**: Extension does not collect any personal information
-2. **Local Storage Only**: All data stored locally, never transmitted externally  
-3. **Minimal Permissions**: Only requests permissions essential for core functionality
-4. **Official APIs Only**: Accesses only official service status endpoints
-5. **Open Source**: Code available for security review and transparency
+## Chrome Web Store Review Summary
+
+**🔑 Key Privacy Points for Store Review**:
+
+1. **🚫 Zero Personal Data Collection**: Extension does not collect, access, or store any personal user information
+2. **🏠 Local Storage Only**: All data stored locally using Chrome APIs, never transmitted to external servers
+3. **🔒 Minimal Permissions**: Only requests 3 essential permissions (storage, alarms, host access)
+4. **🌐 Official APIs Only**: Only accesses public status APIs from official service providers
+5. **📖 Open Source Transparency**: Complete code available for security review and verification
+6. **🛡️ Security Focused**: HTTPS-only, sandboxed operation, no authentication required
+7. **🎯 Single Purpose**: Focused solely on displaying AI developer tool status information
+8. **✅ Chrome Policy Compliant**: Meets all Chrome Web Store privacy and security requirements
+
+**📋 Permission Audit**:
+- `storage`: Local caching only, no external transmission
+- `alarms`: Background monitoring only, no user activity tracking
+- `host_permissions`: Read-only access to 2 official status APIs only
+
+**🔍 No Hidden Functionality**: Extension behavior is transparent, documented, and matches its stated purpose.

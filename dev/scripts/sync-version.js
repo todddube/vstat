@@ -25,7 +25,7 @@ function colorize(text, color) {
 
 class VersionSync {
   constructor() {
-    this.rootDir = __dirname;
+    this.rootDir = path.join(__dirname, '..', '..');
     this.manifestPath = path.join(this.rootDir, 'manifest.json');
     this.packagePath = path.join(this.rootDir, 'package.json');
   }

@@ -1,35 +1,40 @@
 # 🚀 Release Workflow Guide
 
-This document provides a comprehensive guide for managing releases of the Vibe Stats extension.
+This document provides a comprehensive guide for managing releases of the Vibe Stats - AI Dev Tools Status Monitor extension.
 
 ## 📋 Quick Reference
 
 ### Development to Production Pipeline
 
 ```
-📝 Development → 🧪 Testing → 🔍 Validation → 🚀 Release → 🌐 Chrome Store
+📝 Development → 🧪 Testing → 🔍 Validation → 🚀 Release → 🌐 Chrome Web Store
 ```
+
+### Current Version: 1.0.4
+- **Latest Release**: September 28, 2025
+- **Status**: Production Ready
+- **Features**: AI dev tools monitoring with cool vibe icons
 
 ### Command Cheat Sheet
 
 ```bash
 # Version Management
-npm run version:check       # Check version sync
-npm run version:sync        # Sync versions
+npm run version:check       # Check version sync status
+npm run version:sync        # Sync package.json to manifest.json
 npm run version:set 1.2.3   # Set specific version
-npm run version:bump patch  # Bump patch version
+npm run version:bump patch  # Bump patch version (1.0.4 → 1.0.5)
 
 # Build & Release
-npm run prepare-release     # Validate + build
-npm run release:patch       # Ready for GitHub Action (patch)
-npm run release:minor       # Ready for GitHub Action (minor)
-npm run release:major       # Ready for GitHub Action (major)
+npm run prepare-release     # Validate all files + clean build
+npm run release:patch       # GitHub Action patch release
+npm run release:minor       # GitHub Action minor release
+npm run release:major       # GitHub Action major release
 
-# Development
-npm test                    # Run all tests
-npm run test:visual         # Visual validation
+# Development & Testing
+npm test                    # Run comprehensive test suite
+npm run test:visual         # Visual component validation
 npm run build              # Development build
-npm run build:release      # Release build
+npm run build:clean        # Production build with cleanup
 ```
 
 ## 🔄 Automated Release Process
@@ -259,13 +264,16 @@ If a release has issues:
 
 After each release:
 
-- [ ] GitHub release created successfully
-- [ ] All assets attached and downloadable
-- [ ] Chrome Web Store submission completed
-- [ ] Extension loads and functions correctly
-- [ ] Status monitoring works for all services
-- [ ] No console errors in background or popup
-- [ ] Version numbers consistent across all files
+- [ ] GitHub release created successfully with proper tagging
+- [ ] All assets attached and downloadable (zip, manifest)
+- [ ] Chrome Web Store submission completed and approved
+- [ ] Extension loads correctly in clean browser profile
+- [ ] Status monitoring works for Claude AI and GitHub Copilot
+- [ ] Cool vibe icons display properly in all states
+- [ ] Popup interface functions correctly with both services
+- [ ] No console errors in background service worker or popup
+- [ ] Version numbers consistent across manifest.json and package.json
+- [ ] Privacy policy and documentation updated if needed
 
 ### Release Metrics
 

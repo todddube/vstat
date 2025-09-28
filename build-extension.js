@@ -1,8 +1,9 @@
 #!/usr/bin/env node
 
 /**
- * Extension Build Script for Vibe Stats - Dev Tools Status Monitor
- * Creates production-ready zip files for Chrome Web Store submission
+ * Extension Build Script for Vibe Stats - AI Dev Tools Status Monitor
+ * Creates production-ready zip files for Chrome Web Store submission with GitHub integration
+ * Supports automated releases, version bumping, and CI/CD workflows
  */
 
 const fs = require('fs');
@@ -57,19 +58,26 @@ class ExtensionBuilder {
       ]
     };
     
-    // Files/directories to exclude
+    // Files/directories to exclude from build
     this.excludePatterns = [
       '.git',
       '.gitignore',
+      '.gitattributes',
       'node_modules',
       'build',
       'dist',
       '.claude',
       'build-extension.js',
+      'dev',
+      'design',
+      'tests',
+      '.github',
       '*.md',
       '*.log',
       '.DS_Store',
-      'Thumbs.db'
+      'Thumbs.db',
+      '.env',
+      '.env.*'
     ];
   }
 
@@ -425,10 +433,22 @@ class ExtensionBuilder {
    */
   validateGitHubCLI() {
     try {
-      execSync('gh --version', { stdio: 'pipe' });
+      // Check if gh is installed
+      const ghVersion = execSync('gh --version', { stdio: 'pipe', encoding: 'utf8' });
+      console.log(colorize(`✅ GitHub CLI found: ${ghVersion.split('\n')[0]}`, 'green'));
+
+      // Check authentication
       execSync('gh auth status', { stdio: 'pipe' });
+      console.log(colorize('✅ GitHub CLI authenticated', 'green'));
+
       return true;
     } catch (error) {
+      console.log(colorize('❌ GitHub CLI not available or not authenticated', 'red'));
+      if (error.message.includes('not found') || error.message.includes('command not found')) {
+        console.log(colorize('   Install: https://cli.github.com/', 'yellow'));
+      } else {
+        console.log(colorize('   Run: gh auth login', 'yellow'));
+      }
       return false;
     }
   }
@@ -487,59 +507,121 @@ class ExtensionBuilder {
       const currentVersion = manifest.version;
       const newVersion = this.bumpVersion(currentVersion, bumpType);
 
+      console.log(colorize(`📈 Bumping version: ${currentVersion} → ${newVersion} (${bumpType})`, 'blue'));
+
       // Update version files
       this.updateVersionFiles(newVersion);
 
-      // Commit version changes
-      execSync('git add package.json manifest.json');
+      // Stage and commit version changes
+      console.log(colorize('📝 Committing version bump...', 'cyan'));
+      execSync('git add package.json manifest.json', { stdio: 'inherit' });
       execSync(`git commit -m "Bump version to ${newVersion}
+
+🚀 ${bumpType.charAt(0).toUpperCase() + bumpType.slice(1)} release
 
 🤖 Generated with [Claude Code](https://claude.ai/code)
 
-Co-Authored-By: Claude <noreply@anthropic.com>"`);
+Co-Authored-By: Claude <noreply@anthropic.com>"`, { stdio: 'inherit' });
 
-      // Create tag
-      execSync(`git tag -a v${newVersion} -m "Release version ${newVersion}"`);
+      // Create annotated tag
+      console.log(colorize(`🏷️  Creating tag v${newVersion}...`, 'cyan'));
+      execSync(`git tag -a v${newVersion} -m "Release version ${newVersion}
+
+🤖 Vibe Stats - AI Dev Tools Status Monitor
+⚡ Monitor Claude AI and GitHub Copilot with cool vibe indicators
+
+## What's Changed
+- ${bumpType.charAt(0).toUpperCase() + bumpType.slice(1)} release with latest improvements
+- Extension size: ${buildStats.sizeKB} KB (${buildStats.fileCount} files)
+- Chrome Web Store ready
+
+Generated with Claude Code"`, { stdio: 'inherit' });
 
       // Push changes and tags
-      execSync('git push origin main');
-      execSync('git push origin --tags');
+      console.log(colorize('🚀 Pushing to GitHub...', 'cyan'));
+      execSync('git push origin main', { stdio: 'inherit' });
+      execSync('git push origin --tags', { stdio: 'inherit' });
 
-      // Generate release notes
-      const releaseNotes = `## Vibe Stats v${newVersion} ⚡
+      // Generate comprehensive release notes
+      const releaseNotes = `## 🤖 Vibe Stats v${newVersion} - AI Dev Tools Status Monitor
 
 ${manifest.description}
+
+### ✨ What's New in This ${bumpType.charAt(0).toUpperCase() + bumpType.slice(1)} Release
+
+🔥 **Cool AI-Themed Vibe Icons** - Modern gradient design with cyan/orange colors (no purple!)
+⚡ **Dual Service Monitoring** - Claude AI and GitHub Copilot status tracking
+🔄 **Real-Time Updates** - Automatic 5-minute background checks with manual refresh
+🎨 **Clean Interface** - Two-tab popup with active issues and incident history
 
 ### 📦 Extension Details
 - **Version**: ${newVersion}
 - **Size**: ${buildStats.sizeKB} KB (${buildStats.fileCount} files)
 - **Manifest Version**: ${manifest.manifest_version}
+- **Chrome Web Store Ready**: ✅
 
-### 🚀 Installation
-1. Download the \`vibe-stats-v${newVersion}.zip\` file from this release
-2. Open Chrome/Edge and navigate to \`chrome://extensions/\`
-3. Enable "Developer mode"
-4. Click "Load unpacked" and select the extracted extension folder
-5. The extension icon will appear in your browser toolbar
+### 🚀 Installation Instructions
 
-### 🔧 Development
-- Monitor Claude AI and GitHub Copilot status in real-time
-- AI-themed vibe indicators with smart status aggregation
-- Auto-refresh every 5 minutes with manual refresh option
-- Detailed incident reporting and status history
+#### Option 1: Chrome Web Store (Recommended)
+*Coming soon - Extension pending store approval*
+
+#### Option 2: Load Unpacked (Development)
+1. Download \`vibe-stats-v${newVersion}.zip\` from this release
+2. Extract the zip file to a folder
+3. Open Chrome/Edge → \`chrome://extensions/\`
+4. Enable "Developer mode" (toggle in top-right)
+5. Click "Load unpacked" → Select extracted folder
+6. Pin the extension icon to your toolbar
+
+### 🎯 Features & Usage
+- **🟢 Green Icon**: All dev tools operational and vibing! 🔥
+- **🟡 Yellow Icon**: Minor issues with service count badge
+- **🔴 Red Icon**: Major/critical issues with alert indicator
+- **⚪ Gray Icon**: Status unknown or network error
+- **Keyboard Shortcuts**: Ctrl+R (refresh), 1/2 (switch tabs)
+
+### 🔧 Technical Specifications
+- **Permissions**: Storage, Alarms, Host Access (minimal & secure)
+- **APIs**: Official status endpoints only
+- **Privacy**: Zero personal data collection, local storage only
+- **Security**: HTTPS-only, sandboxed operation
 
 ### 📊 Build Statistics
-- Files: ${buildStats.fileCount}
-- Uncompressed: ${buildStats.sizeKB} KB
-- Compressed: ${(zipInfo.zipSize / 1024).toFixed(2)} KB
-- Compression: ${((1 - zipInfo.zipSize / buildStats.totalSize) * 100).toFixed(1)}%
+- **Files**: ${buildStats.fileCount} files included
+- **Build Size**: ${buildStats.sizeKB} KB uncompressed
+- **ZIP Size**: ${(zipInfo.zipSize / 1024).toFixed(2)} KB compressed
+- **Compression**: ${((1 - zipInfo.zipSize / buildStats.totalSize) * 100).toFixed(1)}% reduction
+
+### 🛠️ For Developers
+- **Repository**: [github.com/todddube/vstat](https://github.com/todddube/vstat)
+- **Testing**: Comprehensive test suite included
+- **Build Tools**: Automated CI/CD with version management
+- **Documentation**: Complete setup and development guides
 
 ---
 
-🤖 *Generated with [Claude Code](https://claude.ai/code)*`;
+🤖 **Generated with [Claude Code](https://claude.ai/code)**
+⭐ **Made with ❤️ for the AI developer community**`;
 
       // Create GitHub release with file upload
-      execSync(`gh release create v${newVersion} "${zipInfo.zipPath}" --title "Vibe Stats v${newVersion}" --notes "${releaseNotes.replace(/"/g, '\\"').replace(/\n/g, '\\n')}"`, { stdio: 'inherit' });
+      console.log(colorize('🎉 Creating GitHub release...', 'cyan'));
+
+      // Write release notes to temporary file to avoid command line length issues
+      const releaseNotesFile = path.join(this.distDir, `release-notes-v${newVersion}.md`);
+      fs.writeFileSync(releaseNotesFile, releaseNotes);
+
+      try {
+        execSync(`gh release create v${newVersion} "${zipInfo.zipPath}" "${path.join(this.rootDir, 'manifest.json')}" --title "🤖 Vibe Stats v${newVersion} - AI Dev Tools Monitor" --notes-file "${releaseNotesFile}" --latest`, { stdio: 'inherit' });
+
+        // Clean up release notes file
+        fs.unlinkSync(releaseNotesFile);
+      } catch (error) {
+        // Clean up release notes file even on error
+        if (fs.existsSync(releaseNotesFile)) {
+          fs.unlinkSync(releaseNotesFile);
+        }
+        throw error;
+      }
 
       // Get release URL
       const releaseUrl = execSync(`gh release view v${newVersion} --json url --jq .url`, { encoding: 'utf8' }).trim();
@@ -714,6 +796,8 @@ async function main() {
       process.exit(1);
     }
 
+    console.log(colorize(`🔍 Validating release prerequisites for ${bumpType} release...`, 'cyan'));
+
     // Check working directory is clean
     try {
       const status = execSync('git status --porcelain', { encoding: 'utf8' });
@@ -723,8 +807,33 @@ async function main() {
         console.log(colorize('Please commit or stash changes before creating a release.', 'yellow'));
         process.exit(1);
       }
+      console.log(colorize('✅ Working directory is clean', 'green'));
     } catch (error) {
       console.log(colorize('❌ Failed to check git status. Ensure you are in a git repository.', 'red'));
+      process.exit(1);
+    }
+
+    // Check if we're on main branch
+    try {
+      const currentBranch = execSync('git branch --show-current', { encoding: 'utf8' }).trim();
+      if (currentBranch !== 'main' && currentBranch !== 'master') {
+        console.log(colorize('❌ Not on main/master branch. Please switch to main branch for releases.', 'red'));
+        console.log(colorize(`   Current branch: ${currentBranch}`, 'yellow'));
+        console.log(colorize('   Run: git checkout main', 'yellow'));
+        process.exit(1);
+      }
+      console.log(colorize(`✅ On ${currentBranch} branch`, 'green'));
+    } catch (error) {
+      console.log(colorize('⚠️  Could not verify current branch, proceeding anyway...', 'yellow'));
+    }
+
+    // Check if remote origin exists
+    try {
+      const remoteUrl = execSync('git remote get-url origin', { encoding: 'utf8' }).trim();
+      console.log(colorize(`✅ Remote origin: ${remoteUrl}`, 'green'));
+    } catch (error) {
+      console.log(colorize('❌ No remote origin configured. Please add a remote.', 'red'));
+      console.log(colorize('   Run: git remote add origin <repository-url>', 'yellow'));
       process.exit(1);
     }
   }

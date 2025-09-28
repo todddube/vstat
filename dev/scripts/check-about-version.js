@@ -22,7 +22,7 @@ function colorize(text, color) {
 }
 
 function checkAboutVersion() {
-  const rootDir = __dirname;
+  const rootDir = path.join(__dirname, '..', '..');
   const manifestPath = path.join(rootDir, 'manifest.json');
   const popupPath = path.join(rootDir, 'popup.html');
 
