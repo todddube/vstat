@@ -1,6 +1,6 @@
 {
   "name": "vibe-stats",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "description": "Monitor Claude AI and GitHub Copilot status with cool AI-themed vibe indicators and real-time updates",
   "author": "Todd Dube",
   "license": ".-.",
