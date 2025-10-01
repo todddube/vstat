@@ -46,7 +46,12 @@
       "Bash(start modern-ai-icon-generator.html)",
       "Read(//c/Users/todd/Downloads/**)",
       "Bash(start cool-vibe-icons.html)",
-      "Bash(move cool-vibe-icons.html design/)"
+      "Bash(move cool-vibe-icons.html design/)",
+      "WebFetch(domain:github.com)",
+      "Bash(git push:*)",
+      "Bash(git mv:*)",
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "Bash(git ls-tree:*)"
     ],
     "deny": [],
     "ask": []
