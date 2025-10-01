@@ -16,6 +16,9 @@ on:
         description: 'Custom release notes (optional)'
         required: false
         type: string
+  push:
+    tags:
+      - 'v*'
 
 permissions:
   contents: write
@@ -71,6 +74,66 @@ jobs:
           echo "2. 📥 Download zip from release page" >> $GITHUB_STEP_SUMMARY
           echo "3. 🌐 Submit to Chrome Web Store" >> $GITHUB_STEP_SUMMARY
           echo "4. 🔍 Test in clean browser profile" >> $GITHUB_STEP_SUMMARY
+
+  tag-release:
+    name: 🏷️ Tag-Triggered Release
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+
+    steps:
+      - name: 📥 Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: 🔧 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: 🔍 Validate Extension Files
+        run: npm run validate
+
+      - name: 🏗️ Build Extension
+        run: npm run build:clean
+
+      - name: 📦 Get Version from Tag
+        id: get_version
+        run: |
+          VERSION=${GITHUB_REF#refs/tags/v}
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "📦 Building release for version: $VERSION"
+
+      - name: 🎉 Create GitHub Release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          VERSION=${{ steps.get_version.outputs.version }}
+          ZIP_FILE="dist/vibe-stats-v${VERSION}.zip"
+
+          if [ ! -f "$ZIP_FILE" ]; then
+            echo "❌ Zip file not found: $ZIP_FILE"
+            exit 1
+          fi
+
+          gh release create "v${VERSION}" \
+            "$ZIP_FILE" \
+            "manifest.json" \
+            --title "🤖 Vibe Stats v${VERSION} - AI Dev Tools Monitor" \
+            --generate-notes \
+            --latest
+
+      - name: 📊 Release Summary
+        run: |
+          VERSION=${{ steps.get_version.outputs.version }}
+          echo "## 🎉 Release v${VERSION} Created" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Tag:** v${VERSION}" >> $GITHUB_STEP_SUMMARY
+          echo "**Release URL:** [View Release](https://github.com/${{ github.repository }}/releases/tag/v${VERSION})" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 📦 Artifacts:" >> $GITHUB_STEP_SUMMARY
+          echo "- vibe-stats-v${VERSION}.zip" >> $GITHUB_STEP_SUMMARY
+          echo "- manifest.json" >> $GITHUB_STEP_SUMMARY
 
   validate-build:
     name: 🔍 Validate Build
