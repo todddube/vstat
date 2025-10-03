@@ -4,7 +4,7 @@ A Chrome/Edge browser extension that monitors the real-time status of AI develop
 
 ![Chrome Extension](https://img.shields.io/badge/Chrome-Extension-4285F4?style=flat&logo=googlechrome&logoColor=white) ![Manifest V3](https://img.shields.io/badge/Manifest-V3-green) ![Status](https://img.shields.io/badge/Status-Production%20Ready-brightgreen) ![AI Powered](https://img.shields.io/badge/AI-Powered-00d4ff?style=flat&logo=openai&logoColor=white)
 
-📄 **[Privacy Policy](privacy.md)** - Learn about our data collection and privacy practices
+📄 **[Privacy Policy](PRIVACY.md)** - Learn about our data collection and privacy practices
 
 ## ✨ Features
 
