@@ -182,3 +182,4 @@ vstat/
 - **Popup not opening**: Right-click icon → "Inspect popup" for JavaScript errors
 
 The extension includes comprehensive error handling and will show "Status Unknown" with gray icons when API calls fail.
+- Update this to include relevant things you just did above on release and tags and releases in github for this project
