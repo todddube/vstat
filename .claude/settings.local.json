@@ -53,7 +53,8 @@
       "WebFetch(domain:raw.githubusercontent.com)",
       "Bash(git ls-tree:*)",
       "Bash(git pull:*)",
-      "Bash(git stash:*)"
+      "Bash(git stash:*)",
+      "Bash(git tag:*)"
     ],
     "deny": [],
     "ask": []
