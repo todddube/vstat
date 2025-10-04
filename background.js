@@ -20,13 +20,6 @@ class VStateMonitor {
       componentsUrl: 'https://www.githubstatus.com/api/v2/components.json'
     };
     
-    // Azure API endpoints (using Azure DevOps status as proxy for Azure services)
-    this.azure = {
-      statusUrl: 'https://status.dev.azure.com/_apis/status/health?api-version=7.1-preview.1',
-      incidentsUrl: 'https://status.dev.azure.com/_apis/status/health?api-version=7.1-preview.1', // Same endpoint provides incidents
-      summaryUrl: 'https://status.dev.azure.com/_apis/status/health?api-version=7.1-preview.1'
-    };
-    
     this.alarmName = 'vstateCheck';
     this.intervalMinutes = 5;
     this.maxRetries = 3;
@@ -55,56 +48,49 @@ class VStateMonitor {
   }
 
   /**
-   * Check status for Claude, GitHub, and Azure services
+   * Check status for Claude and GitHub services
    */
   async checkAllStatuses(retryCount = 0) {
     try {
-      const [claudeResults, githubResults, azureResults] = await Promise.allSettled([
+      const [claudeResults, githubResults] = await Promise.allSettled([
         this.checkServiceStatus('claude'),
-        this.checkServiceStatus('github'),
-        this.checkServiceStatus('azure')
+        this.checkServiceStatus('github')
       ]);
 
       // Process results for all services
       const claudeStatus = this.extractStatusFromResult(claudeResults, 'claude');
       const githubStatus = this.extractStatusFromResult(githubResults, 'github');
-      const azureStatus = this.extractStatusFromResult(azureResults, 'azure');
 
       // Combine status and determine overall state
-      const combinedStatus = this.combineStatuses(claudeStatus, githubStatus, azureStatus);
-      
+      const combinedStatus = this.combineStatuses(claudeStatus, githubStatus);
+
       // Store the status data
-      await this.updateVStateStatus(claudeStatus, githubStatus, azureStatus, combinedStatus);
+      await this.updateVStateStatus(claudeStatus, githubStatus, combinedStatus);
       await this.updateBadgeIcon(combinedStatus);
-      
+
       // Store success timestamp
       await chrome.storage.local.set({ lastSuccessfulCheck: Date.now() });
-      
+
     } catch (error) {
       console.error('Failed to check VState status (attempt', retryCount + 1, '):', error);
-      
+
       if (retryCount < this.maxRetries) {
         setTimeout(() => this.checkAllStatuses(retryCount + 1), this.retryDelay * (retryCount + 1));
         return;
       }
-      
+
       // Final failure - set unknown status
       await this.handleCheckFailure(error);
     }
   }
 
   /**
-   * Check status for a specific service (claude, github, or azure)
+   * Check status for a specific service (claude or github)
    */
   async checkServiceStatus(serviceName) {
     const serviceConfig = this[serviceName];
     if (!serviceConfig) {
       throw new Error(`Unknown service: ${serviceName}`);
-    }
-
-    // Azure uses a different API structure
-    if (serviceName === 'azure') {
-      return this.checkAzureStatus();
     }
 
     const [statusData, incidentsData, summaryData] = await Promise.allSettled([
@@ -122,109 +108,13 @@ class VStateMonitor {
   }
 
   /**
-   * Check Azure DevOps status (as proxy for Azure services)
-   */
-  async checkAzureStatus() {
-    try {
-      const statusData = await this.fetchData(this.azure.statusUrl);
-      
-      // Transform Azure DevOps response to our standard format
-      const azureStatus = this.transformAzureResponse(statusData);
-      
-      return {
-        service: 'azure',
-        status: azureStatus.status,
-        incidents: azureStatus.incidents,
-        components: azureStatus.components
-      };
-    } catch (error) {
-      console.error('Failed to fetch Azure status:', error);
-      return {
-        service: 'azure',
-        status: { indicator: 'unknown' },
-        incidents: [],
-        components: []
-      };
-    }
-  }
-
-  /**
-   * Transform Azure DevOps API response to our standard format
-   */
-  transformAzureResponse(data) {
-    // Azure DevOps API returns services with geographies and their health status
-    const services = data.services || [];
-    let worstStatus = 'operational';
-    const components = [];
-    const incidents = [];
-
-    // Check each service's geography status
-    services.forEach(service => {
-      const serviceName = service.id || service.name;
-      if (service.geographies) {
-        service.geographies.forEach(geography => {
-          const geoStatus = geography.health?.toLowerCase() || 'unknown';
-          
-          // Map Azure health status to our status levels
-          let mappedStatus = 'operational';
-          if (geoStatus.includes('unhealthy') || geoStatus.includes('critical')) {
-            mappedStatus = 'critical';
-          } else if (geoStatus.includes('degraded') || geoStatus.includes('warning')) {
-            mappedStatus = 'major';
-          } else if (geoStatus.includes('advisory')) {
-            mappedStatus = 'minor';
-          } else if (geoStatus === 'healthy') {
-            mappedStatus = 'operational';
-          } else {
-            mappedStatus = 'unknown';
-          }
-
-          // Track worst status
-          const statusPriority = { 'critical': 4, 'major': 3, 'minor': 2, 'operational': 1, 'unknown': 0 };
-          if (statusPriority[mappedStatus] > statusPriority[worstStatus]) {
-            worstStatus = mappedStatus;
-          }
-
-          // Add as component
-          components.push({
-            name: `${serviceName} - ${geography.name}`,
-            status: mappedStatus,
-            id: `azure-${serviceName}-${geography.name}`.toLowerCase().replace(/\s+/g, '-')
-          });
-
-          // Create incidents for non-healthy services
-          if (mappedStatus !== 'operational') {
-            incidents.push({
-              name: `${serviceName} issues in ${geography.name}`,
-              status: mappedStatus === 'critical' ? 'investigating' : 'monitoring',
-              impact: mappedStatus,
-              created_at: new Date().toISOString(),
-              updates: [{
-                body: `${geography.name} region experiencing ${mappedStatus} issues`,
-                created_at: new Date().toISOString(),
-                status: mappedStatus === 'critical' ? 'investigating' : 'monitoring'
-              }]
-            });
-          }
-        });
-      }
-    });
-
-    return {
-      status: { indicator: worstStatus },
-      components: components,
-      incidents: incidents
-    };
-  }
-
-  /**
    * Combine statuses from multiple services
    */
-  combineStatuses(claudeStatus, githubStatus, azureStatus) {
+  combineStatuses(claudeStatus, githubStatus) {
     // Priority: critical > major > minor > operational
     const statusPriority = {
       'critical': 4,
-      'major': 3, 
+      'major': 3,
       'minor': 2,
       'operational': 1,
       'unknown': 0
@@ -232,26 +122,24 @@ class VStateMonitor {
 
     const claudeLevel = statusPriority[claudeStatus?.status?.indicator] || 0;
     const githubLevel = statusPriority[githubStatus?.status?.indicator] || 0;
-    const azureLevel = statusPriority[azureStatus?.status?.indicator] || 0;
-    
-    const maxLevel = Math.max(claudeLevel, githubLevel, azureLevel);
-    const combinedIndicator = Object.keys(statusPriority).find(key => 
+
+    const maxLevel = Math.max(claudeLevel, githubLevel);
+    const combinedIndicator = Object.keys(statusPriority).find(key =>
       statusPriority[key] === maxLevel
     ) || 'unknown';
 
     return {
       indicator: combinedIndicator,
-      description: this.getCombinedDescription(claudeStatus, githubStatus, azureStatus, combinedIndicator),
+      description: this.getCombinedDescription(claudeStatus, githubStatus, combinedIndicator),
       claude: claudeStatus,
-      github: githubStatus,
-      azure: azureStatus
+      github: githubStatus
     };
   }
 
   /**
    * Get combined status description
    */
-  getCombinedDescription(claudeStatus, githubStatus, azureStatus, indicator) {
+  getCombinedDescription(claudeStatus, githubStatus, indicator) {
     const descriptions = {
       'operational': 'All dev tools are vibing! 🔥',
       'minor': 'Minor issues detected in your dev tools',
@@ -259,7 +147,7 @@ class VStateMonitor {
       'critical': 'Critical issues - dev tools are down!',
       'unknown': 'Unable to determine dev tools status'
     };
-    
+
     return descriptions[indicator] || descriptions.unknown;
   }
 
@@ -483,28 +371,25 @@ class VStateMonitor {
   /**
    * Update VState status data in storage
    */
-  async updateVStateStatus(claudeStatus, githubStatus, azureStatus, combinedStatus) {
+  async updateVStateStatus(claudeStatus, githubStatus, combinedStatus) {
     const currentTime = new Date().toISOString();
-    
+
     await chrome.storage.local.set({
       // Combined status
       vstateStatus: combinedStatus,
-      
+
       // Individual service data
       claudeStatus: claudeStatus,
       githubStatus: githubStatus,
-      azureStatus: azureStatus,
-      
+
       // Individual incidents
       claudeIncidents: claudeStatus?.incidents || [],
       githubIncidents: githubStatus?.incidents || [],
-      azureIncidents: azureStatus?.incidents || [],
-      
+
       // Individual components
       claudeComponents: claudeStatus?.components || [],
       githubComponents: githubStatus?.components || [],
-      azureComponents: azureStatus?.components || [],
-      
+
       // Timestamps
       lastUpdated: currentTime,
       lastSuccessfulCheck: Date.now()
@@ -745,8 +630,8 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     (async () => {
       try {
         const data = await chrome.storage.local.get([
-          'vstateStatus', 'claudeStatus', 'githubStatus', 'azureStatus',
-          'claudeIncidents', 'githubIncidents', 'azureIncidents', 
+          'vstateStatus', 'claudeStatus', 'githubStatus',
+          'claudeIncidents', 'githubIncidents',
           'lastUpdated', 'lastError'
         ]);
         sendResponse({ status: 'success', data });

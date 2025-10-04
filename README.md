@@ -88,7 +88,7 @@ npm run build
 
 ### System Requirements
 - **Browser**: Chrome 88+ or Edge 88+ (Chromium-based)
-- **Network**: Internet connection to access status APIs (status.anthropic.com, githubstatus.com)
+- **Network**: Internet connection to access status APIs (status.anthropic.com, www.githubstatus.com)
 - **Permissions**: Storage and Alarms (automatically granted)
 
 ## 🎯 Usage Guide

@@ -202,34 +202,31 @@ class VStatePopupController {
   async loadSectionIncidents(sectionName) {
     const incidentsContent = document.getElementById(`${sectionName}-incidents-content`);
     if (!incidentsContent) return;
-    
+
     // Show loading state
     incidentsContent.innerHTML = '<div class="loading">🔄 Loading incidents...</div>';
-    
+
     try {
       // Get status data from storage
       const result = await chrome.storage.local.get([
-        'vstateStatus', 'claudeStatus', 'githubStatus', 'azureStatus',
-        'claudeIncidents', 'githubIncidents', 'azureIncidents'
+        'vstateStatus', 'claudeStatus', 'githubStatus',
+        'claudeIncidents', 'githubIncidents'
       ]);
-      
+
       let incidents = [];
       let sectionTitle = '';
-      
+
       if (sectionName === 'claude') {
         incidents = result.claudeIncidents || [];
         sectionTitle = '🤖 Claude AI Recent Issues';
       } else if (sectionName === 'github') {
         incidents = result.githubIncidents || [];
         sectionTitle = '🐙 GitHub Services Recent Issues';
-      } else if (sectionName === 'azure') {
-        incidents = result.azureIncidents || [];
-        sectionTitle = '☁️ Azure DevOps Recent Issues';
       }
-      
+
       // Get recent incidents (last 5)
       const recentIncidents = incidents.slice(0, 5);
-      
+
       if (recentIncidents.length === 0) {
         const headerColor = this.getSectionHeaderColor(sectionName);
         const gradientEndColor = this.getSectionGradientEndColor(sectionName);
@@ -251,7 +248,7 @@ class VStatePopupController {
           ${recentIncidents.map(incident => this.renderIncident(incident)).join('')}
         `;
       }
-      
+
     } catch (error) {
       console.error('Error loading section incidents:', error);
       const headerColor = this.getSectionHeaderColor(sectionName);
@@ -289,11 +286,7 @@ class VStatePopupController {
       'github-copilot': 'GitHub Copilot',
       'github-api': 'GitHub API',
       'github-codespaces': 'GitHub Codespaces',
-      'github-actions': 'GitHub Actions',
-      'azure-pipelines': 'Azure Pipelines',
-      'azure-repos': 'Azure Repos',
-      'azure-boards': 'Azure Boards',
-      'azure-artifacts': 'Azure Artifacts'
+      'github-actions': 'GitHub Actions'
     };
     return serviceNames[serviceName] || serviceName;
   }
@@ -304,8 +297,7 @@ class VStatePopupController {
   getSectionHeaderColor(sectionName) {
     const colors = {
       'claude': '#D97706',
-      'github': '#24292E',
-      'azure': '#0078d4'
+      'github': '#24292E'
     };
     return colors[sectionName] || '#64748b';
   }
@@ -316,8 +308,7 @@ class VStatePopupController {
   getSectionGradientEndColor(sectionName) {
     const colors = {
       'claude': '#DC2626',
-      'github': '#0D1117',
-      'azure': '#106ebe'
+      'github': '#0D1117'
     };
     return colors[sectionName] || '#475569';
   }
@@ -328,8 +319,7 @@ class VStatePopupController {
   getSectionDisplayName(sectionName) {
     const names = {
       'claude': '🤖 Claude AI',
-      'github': '🐙 GitHub Services',
-      'azure': '☁️ Azure DevOps'
+      'github': '🐙 GitHub Services'
     };
     return names[sectionName] || sectionName;
   }
@@ -368,8 +358,8 @@ class VStatePopupController {
   async loadStatus() {
     try {
       const result = await chrome.storage.local.get([
-        'vstateStatus', 'claudeStatus', 'githubStatus', 'azureStatus',
-        'claudeIncidents', 'githubIncidents', 'azureIncidents', 
+        'vstateStatus', 'claudeStatus', 'githubStatus',
+        'claudeIncidents', 'githubIncidents',
         'lastUpdated', 'lastError'
       ]);
 
@@ -377,14 +367,13 @@ class VStatePopupController {
         this.updateStatusDisplay(result.vstateStatus, result.lastUpdated, result.lastError);
         this.updateClaudeServices(result.claudeStatus);
         this.updateGitHubServices(result.githubStatus);
-        this.updateAzureServices(result.azureStatus);
         this.errorRetryCount = 0; // Reset error count on success
       } else {
         this.showNoData();
       }
     } catch (error) {
       console.error('Failed to load status:', error);
-      
+
       if (this.errorRetryCount < this.maxErrorRetries) {
         this.errorRetryCount++;
         setTimeout(() => this.loadStatus(), 1000 * this.errorRetryCount);
@@ -487,46 +476,6 @@ class VStatePopupController {
     });
   }
 
-  /**
-   * Update Azure services display
-   */
-  updateAzureServices(azureStatus) {
-    if (!azureStatus) return;
-
-    // Update Azure service icons based on status data
-    const azureServices = {
-      'azure-pipelines': ['pipelines', 'build and release', 'ci/cd'],
-      'azure-repos': ['repos', 'repositories', 'source control', 'git'],
-      'azure-boards': ['boards', 'work items', 'agile tools'],
-      'azure-artifacts': ['artifacts', 'packages', 'feeds']
-    };
-
-    Object.entries(azureServices).forEach(([serviceId, componentNames]) => {
-      const serviceEl = document.querySelector(`[data-service="${serviceId}"]`);
-      if (!serviceEl) return;
-
-      const iconEl = serviceEl.querySelector('.service-icon');
-      if (!iconEl) return;
-
-      // Find matching component in Azure status
-      let status = 'unknown';
-      if (azureStatus.components) {
-        const component = azureStatus.components.find(comp => {
-          const compName = comp.name.toLowerCase();
-          return componentNames.some(name => 
-            compName.includes(name.toLowerCase()) ||
-            name.toLowerCase().includes(compName)
-          );
-        });
-        if (component) {
-          status = this.mapComponentStatus(component.status);
-        }
-      }
-
-      iconEl.className = `service-icon ${status}`;
-      iconEl.textContent = this.getServiceIcon(status);
-    });
-  }
 
   /**
    * Send message to background script with timeout

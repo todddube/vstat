@@ -525,12 +525,6 @@
             background: linear-gradient(135deg, #4b5563 0%, #374151 100%);
             animation-delay: 0.2s;
             animation-fill-mode: both;
-        }
-
-        .azure-section {
-            background: linear-gradient(135deg, #0078d4 0%, #106ebe 100%);
-            animation-delay: 0.4s;
-            animation-fill-mode: both;
             margin-bottom: 0px;
         }
 
@@ -594,10 +588,6 @@
             border-top: 2px solid #24292E;
         }
 
-        .azure-section .section-incidents-container {
-            border-top: 2px solid #0078d4;
-        }
-
         .section-incidents-content {
             padding: 10px;
             max-height: 200px;
@@ -631,7 +621,7 @@
             box-shadow: 0 2px 8px rgba(100, 116, 139, 0.3);
         }
 
-        .claude-grid, .github-grid, .azure-grid {
+        .claude-grid, .github-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 6px;
@@ -1140,41 +1130,6 @@
         </div>
     </div>
 
-    <!-- Azure Section -->
-    <div class="azure-section">
-        <div class="section-header">
-            <div class="section-title">
-                <a href="https://azure.status.microsoft/en-us/status" target="_blank" class="status-link">☁️ Azure DevOps Services</a>
-            </div>
-            <button class="section-incidents-toggle" data-section="azure" aria-label="Toggle Azure incidents">
-                <span class="incidents-text">Recent Issues</span>
-                <span class="expand-icon">▶</span>
-            </button>
-        </div>
-        <div class="section-incidents-container" id="azure-incidents" style="display: none;">
-            <div class="section-incidents-content" id="azure-incidents-content">
-                <div class="loading">🔄 Loading Azure incidents...</div>
-            </div>
-        </div>
-        <div class="azure-grid" id="azure-grid">
-            <div class="service-item" data-service="azure-pipelines" data-url="https://dev.azure.com">
-                <div class="service-icon unknown">🚀</div>
-                <div class="service-name">Pipelines</div>
-            </div>
-            <div class="service-item" data-service="azure-repos" data-url="https://dev.azure.com">
-                <div class="service-icon unknown">📦</div>
-                <div class="service-name">Repos</div>
-            </div>
-            <div class="service-item" data-service="azure-boards" data-url="https://dev.azure.com">
-                <div class="service-icon unknown">📋</div>
-                <div class="service-name">Boards</div>
-            </div>
-            <div class="service-item" data-service="azure-artifacts" data-url="https://dev.azure.com">
-                <div class="service-icon unknown">📁</div>
-                <div class="service-name">Artifacts</div>
-            </div>
-        </div>
-    </div>
 
     <!-- About Modal -->
     <div class="about-modal" id="about-modal">
