@@ -182,4 +182,42 @@ vstat/
 - **Popup not opening**: Right-click icon → "Inspect popup" for JavaScript errors
 
 The extension includes comprehensive error handling and will show "Status Unknown" with gray icons when API calls fail.
-- Update this to include relevant things you just did above on release and tags and releases in github for this project
+
+## Release and Deployment
+
+### GitHub Releases and Tags
+The project uses GitHub releases and git tags for version management:
+
+```bash
+# Create a new release with git tag
+git tag -a v1.0.4 -m "Release version 1.0.4"
+git push origin v1.0.4
+
+# GitHub CLI for creating releases
+gh release create v1.0.4 ./dist/vibe-stats-v1.0.4-*.zip --title "v1.0.4 - Release Title" --notes "Release notes here"
+
+# View all releases
+gh release list
+
+# View all tags
+git tag -l
+```
+
+### Release Workflow
+1. Update version in `manifest.json` (source of truth)
+2. Run `npm run version:sync` to sync package.json
+3. Run `npm run prepare-release` to validate and build
+4. Create git tag: `git tag -a v1.0.4 -m "Release v1.0.4"`
+5. Push tag: `git push origin v1.0.4`
+6. Create GitHub release: `gh release create v1.0.4 ./dist/*.zip --title "Version 1.0.4" --notes "Release notes"`
+7. Upload to Chrome Web Store from `./dist/` directory
+
+### Privacy Policy
+The extension includes a comprehensive privacy policy that:
+- **Location**: `privacy.html` in repository root
+- **GitHub Pages URL**: `https://todddube.github.io/vstat/`
+- **Referenced in**: `manifest.json` privacy_policy field
+- **Purpose**: Chrome Web Store compliance and user transparency
+- **Content**: Zero data collection policy, local-only storage
+
+The privacy policy is hosted on GitHub Pages and automatically redirected from `index.html`.
