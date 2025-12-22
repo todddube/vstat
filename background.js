@@ -439,11 +439,13 @@ class VStateMonitor {
         });
       }
       
-      // Update title with status and affected count
+      // Update title with version, status and affected count
+      const manifest = chrome.runtime.getManifest();
+      const version = manifest.version;
       const statusText = this.getStatusText(status);
-      const titleSuffix = affectedCount > 0 ? ` (${affectedCount} service${affectedCount > 1 ? 's' : ''} affected)` : '';
+      const titleSuffix = affectedCount > 0 ? ` (${affectedCount} affected)` : '';
       await chrome.action.setTitle({
-        title: `Vibe Stats ⚡: ${statusText}${titleSuffix}`
+        title: `Vibe Stats v${version} - ${statusText}${titleSuffix}`
       });
       
     } catch (error) {

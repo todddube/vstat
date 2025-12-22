@@ -19,6 +19,7 @@ class VStatePopupController {
    */
   async init() {
     try {
+      this.loadVersion();
       await this.loadStatus();
       this.setupEventListeners();
       this.setupKeyboardNavigation();
@@ -26,6 +27,45 @@ class VStatePopupController {
     } catch (error) {
       console.error('Initialization error:', error);
       throw error;
+    }
+  }
+
+  /**
+   * Load and display version from manifest
+   */
+  loadVersion() {
+    try {
+      const manifest = chrome.runtime.getManifest();
+      const version = manifest.version;
+
+      // Update version badge in header
+      const versionBadge = document.getElementById('version-badge');
+      if (versionBadge) {
+        versionBadge.textContent = `v${version}`;
+        versionBadge.title = `${manifest.name} v${version}`;
+      }
+
+      // Update extension icon tooltip with version
+      this.updateExtensionTitle(version);
+    } catch (error) {
+      console.error('Error loading version:', error);
+    }
+  }
+
+  /**
+   * Update extension icon tooltip with version and status
+   */
+  async updateExtensionTitle(version, status = null) {
+    try {
+      let title = `Vibe Stats v${version}`;
+      if (status && status !== 'operational') {
+        title += ` - ${this.getStatusText(status)}`;
+      } else if (status === 'operational') {
+        title += ' - All Systems Go!';
+      }
+      await chrome.action.setTitle({ title });
+    } catch (error) {
+      console.log('Could not update extension title:', error);
     }
   }
 
@@ -509,11 +549,11 @@ class VStatePopupController {
         statusIndicator.className = `status-indicator status-${status}`;
         statusIndicator.setAttribute('aria-label', `Status: ${this.getStatusText(status)}`);
       }
-      
+
       if (statusIcon) {
         statusIcon.src = `icons/ai-vibe-32.png`;
         statusIcon.alt = `Vibe Stats status: ${this.getStatusText(status)} ⚡`;
-        
+
         // Add pulse animation for non-operational statuses
         if (status !== 'operational' && status !== 'none') {
           statusIcon.style.animation = 'pulse 2s ease-in-out infinite';
@@ -527,7 +567,7 @@ class VStatePopupController {
           const date = new Date(lastUpdated);
           const timeAgo = this.formatTime(date);
           lastUpdatedEl.textContent = `Updated: ${timeAgo}`;
-          
+
           if (lastError) {
             const errorDate = new Date(lastError.timestamp);
             const errorAgo = this.formatTime(errorDate);
@@ -539,6 +579,10 @@ class VStatePopupController {
           lastUpdatedEl.textContent = 'No data available';
         }
       }
+
+      // Update extension icon tooltip with current status
+      const manifest = chrome.runtime.getManifest();
+      this.updateExtensionTitle(manifest.version, status);
     } catch (error) {
       console.error('Error updating status display:', error);
     }

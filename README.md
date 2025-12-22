@@ -238,7 +238,7 @@ npm run prepare-release
 
 ### Build Output
 - **📁 `./build/`**: Temporary directory with processed extension files
-- **📦 `./dist/vibe-stats-v1.1.0-YYYY-MM-DD.zip`**: Production zip for Chrome Web Store
+- **📦 `./dist/vibe-stats-v1.2.5-YYYY-MM-DD.zip`**: Production zip for Chrome Web Store
 - **📊 Build Report**: Detailed statistics and next steps
 
 ### Chrome Web Store Submission
