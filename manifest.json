@@ -1,9 +1,9 @@
 {
   "manifest_version": 3,
   "name": "Vibe Stats - AI Dev Tools Monitor",
-  "version": "1.2.5",
+  "version": "1.2.6",
   "description": "Monitor Claude AI and GitHub Copilot status with real-time updates and cool AI-themed vibe indicators! 🤖⚡🔥",
-  "author": "Todd Dube - https://github.com/todddube",
+  "author": "Todd Dube - https://github.com/todddube/vstat",
   "minimum_chrome_version": "88",
   "permissions": [
     "storage",

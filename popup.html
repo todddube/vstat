@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
     <meta charset="utf-8">
     <style>
@@ -194,42 +194,47 @@
 
         .status-indicator {
             display: inline-block;
-            width: 10px;
-            height: 10px;
+            width: 12px;
+            height: 12px;
             border-radius: 50%;
             animation: statusPulse 2s ease-in-out infinite;
+            border: 2px solid rgba(255, 255, 255, 0.8);
         }
 
         @keyframes statusPulse {
-            0%, 100% { transform: scale(1); box-shadow: 0 0 4px currentColor; }
-            50% { transform: scale(1.2); box-shadow: 0 0 12px currentColor, 0 0 20px currentColor; }
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.15); }
         }
 
         .status-operational {
             background: var(--status-operational);
-            box-shadow: 0 0 8px var(--status-operational);
+            box-shadow: 0 0 6px var(--status-operational), 0 0 12px var(--status-operational), inset 0 0 4px rgba(255, 255, 255, 0.4);
         }
         .status-minor {
             background: var(--status-minor);
-            box-shadow: 0 0 8px var(--status-minor);
+            box-shadow: 0 0 6px var(--status-minor), 0 0 12px var(--status-minor), inset 0 0 4px rgba(255, 255, 255, 0.4);
         }
         .status-major {
             background: var(--status-major);
-            box-shadow: 0 0 8px var(--status-major);
+            box-shadow: 0 0 6px var(--status-major), 0 0 12px var(--status-major), inset 0 0 4px rgba(255, 255, 255, 0.4);
         }
         .status-critical {
             background: var(--status-critical);
-            box-shadow: 0 0 8px var(--status-critical);
+            box-shadow: 0 0 6px var(--status-critical), 0 0 12px var(--status-critical), inset 0 0 4px rgba(255, 255, 255, 0.4);
             animation: criticalPulse 0.5s ease-in-out infinite;
         }
         .status-unknown {
             background: var(--status-unknown);
-            box-shadow: 0 0 8px var(--status-unknown);
+            box-shadow: 0 0 6px var(--status-unknown), 0 0 12px var(--status-unknown), inset 0 0 4px rgba(255, 255, 255, 0.4);
+        }
+        .status-none {
+            background: var(--status-operational);
+            box-shadow: 0 0 6px var(--status-operational), 0 0 12px var(--status-operational), inset 0 0 4px rgba(255, 255, 255, 0.4);
         }
 
         @keyframes criticalPulse {
             0%, 100% { opacity: 1; transform: scale(1); }
-            50% { opacity: 0.5; transform: scale(1.3); }
+            50% { opacity: 0.7; transform: scale(1.2); }
         }
 
         .header-controls-row {
@@ -864,6 +869,46 @@
 
         .no-incidents.error {
             color: var(--status-critical);
+        }
+
+        /* Section Incident Headers */
+        .section-incident-header {
+            padding: 10px;
+            border-radius: 6px;
+            color: white;
+            margin-bottom: 10px;
+        }
+
+        .section-incident-header strong {
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+        }
+
+        .section-incident-header.claude-header {
+            background: linear-gradient(135deg, #D97706 0%, #DC2626 100%);
+        }
+
+        .section-incident-header.github-header {
+            background: linear-gradient(135deg, #24292E 0%, #0D1117 100%);
+        }
+
+        .section-incident-header-lg {
+            margin-bottom: 15px;
+            padding: 10px;
+            border-radius: 6px;
+            color: white;
+        }
+
+        .section-incident-header-lg strong {
+            font-size: 14px;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+        }
+
+        .section-incident-header-lg.claude-header {
+            background: linear-gradient(135deg, #D97706 0%, #DC2626 100%);
+        }
+
+        .section-incident-header-lg.github-header {
+            background: linear-gradient(135deg, #24292E 0%, #0D1117 100%);
         }
 
         /* Utility Classes */

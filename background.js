@@ -25,6 +25,8 @@ class VStateMonitor {
     this.maxRetries = 3;
     this.retryDelay = 2000;
     this.animationInterval = null;
+    this.animationStartTime = null;
+    this.maxAnimationDuration = 30 * 60 * 1000; // 30 minutes max animation
   }
 
   /**
@@ -370,9 +372,15 @@ class VStateMonitor {
 
   /**
    * Update VState status data in storage
+   * Includes pruning to prevent storage accumulation
    */
   async updateVStateStatus(claudeStatus, githubStatus, combinedStatus) {
     const currentTime = new Date().toISOString();
+    const maxIncidents = 50; // Limit stored incidents to prevent accumulation
+
+    // Prune incidents to prevent storage bloat
+    const claudeIncidents = this.pruneIncidents(claudeStatus?.incidents || [], maxIncidents);
+    const githubIncidents = this.pruneIncidents(githubStatus?.incidents || [], maxIncidents);
 
     await chrome.storage.local.set({
       // Combined status
@@ -382,9 +390,9 @@ class VStateMonitor {
       claudeStatus: claudeStatus,
       githubStatus: githubStatus,
 
-      // Individual incidents
-      claudeIncidents: claudeStatus?.incidents || [],
-      githubIncidents: githubStatus?.incidents || [],
+      // Individual incidents (pruned)
+      claudeIncidents: claudeIncidents,
+      githubIncidents: githubIncidents,
 
       // Individual components
       claudeComponents: claudeStatus?.components || [],
@@ -394,6 +402,20 @@ class VStateMonitor {
       lastUpdated: currentTime,
       lastSuccessfulCheck: Date.now()
     });
+  }
+
+  /**
+   * Prune incidents array to prevent storage accumulation
+   * Keeps the most recent incidents up to maxCount
+   */
+  pruneIncidents(incidents, maxCount = 50) {
+    if (!Array.isArray(incidents)) return [];
+    if (incidents.length <= maxCount) return incidents;
+
+    // Sort by created_at descending and take the most recent
+    return incidents
+      .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+      .slice(0, maxCount);
   }
 
   async updateStatus(status, incidents, historicalIncidents, components, lastFiveIncidents) {
@@ -458,23 +480,28 @@ class VStateMonitor {
    */
   countAffectedServices(components) {
     if (!Array.isArray(components)) return 0;
-    
-    // Key service components to track
-    const keyServices = [
-      'claude.ai', 'claude frontend', 'claude.ai website',
-      'anthropic console', 'console.anthropic.com', 'console',
-      'anthropic api', 'api.anthropic.com', 'api',
-      'claude code', 'code editor'
+
+    // Key service components to track - using word patterns for robust matching
+    const keyServicePatterns = [
+      /\bclaude\.ai\b/i,
+      /\bclaude\s+frontend\b/i,
+      /\bclaude\.ai\s+website\b/i,
+      /\banthropic\s+console\b/i,
+      /\bconsole\.anthropic\.com\b/i,
+      /\bconsole\b/i,
+      /\banthropic\s+api\b/i,
+      /\bapi\.anthropic\.com\b/i,
+      /\bapi\s+requests?\b/i,
+      /\bclaude\s+code\b/i,
+      /\bcode\s+editor\b/i
     ];
-    
+
     return components.filter(component => {
-      const name = component.name.toLowerCase();
-      const isKeyService = keyServices.some(service => 
-        name.includes(service) || service.includes(name)
-      );
-      const isNotOperational = component.status && 
+      const name = component.name;
+      const isKeyService = keyServicePatterns.some(pattern => pattern.test(name));
+      const isNotOperational = component.status &&
         component.status.toLowerCase() !== 'operational';
-      
+
       return isKeyService && isNotOperational;
     }).length;
   }
@@ -505,20 +532,30 @@ class VStateMonitor {
 
   /**
    * Handle icon animation for different statuses
+   * Includes max duration to prevent indefinite animation
    */
   handleIconAnimation(status) {
     // Clear any existing animation interval
-    if (this.animationInterval) {
-      clearInterval(this.animationInterval);
-      this.animationInterval = null;
-    }
+    this.clearAnimation();
 
     // Start badge animation for problematic statuses instead of icon blinking
     if (status !== 'operational' && status !== 'none') {
       let isVisible = true;
-      
+      this.animationStartTime = Date.now();
+
       this.animationInterval = setInterval(async () => {
         try {
+          // Check if max animation duration exceeded
+          if (Date.now() - this.animationStartTime > this.maxAnimationDuration) {
+            console.log('Animation max duration reached, stopping animation');
+            this.clearAnimation();
+            // Restore original badge color
+            await chrome.action.setBadgeBackgroundColor({
+              color: this.getBadgeColor(status)
+            });
+            return;
+          }
+
           if (isVisible) {
             // Make badge flash by changing opacity
             await chrome.action.setBadgeBackgroundColor({
@@ -534,13 +571,21 @@ class VStateMonitor {
         } catch (error) {
           console.error('Animation error:', error);
           // If animation fails, clear the interval to prevent spam
-          if (this.animationInterval) {
-            clearInterval(this.animationInterval);
-            this.animationInterval = null;
-          }
+          this.clearAnimation();
         }
       }, 1000); // Flash every second
     }
+  }
+
+  /**
+   * Clear animation interval and reset state
+   */
+  clearAnimation() {
+    if (this.animationInterval) {
+      clearInterval(this.animationInterval);
+      this.animationInterval = null;
+    }
+    this.animationStartTime = null;
   }
 
   getBadgeColor(status) {
