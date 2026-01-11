@@ -308,12 +308,9 @@ class ExtensionBuilder {
     console.log(colorize('📦 Creating zip file...', 'cyan'));
 
     const version = manifest.version;
-    const timestamp = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
 
-    // For release builds, use cleaner naming
-    const zipName = options.isRelease ?
-      `vibe-stats-v${version}.zip` :
-      `vibe-stats-v${version}-${timestamp}.zip`;
+    // Always use clean naming without date
+    const zipName = `vibe-stats-v${version}.zip`;
 
     const zipPath = path.join(this.distDir, zipName);
     

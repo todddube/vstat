@@ -63,17 +63,21 @@ https://todddube.github.io/vstat/PRIVACY.html
 
 **Extension Description:**
 ```
-Monitor Claude AI and GitHub Copilot status with real-time updates and cool AI-themed vibe indicators. Keep your dev tools vibe in check! 🤖⚡🔥
+Monitor all your essential AI developer tools in one place! Track real-time status for Claude AI, OpenAI (ChatGPT), GitHub Copilot, and Google Gemini with sleek vibe indicators.
 
 Features:
-• Real-time status monitoring for Claude AI and GitHub Copilot
-• Cool AI-themed vibe indicators with modern gradient design
-• Detailed incident information and service updates
-• Smart notification system with badge indicators
-• Lightweight and fast - updates every 5 minutes
-• Privacy-focused - zero personal data collection
+• Real-time status monitoring for 4 major AI services:
+  - Claude AI (Anthropic)
+  - OpenAI (ChatGPT & API)
+  - GitHub Copilot & Actions
+  - Google Gemini & AI Studio
+• Professional light theme with color-coded service cards
+• Expandable incident details with 14-day history
+• Click any service card to open its official status page
+• Automatic updates every 5 minutes with manual refresh
+• Privacy-focused - zero personal data collection, local storage only
 
-Perfect for developers who rely on AI development tools.
+Perfect for developers who rely on AI coding assistants and want to know instantly when services have issues.
 ```
 
 **Category:** Developer Tools

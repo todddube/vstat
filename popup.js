@@ -1,15 +1,50 @@
 /**
  * VState PopupController manages the extension popup interface
- * Handles status display, service expansion, and user interactions
+ * Handles status display for Claude, GitHub, OpenAI, and Gemini
  */
 class VStatePopupController {
   constructor() {
     this.refreshing = false;
     this.errorRetryCount = 0;
     this.maxErrorRetries = 3;
-    this.expandedServices = new Set();
 
-    // Cache DOM elements for better performance
+    // Service configuration with status page URLs
+    this.services = {
+      claude: {
+        name: 'Claude AI',
+        statusUrl: 'https://status.anthropic.com',
+        components: [
+          { id: 'claude-web', name: 'Claude.ai', patterns: [/\bclaude\.ai\b/i, /\bweb\b/i] },
+          { id: 'claude-api', name: 'API', patterns: [/\bapi\b/i] }
+        ]
+      },
+      github: {
+        name: 'GitHub',
+        statusUrl: 'https://www.githubstatus.com',
+        components: [
+          { id: 'copilot', name: 'Copilot', patterns: [/\bcopilot\b/i] },
+          { id: 'actions', name: 'Actions', patterns: [/\bactions\b/i] }
+        ]
+      },
+      openai: {
+        name: 'OpenAI',
+        statusUrl: 'https://status.openai.com',
+        components: [
+          { id: 'chatgpt', name: 'ChatGPT', patterns: [/\bchatgpt\b/i, /\bchat\b/i] },
+          { id: 'api', name: 'API', patterns: [/\bapi\b/i] }
+        ]
+      },
+      gemini: {
+        name: 'Gemini',
+        statusUrl: 'https://aistudio.google.com/status',
+        components: [
+          { id: 'ai-studio', name: 'AI Studio', patterns: [/\bstudio\b/i] },
+          { id: 'gemini-api', name: 'Gemini API', patterns: [/\bapi\b/i, /\bgemini\b/i] }
+        ]
+      }
+    };
+
+    // Cache DOM elements
     this.elements = {};
 
     this.init().catch(error => {
@@ -23,20 +58,25 @@ class VStatePopupController {
    */
   cacheElements() {
     this.elements = {
-      statusIndicator: document.getElementById('status-indicator'),
+      overallStatus: document.getElementById('overall-status'),
+      statusDot: document.getElementById('status-dot'),
+      statusText: document.getElementById('status-text'),
       statusIcon: document.getElementById('status-icon'),
       lastUpdated: document.getElementById('last-updated'),
       versionBadge: document.getElementById('version-badge'),
       refreshBtn: document.getElementById('refresh-btn'),
       aboutBtn: document.getElementById('about-btn'),
       aboutModal: document.getElementById('about-modal'),
-      aboutClose: document.getElementById('about-close'),
-      demoBtn: document.getElementById('demo-btn'),
-      claudeIncidents: document.getElementById('claude-incidents'),
-      claudeIncidentsContent: document.getElementById('claude-incidents-content'),
-      githubIncidents: document.getElementById('github-incidents'),
-      githubIncidentsContent: document.getElementById('github-incidents-content')
+      aboutClose: document.getElementById('about-close')
     };
+
+    // Cache service card elements
+    ['claude', 'github', 'openai', 'gemini'].forEach(service => {
+      this.elements[`${service}Card`] = document.getElementById(`${service}-card`);
+      this.elements[`${service}Status`] = document.getElementById(`${service}-status`);
+      this.elements[`${service}Components`] = document.getElementById(`${service}-components`);
+      this.elements[`${service}Incidents`] = document.getElementById(`${service}-incidents`);
+    });
   }
 
   /**
@@ -46,9 +86,9 @@ class VStatePopupController {
     try {
       this.cacheElements();
       this.loadVersion();
-      await this.loadStatus();
       this.setupEventListeners();
       this.setupKeyboardNavigation();
+      await this.loadStatus();
       this.startAutoRefresh();
     } catch (error) {
       console.error('Initialization error:', error);
@@ -64,311 +104,180 @@ class VStatePopupController {
       const manifest = chrome.runtime.getManifest();
       const version = manifest.version;
 
-      // Update version badge in header (use cached element)
       if (this.elements.versionBadge) {
         this.elements.versionBadge.textContent = `v${version}`;
         this.elements.versionBadge.title = `${manifest.name} v${version}`;
       }
-
-      // Update extension icon tooltip with version
-      this.updateExtensionTitle(version);
     } catch (error) {
       console.error('Error loading version:', error);
     }
   }
 
   /**
-   * Update extension icon tooltip with version and status
-   */
-  async updateExtensionTitle(version, status = null) {
-    try {
-      let title = `Vibe Stats v${version}`;
-      if (status && status !== 'operational') {
-        title += ` - ${this.getStatusText(status)}`;
-      } else if (status === 'operational') {
-        title += ' - All Systems Go!';
-      }
-      await chrome.action.setTitle({ title });
-    } catch (error) {
-      console.log('Could not update extension title:', error);
-    }
-  }
-
-  /**
-   * Set up event listeners with error handling
+   * Set up event listeners
    */
   setupEventListeners() {
-    try {
-      // Refresh button with debouncing (use cached element)
-      if (this.elements.refreshBtn) {
-        this.elements.refreshBtn.addEventListener('click', (e) => {
-          e.preventDefault();
-          this.refreshStatus();
-        });
-      }
-
-      // Section incident toggle buttons
-      document.querySelectorAll('.section-incidents-toggle').forEach(toggle => {
-        toggle.addEventListener('click', (e) => {
-          e.preventDefault();
-          const sectionName = toggle.getAttribute('data-section');
-          this.toggleSectionIncidents(sectionName);
-        });
-      });
-
-      // Handle popup visibility changes
-      document.addEventListener('visibilitychange', () => {
-        if (!document.hidden) {
-          this.onPopupVisible();
-        }
-      });
-
-      // About modal functionality (use cached elements)
-      if (this.elements.aboutBtn && this.elements.aboutModal && this.elements.aboutClose) {
-        this.elements.aboutBtn.addEventListener('click', (e) => {
-          e.preventDefault();
-          this.showAboutModal();
-        });
-
-        this.elements.aboutClose.addEventListener('click', (e) => {
-          e.preventDefault();
-          this.hideAboutModal();
-        });
-
-        // Close modal when clicking outside content
-        this.elements.aboutModal.addEventListener('click', (e) => {
-          if (e.target === this.elements.aboutModal) {
-            this.hideAboutModal();
-          }
-        });
-      }
-
-      // Service item click handlers for external links
-      document.querySelectorAll('.service-item[data-url]').forEach(item => {
-        item.addEventListener('click', (e) => {
-          e.preventDefault();
-          const url = item.getAttribute('data-url');
-          if (url) {
-            chrome.tabs.create({ url: url });
-          }
-        });
-      });
-
-      // Status link click handlers
-      document.querySelectorAll('.status-link').forEach(link => {
-        link.addEventListener('click', (e) => {
-          e.preventDefault();
-          const url = link.getAttribute('href');
-          if (url) {
-            chrome.tabs.create({ url: url });
-          }
-        });
-      });
-
-      // Demo button click handler (use cached element)
-      if (this.elements.demoBtn) {
-        this.elements.demoBtn.addEventListener('click', (e) => {
-          e.preventDefault();
-          if (this.demoTimer) {
-            this.resetDemo();
-          } else {
-            this.startStatusDemo();
-          }
-        });
-      }
-
-    } catch (error) {
-      console.error('Error setting up event listeners:', error);
-    }
-  }
-
-  /**
-   * Set up keyboard navigation for accessibility
-   */
-  setupKeyboardNavigation() {
-    document.addEventListener('keydown', (e) => {
-      // Close about modal with Escape key
-      if (e.key === 'Escape') {
-        const aboutModal = document.getElementById('about-modal');
-        if (aboutModal && aboutModal.classList.contains('show')) {
-          this.hideAboutModal();
-          return;
-        }
-      }
-
-      // Refresh with Ctrl+R or F5
-      if ((e.ctrlKey && e.key === 'r') || e.key === 'F5') {
+    // Refresh button
+    if (this.elements.refreshBtn) {
+      this.elements.refreshBtn.addEventListener('click', (e) => {
         e.preventDefault();
         this.refreshStatus();
-        return;
-      }
+      });
+    }
 
-      // Navigate section toggles with arrow keys when focused
-      if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
-        const focused = document.activeElement;
-        if (focused && focused.classList.contains('section-incidents-toggle')) {
-          e.preventDefault();
-          const toggles = Array.from(document.querySelectorAll('.section-incidents-toggle'));
-          const currentIndex = toggles.indexOf(focused);
-          const nextIndex = e.key === 'ArrowDown' 
-            ? (currentIndex + 1) % toggles.length 
-            : (currentIndex - 1 + toggles.length) % toggles.length;
-          toggles[nextIndex].focus();
-        }
-      }
+    // About modal
+    if (this.elements.aboutBtn && this.elements.aboutModal && this.elements.aboutClose) {
+      this.elements.aboutBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        this.showAboutModal();
+      });
 
-      // Activate section incidents with Enter or Space
-      if (e.key === 'Enter' || e.key === ' ') {
-        const focused = document.activeElement;
-        if (focused && focused.classList.contains('section-incidents-toggle')) {
-          e.preventDefault();
-          const sectionName = focused.getAttribute('data-section');
-          this.toggleSectionIncidents(sectionName);
+      this.elements.aboutClose.addEventListener('click', (e) => {
+        e.preventDefault();
+        this.hideAboutModal();
+      });
+
+      this.elements.aboutModal.addEventListener('click', (e) => {
+        if (e.target === this.elements.aboutModal) {
+          this.hideAboutModal();
         }
+      });
+    }
+
+    // Incident toggles
+    document.querySelectorAll('.toggle-btn').forEach(toggle => {
+      toggle.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        const service = toggle.getAttribute('data-service');
+        this.toggleIncidents(service, toggle);
+      });
+    });
+
+    // Service card clicks - open status page
+    document.querySelectorAll('.service-card').forEach(card => {
+      card.addEventListener('click', (e) => {
+        // Don't trigger if clicking on the toggle button
+        if (e.target.closest('.toggle-btn')) return;
+
+        const service = card.getAttribute('data-service');
+        if (this.services[service]) {
+          chrome.tabs.create({ url: this.services[service].statusUrl });
+        }
+      });
+    });
+
+    // Handle popup visibility changes
+    document.addEventListener('visibilitychange', () => {
+      if (!document.hidden) {
+        this.onPopupVisible();
       }
     });
   }
 
   /**
-   * Toggle section incidents to show/hide recent issues
+   * Set up keyboard navigation
    */
-  toggleSectionIncidents(sectionName) {
-    const toggle = document.querySelector(`[data-section="${sectionName}"]`);
-    const incidentsContainer = document.getElementById(`${sectionName}-incidents`);
-    
-    if (!toggle || !incidentsContainer) return;
-    
+  setupKeyboardNavigation() {
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        if (this.elements.aboutModal?.classList.contains('show')) {
+          this.hideAboutModal();
+          return;
+        }
+      }
+
+      if ((e.ctrlKey && e.key === 'r') || e.key === 'F5') {
+        e.preventDefault();
+        this.refreshStatus();
+      }
+    });
+  }
+
+  /**
+   * Toggle incidents visibility for a service
+   */
+  toggleIncidents(service, toggle) {
+    const container = this.elements[`${service}Incidents`];
+    if (!container) return;
+
     const isExpanded = toggle.classList.contains('expanded');
-    
+
     if (isExpanded) {
-      // Collapse
       toggle.classList.remove('expanded');
-      incidentsContainer.style.display = 'none';
+      container.classList.remove('show');
     } else {
-      // Expand
       toggle.classList.add('expanded');
-      incidentsContainer.style.display = 'block';
-      this.loadSectionIncidents(sectionName);
+      container.classList.add('show');
+      this.loadServiceIncidents(service);
     }
   }
 
   /**
-   * Load incidents for a section (claude or github)
+   * Load incidents for a specific service
    */
-  async loadSectionIncidents(sectionName) {
-    const incidentsContent = document.getElementById(`${sectionName}-incidents-content`);
-    if (!incidentsContent) return;
+  async loadServiceIncidents(service) {
+    const container = this.elements[`${service}Incidents`];
+    if (!container) return;
 
-    // Show loading state
-    incidentsContent.innerHTML = '<div class="loading">🔄 Loading incidents...</div>';
+    container.innerHTML = '<div class="loading">Loading incidents...</div>';
 
     try {
-      // Get status data from storage
-      const result = await chrome.storage.local.get([
-        'vstateStatus', 'claudeStatus', 'githubStatus',
-        'claudeIncidents', 'githubIncidents'
-      ]);
+      const result = await chrome.storage.local.get([`${service}Incidents`]);
+      const incidents = result[`${service}Incidents`] || [];
 
-      let incidents = [];
-      let sectionTitle = '';
-
-      if (sectionName === 'claude') {
-        incidents = result.claudeIncidents || [];
-        sectionTitle = '🤖 Claude AI Recent Issues';
-      } else if (sectionName === 'github') {
-        incidents = result.githubIncidents || [];
-        sectionTitle = '🐙 GitHub Services Recent Issues';
+      if (incidents.length === 0) {
+        container.innerHTML = '<div class="no-incidents">No recent incidents</div>';
+        return;
       }
 
-      // Get recent incidents (last 5)
       const recentIncidents = incidents.slice(0, 5);
-
-      const headerClass = sectionName === 'claude' ? 'claude-header' : 'github-header';
-
-      if (recentIncidents.length === 0) {
-        incidentsContent.innerHTML = `
-          <div class="section-incident-header ${headerClass}">
-            <strong>${sectionTitle}</strong>
-          </div>
-          <div class="no-incidents">
-            No recent incidents - all systems operational! 🎉
-          </div>
-        `;
-      } else {
-        incidentsContent.innerHTML = `
-          <div class="section-incident-header-lg ${headerClass}">
-            <strong>${sectionTitle}</strong>
-          </div>
-          ${recentIncidents.map(incident => this.renderIncident(incident)).join('')}
-        `;
-      }
+      container.innerHTML = recentIncidents.map(incident => this.renderIncident(incident)).join('');
 
     } catch (error) {
-      console.error('Error loading section incidents:', error);
-      const headerClass = sectionName === 'claude' ? 'claude-header' : 'github-header';
-      const displayName = this.getSectionDisplayName(sectionName);
-      incidentsContent.innerHTML = `
-        <div class="section-incident-header ${headerClass}">
-          <strong>${displayName} Recent Issues</strong>
-        </div>
-        <div class="no-incidents error">
-          Error loading incidents for ${displayName}
-        </div>
-      `;
+      console.error(`Error loading ${service} incidents:`, error);
+      container.innerHTML = '<div class="no-incidents">Error loading incidents</div>';
     }
   }
 
   /**
-   * Filter incidents based on service type
+   * Render a single incident
    */
-  filterIncidentsForService(incidents, serviceName) {
-    // For now, return all incidents for the service provider
-    // Could be enhanced to filter by specific service components
-    return incidents.slice(0, 5); // Show max 5 recent incidents
+  renderIncident(incident) {
+    const impactClass = incident.impact ? `impact-${incident.impact}` : '';
+    const statusClass = incident.status === 'resolved' ? 'resolved' : '';
+
+    let updateText = '';
+    if (incident.incident_updates?.length > 0 || incident.updates?.length > 0) {
+      const updates = incident.incident_updates || incident.updates || [];
+      if (updates[0]?.body) {
+        updateText = `<div class="incident-desc">${this.truncateText(updates[0].body, 100)}</div>`;
+      }
+    }
+
+    const title = incident.titleWithDate || incident.name || 'Unknown incident';
+    const dateStr = incident.created_at ? this.formatTime(new Date(incident.created_at)) : '';
+
+    return `
+      <div class="incident-item ${impactClass}">
+        <div class="incident-title">${this.escapeHtml(title)}</div>
+        <div class="incident-meta">
+          <span class="incident-status-tag ${statusClass}">${incident.status || 'unknown'}</span>
+          ${dateStr ? `<span class="incident-time">${dateStr}</span>` : ''}
+        </div>
+        ${updateText}
+      </div>
+    `;
   }
 
   /**
-   * Get display name for service
-   */
-  getServiceDisplayName(serviceName) {
-    const serviceNames = {
-      'claude-web': 'Claude Web',
-      'claude-api': 'Claude API',
-      'claude-dashboard': 'Claude Dashboard',
-      'claude-docs': 'Claude Docs/Support',
-      'github-copilot': 'GitHub Copilot',
-      'github-api': 'GitHub API',
-      'github-codespaces': 'GitHub Codespaces',
-      'github-actions': 'GitHub Actions'
-    };
-    return serviceNames[serviceName] || serviceName;
-  }
-
-  /**
-   * Get section display name
-   */
-  getSectionDisplayName(sectionName) {
-    const names = {
-      'claude': '🤖 Claude AI',
-      'github': '🐙 GitHub Services'
-    };
-    return names[sectionName] || sectionName;
-  }
-
-  /**
-   * Handle when popup becomes visible
+   * Handle popup becoming visible
    */
   onPopupVisible() {
-    // Auto-refresh if data is older than 30 seconds
     chrome.storage.local.get(['lastUpdated'], (result) => {
-      if (chrome.runtime.lastError) {
-        console.warn('Storage error in onPopupVisible:', chrome.runtime.lastError);
-        return;
-      }
-      const lastUpdated = result.lastUpdated;
-      if (lastUpdated) {
-        const timeSince = Date.now() - lastUpdated;
-        if (timeSince > 30000) { // 30 seconds
+      if (result.lastUpdated) {
+        const timeSince = Date.now() - new Date(result.lastUpdated).getTime();
+        if (timeSince > 30000) {
           this.loadStatus();
         }
       }
@@ -379,12 +288,11 @@ class VStatePopupController {
    * Start auto-refresh interval
    */
   startAutoRefresh() {
-    // Refresh every 2 minutes when popup is open
     this.autoRefreshInterval = setInterval(() => {
       if (!document.hidden && !this.refreshing) {
         this.loadStatus();
       }
-    }, 120000);
+    }, 120000); // 2 minutes
   }
 
   /**
@@ -393,16 +301,18 @@ class VStatePopupController {
   async loadStatus() {
     try {
       const result = await chrome.storage.local.get([
-        'vstateStatus', 'claudeStatus', 'githubStatus',
-        'claudeIncidents', 'githubIncidents',
+        'vstateStatus', 'claudeStatus', 'githubStatus', 'openaiStatus', 'geminiStatus',
+        'claudeIncidents', 'githubIncidents', 'openaiIncidents', 'geminiIncidents',
         'lastUpdated', 'lastError'
       ]);
 
       if (result.vstateStatus) {
-        this.updateStatusDisplay(result.vstateStatus, result.lastUpdated, result.lastError);
-        this.updateClaudeServices(result.claudeStatus);
-        this.updateGitHubServices(result.githubStatus);
-        this.errorRetryCount = 0; // Reset error count on success
+        this.updateOverallStatus(result.vstateStatus, result.lastUpdated);
+        this.updateServiceCard('claude', result.claudeStatus);
+        this.updateServiceCard('github', result.githubStatus);
+        this.updateServiceCard('openai', result.openaiStatus);
+        this.updateServiceCard('gemini', result.geminiStatus);
+        this.errorRetryCount = 0;
       } else {
         this.showNoData();
       }
@@ -419,145 +329,152 @@ class VStatePopupController {
   }
 
   /**
-   * Update Claude services display
+   * Update overall status display
    */
-  updateClaudeServices(claudeStatus) {
-    if (!claudeStatus) return;
+  updateOverallStatus(status, lastUpdated) {
+    const indicator = status.indicator || 'unknown';
+    const description = status.description || this.getStatusText(indicator);
 
-    // Update Claude service icons based on status data - using regex patterns for robust matching
-    const claudeServices = {
-      'claude-web': [/\bclaude\.ai\b/i, /\bclaude\s+frontend\b/i, /\bweb\s+interface\b/i, /\bclaude\.ai\s+website\b/i],
-      'claude-api': [/\bapi\b/i, /\bclaude\s+api\b/i, /\banthropic\s+api\b/i, /\bapi\.anthropic\.com\b/i],
-      'claude-dashboard': [/\bconsole\b/i, /\banthropic\s+console\b/i, /\bconsole\.anthropic\.com\b/i, /\bdashboard\b/i],
-      'claude-docs': [/\bdocumentation\b/i, /\bdocs\b/i, /\bsupport\b/i, /\bdocs\.anthropic\.com\b/i, /\bhelp\s+center\b/i]
-    };
+    // Update overall status banner
+    if (this.elements.overallStatus) {
+      this.elements.overallStatus.className = `status-banner ${indicator}`;
+    }
 
-    Object.entries(claudeServices).forEach(([serviceId, patterns]) => {
-      const serviceEl = document.querySelector(`[data-service="${serviceId}"]`);
-      if (!serviceEl) return;
+    if (this.elements.statusDot) {
+      this.elements.statusDot.className = `status-indicator ${indicator}`;
+    }
 
-      const iconEl = serviceEl.querySelector('.service-icon');
-      if (!iconEl) return;
+    if (this.elements.statusText) {
+      this.elements.statusText.textContent = description;
+    }
 
-      // Find matching component in Claude status
-      let status = 'unknown';
-      if (claudeStatus.components) {
-        const component = claudeStatus.components.find(comp => {
-          return patterns.some(pattern => pattern.test(comp.name));
-        });
-        if (component) {
-          status = this.mapComponentStatus(component.status);
-        }
-      }
-
-      iconEl.className = `service-icon ${status}`;
-      iconEl.textContent = this.getServiceIcon(status);
-    });
+    // Update last updated time
+    if (this.elements.lastUpdated && lastUpdated) {
+      const date = new Date(lastUpdated);
+      this.elements.lastUpdated.textContent = `Updated: ${this.formatTime(date)}`;
+    }
   }
 
   /**
-   * Update GitHub services display
+   * Update a service card with status data
    */
-  updateGitHubServices(githubStatus) {
-    if (!githubStatus) return;
+  updateServiceCard(serviceName, serviceData) {
+    const statusEl = this.elements[`${serviceName}Status`];
+    const componentsEl = this.elements[`${serviceName}Components`];
 
-    // Update GitHub service icons based on status data - using regex patterns for robust matching
-    const githubServices = {
-      'github-copilot': [/\bcopilot\b/i, /\bgithub\s+copilot\b/i, /\bcopilot\s+for\s+business\b/i, /\bcopilot\s+for\s+individuals\b/i],
-      'github-api': [/\bapi\s+requests?\b/i, /\bgithub\s+api\b/i, /\brest\s+api\b/i, /\bgraphql\s+api\b/i],
-      'github-codespaces': [/\bcodespaces\b/i, /\bgithub\s+codespaces\b/i, /\bcloud\s+development\b/i],
-      'github-actions': [/\bactions\b/i, /\bgithub\s+actions\b/i, /\bworkflows\b/i, /\bci\/cd\b/i]
-    };
+    if (!statusEl) return;
 
-    Object.entries(githubServices).forEach(([serviceId, patterns]) => {
-      const serviceEl = document.querySelector(`[data-service="${serviceId}"]`);
-      if (!serviceEl) return;
+    // Get status indicator
+    let indicator = 'unknown';
+    if (serviceData?.status?.indicator) {
+      indicator = serviceData.status.indicator;
+    } else if (typeof serviceData?.status === 'string') {
+      indicator = serviceData.status;
+    }
 
-      const iconEl = serviceEl.querySelector('.service-icon');
-      if (!iconEl) return;
+    // Update status badge
+    statusEl.className = `card-status ${indicator}`;
+    const statusIcon = statusEl.querySelector('.status-icon');
+    const statusLabel = statusEl.querySelector('.status-label');
 
-      // Find matching component in GitHub status
-      let status = 'unknown';
-      if (githubStatus.components) {
-        const component = githubStatus.components.find(comp => {
-          return patterns.some(pattern => pattern.test(comp.name));
-        });
-        if (component) {
-          status = this.mapComponentStatus(component.status);
-        }
-      }
+    if (statusIcon) {
+      statusIcon.className = `status-icon ${indicator}`;
+      statusIcon.innerHTML = this.getStatusIcon(indicator);
+    }
 
-      iconEl.className = `service-icon ${status}`;
-      iconEl.textContent = this.getServiceIcon(status);
-    });
+    if (statusLabel) {
+      statusLabel.textContent = this.getStatusLabel(indicator);
+    }
+
+    // Update components
+    if (componentsEl && serviceData?.components) {
+      this.updateServiceComponents(serviceName, componentsEl, serviceData.components);
+    }
   }
 
-
   /**
-   * Send message to background script with timeout
+   * Update service components display
    */
-  async sendMessage(message, timeout = 5000) {
-    return new Promise((resolve) => {
-      const timeoutId = setTimeout(() => resolve(null), timeout);
-      
-      chrome.runtime.sendMessage(message, (response) => {
-        clearTimeout(timeoutId);
-        if (chrome.runtime.lastError) {
-          console.warn('Message error:', chrome.runtime.lastError);
-          resolve(null);
-        } else {
-          resolve(response);
-        }
+  updateServiceComponents(serviceName, container, components) {
+    const serviceConfig = this.services[serviceName];
+    if (!serviceConfig) return;
+
+    const html = serviceConfig.components.map(configComp => {
+      // Find matching component from API data
+      const apiComp = components.find(c => {
+        const name = c.name?.toLowerCase() || '';
+        return configComp.patterns.some(p => p.test(name));
       });
-    });
+
+      const status = apiComp?.status?.toLowerCase() || 'operational';
+      const statusClass = this.mapStatusClass(status);
+      const statusText = this.getComponentStatusText(status);
+
+      return `
+        <div class="component-item">
+          <span class="component-name">${configComp.name}</span>
+          <div class="component-status">
+            <div class="component-dot ${statusClass}"></div>
+            <span class="component-text">${statusText}</span>
+          </div>
+        </div>
+      `;
+    }).join('');
+
+    container.innerHTML = html;
   }
 
   /**
-   * Update status display with error state handling
+   * Map status string to CSS class
    */
-  updateStatusDisplay(status, lastUpdated, lastError) {
-    try {
-      // Use cached elements for better performance
-      if (this.elements.statusIndicator) {
-        this.elements.statusIndicator.className = `status-indicator status-${status}`;
-        this.elements.statusIndicator.setAttribute('aria-label', `Status: ${this.getStatusText(status)}`);
-      }
+  mapStatusClass(status) {
+    if (!status) return 'unknown';
+    const s = status.toLowerCase();
+    if (s === 'operational') return '';
+    if (s.includes('degraded') || s.includes('minor')) return 'minor';
+    if (s.includes('major') || s.includes('partial')) return 'major';
+    if (s.includes('outage') || s.includes('critical')) return 'critical';
+    return 'unknown';
+  }
 
-      if (this.elements.statusIcon) {
-        this.elements.statusIcon.src = `icons/ai-vibe-32.png`;
-        this.elements.statusIcon.alt = `Vibe Stats status: ${this.getStatusText(status)} ⚡`;
+  /**
+   * Get component status text
+   */
+  getComponentStatusText(status) {
+    if (!status) return 'UNKNOWN';
+    const s = status.toLowerCase();
+    if (s === 'operational') return 'OK';
+    if (s.includes('degraded')) return 'DEGRADED';
+    if (s.includes('minor')) return 'MINOR';
+    if (s.includes('major')) return 'MAJOR';
+    if (s.includes('partial')) return 'PARTIAL';
+    if (s.includes('outage')) return 'OUTAGE';
+    return 'UNKNOWN';
+  }
 
-        // Add pulse animation for non-operational statuses
-        if (status !== 'operational' && status !== 'none') {
-          this.elements.statusIcon.style.animation = 'pulse 2s ease-in-out infinite';
-        } else {
-          this.elements.statusIcon.style.animation = '';
-        }
-      }
+  /**
+   * Get status icon HTML
+   */
+  getStatusIcon(status) {
+    switch (status) {
+      case 'operational': return '&#10003;';
+      case 'minor': return '&#9888;';
+      case 'major': return '&#9889;';
+      case 'critical': return '&#10007;';
+      default: return '?';
+    }
+  }
 
-      if (this.elements.lastUpdated) {
-        if (lastUpdated) {
-          const date = new Date(lastUpdated);
-          const timeAgo = this.formatTime(date);
-          this.elements.lastUpdated.textContent = `Updated: ${timeAgo}`;
-
-          if (lastError) {
-            const errorDate = new Date(lastError.timestamp);
-            const errorAgo = this.formatTime(errorDate);
-            this.elements.lastUpdated.title = `Last error: ${lastError.message} (${errorAgo})`;
-          } else {
-            this.elements.lastUpdated.removeAttribute('title');
-          }
-        } else {
-          this.elements.lastUpdated.textContent = 'No data available';
-        }
-      }
-
-      // Update extension icon tooltip with current status
-      const manifest = chrome.runtime.getManifest();
-      this.updateExtensionTitle(manifest.version, status);
-    } catch (error) {
-      console.error('Error updating status display:', error);
+  /**
+   * Get status label text
+   */
+  getStatusLabel(status) {
+    switch (status) {
+      case 'operational': return 'Operational';
+      case 'minor': return 'Minor Issues';
+      case 'major': return 'Major Issues';
+      case 'critical': return 'Critical';
+      default: return 'Unknown';
     }
   }
 
@@ -566,75 +483,21 @@ class VStatePopupController {
    */
   getStatusText(status) {
     switch (status) {
-      case 'none':
       case 'operational':
         return 'All Systems Operational';
       case 'minor':
-        return 'Minor Issues';
+        return 'Minor Issues Detected';
       case 'major':
-        return 'Major Issues';
+        return 'Major Issues Detected';
       case 'critical':
-        return 'Critical Issues';
+        return 'Critical Issues Detected';
       default:
         return 'Status Unknown';
     }
   }
 
   /**
-   * Map component status to our internal status levels
-   */
-  mapComponentStatus(status) {
-    if (!status) return 'unknown';
-    
-    const statusLower = status.toLowerCase();
-    if (statusLower === 'operational') return 'operational';
-    if (statusLower.includes('degraded') || statusLower.includes('minor')) return 'minor';
-    if (statusLower.includes('major') || statusLower.includes('partial')) return 'major';
-    if (statusLower.includes('outage') || statusLower.includes('critical')) return 'critical';
-    return 'unknown';
-  }
-
-  /**
-   * Get emoji/symbol for service status
-   */
-  getServiceIcon(status) {
-    switch (status) {
-      case 'operational': return '✓';
-      case 'minor': return '⚠';
-      case 'major': return '⚡';
-      case 'critical': return '✕';
-      default: return '?';
-    }
-  }
-
-  /**
-   * Render incident for display
-   */
-  renderIncident(incident) {
-    const impactClass = incident.impact ? `impact-${incident.impact}` : '';
-    const statusClass = incident.status ? incident.status.replace(/\s+/g, '-').toLowerCase() : '';
-    
-    let updateText = '';
-    if (incident.updates && incident.updates.length > 0) {
-      updateText = `
-        <div class="incident-update">
-          ${this.truncateText(incident.updates[0].body, 120)}
-        </div>
-      `;
-    }
-
-    return `
-      <div class="incident ${impactClass}">
-        <div class="incident-name">${this.escapeHtml(incident.titleWithDate || incident.name)}</div>
-        <span class="incident-status ${statusClass}">${incident.status}</span>
-        ${updateText}
-        <div class="incident-date">${this.formatTime(new Date(incident.created_at))}</div>
-      </div>
-    `;
-  }
-
-  /**
-   * Refresh status with proper debouncing and error handling
+   * Refresh status with debouncing
    */
   async refreshStatus() {
     if (this.refreshing) return;
@@ -646,7 +509,6 @@ class VStatePopupController {
     try {
       this.elements.refreshBtn.textContent = 'Refreshing...';
       this.elements.refreshBtn.disabled = true;
-      this.elements.refreshBtn.setAttribute('aria-busy', 'true');
 
       const response = await this.sendMessage({ action: 'forceRefresh' });
 
@@ -654,9 +516,7 @@ class VStatePopupController {
         throw new Error(response.error || 'Refresh failed');
       }
 
-      // Wait a moment for the background script to complete
       await new Promise(resolve => setTimeout(resolve, 1500));
-
       await this.loadStatus();
 
     } catch (error) {
@@ -665,9 +525,27 @@ class VStatePopupController {
     } finally {
       this.elements.refreshBtn.textContent = originalText;
       this.elements.refreshBtn.disabled = false;
-      this.elements.refreshBtn.removeAttribute('aria-busy');
       this.refreshing = false;
     }
+  }
+
+  /**
+   * Send message to background script
+   */
+  async sendMessage(message, timeout = 5000) {
+    return new Promise((resolve) => {
+      const timeoutId = setTimeout(() => resolve(null), timeout);
+
+      chrome.runtime.sendMessage(message, (response) => {
+        clearTimeout(timeoutId);
+        if (chrome.runtime.lastError) {
+          console.warn('Message error:', chrome.runtime.lastError);
+          resolve(null);
+        } else {
+          resolve(response);
+        }
+      });
+    });
   }
 
   /**
@@ -688,52 +566,8 @@ class VStatePopupController {
     }, 3000);
   }
 
-  getIconColor(status) {
-    switch (status) {
-      case 'none':
-      case 'operational':
-        return 'green';
-      case 'minor':
-        return 'yellow';
-      case 'major':
-      case 'critical':
-        return 'red';
-      default:
-        return 'gray';
-    }
-  }
-
-  formatTime(date) {
-    const now = new Date();
-    const diff = now - date;
-    const minutes = Math.floor(diff / 60000);
-    const hours = Math.floor(diff / 3600000);
-    const days = Math.floor(diff / 86400000);
-
-    if (days > 0) {
-      return `${days}d ago`;
-    } else if (hours > 0) {
-      return `${hours}h ago`;
-    } else if (minutes > 0) {
-      return `${minutes}m ago`;
-    } else {
-      return 'Just now';
-    }
-  }
-
-  truncateText(text, maxLength) {
-    if (text.length <= maxLength) return text;
-    return text.substr(0, maxLength) + '...';
-  }
-
-  escapeHtml(text) {
-    const div = document.createElement('div');
-    div.textContent = text;
-    return div.innerHTML;
-  }
-
   /**
-   * Show no data state with helpful message
+   * Show no data state
    */
   showNoData() {
     if (this.elements.lastUpdated) {
@@ -742,7 +576,7 @@ class VStatePopupController {
   }
 
   /**
-   * Show error state with retry option
+   * Show error state
    */
   showError(message = 'Failed to load data') {
     if (this.elements.lastUpdated) {
@@ -752,13 +586,47 @@ class VStatePopupController {
   }
 
   /**
-   * Show the About modal with manifest information
+   * Format time as relative string
+   */
+  formatTime(date) {
+    const now = new Date();
+    const diff = now - date;
+    const minutes = Math.floor(diff / 60000);
+    const hours = Math.floor(diff / 3600000);
+    const days = Math.floor(diff / 86400000);
+
+    if (days > 0) return `${days}d ago`;
+    if (hours > 0) return `${hours}h ago`;
+    if (minutes > 0) return `${minutes}m ago`;
+    return 'Just now';
+  }
+
+  /**
+   * Truncate text to max length
+   */
+  truncateText(text, maxLength) {
+    if (!text) return '';
+    if (text.length <= maxLength) return text;
+    return text.substr(0, maxLength) + '...';
+  }
+
+  /**
+   * Escape HTML entities
+   */
+  escapeHtml(text) {
+    if (!text) return '';
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+  }
+
+  /**
+   * Show the About modal
    */
   async showAboutModal() {
     try {
       const manifest = chrome.runtime.getManifest();
 
-      // Update modal content with manifest data (non-cached elements - only used in modal)
       const titleEl = document.getElementById('about-title');
       const versionEl = document.getElementById('about-version');
       const descriptionEl = document.getElementById('about-description');
@@ -768,27 +636,19 @@ class VStatePopupController {
       if (versionEl) versionEl.textContent = `Version ${manifest.version}`;
       if (descriptionEl) descriptionEl.textContent = manifest.description;
 
-      // Extract author name and URL from the author field
       if (authorEl && manifest.author) {
         const authorText = manifest.author;
         const urlMatch = authorText.match(/https?:\/\/[^\s]+/);
         const nameMatch = authorText.match(/^([^-]+)/);
 
         if (nameMatch && urlMatch) {
-          const authorName = nameMatch[1].trim();
-          const authorUrl = urlMatch[0];
-          authorEl.textContent = authorName;
-          authorEl.href = authorUrl;
-        } else {
-          authorEl.textContent = authorText;
-          authorEl.href = '#';
+          authorEl.textContent = nameMatch[1].trim();
+          authorEl.href = urlMatch[0];
         }
       }
 
-      // Show the modal (use cached element)
       if (this.elements.aboutModal) {
         this.elements.aboutModal.classList.add('show');
-        // Focus the close button for accessibility
         if (this.elements.aboutClose) {
           this.elements.aboutClose.focus();
         }
@@ -804,180 +664,11 @@ class VStatePopupController {
   hideAboutModal() {
     if (this.elements.aboutModal) {
       this.elements.aboutModal.classList.remove('show');
-      // Return focus to the about button
       if (this.elements.aboutBtn) {
         this.elements.aboutBtn.focus();
       }
     }
   }
-
-  
-  /**
-   * Start status demo - cycles through different status states
-   */
-  startStatusDemo() {
-    if (!this.elements.demoBtn) return;
-
-    // Demo states with issue counts for badge simulation
-    const demoStates = [
-      { status: 'operational', description: 'All systems operational - AI tools vibing!', issueCount: 0 },
-      { status: 'minor', description: 'Minor issues - 2 services affected', issueCount: 2 },
-      { status: 'major', description: 'Major issues - 4 services disrupted', issueCount: 4 },
-      { status: 'critical', description: 'Critical - 6 services down!', issueCount: 6 },
-      { status: 'unknown', description: 'Status unknown - unable to connect', issueCount: 0 }
-    ];
-
-    let currentStateIndex = 0;
-    const totalDuration = 15000; // 15 seconds
-    const stateInterval = totalDuration / demoStates.length; // 3 seconds per state
-
-    // Update button (use cached element)
-    this.elements.demoBtn.disabled = true;
-    this.elements.demoBtn.innerHTML = '🔄 Running Demo...';
-
-    // Store original status for reset
-    this.originalStatus = this.getCurrentStatus();
-
-    const demoTimer = setInterval(() => {
-      // Move to next state
-      if (currentStateIndex < demoStates.length) {
-        const state = demoStates[currentStateIndex];
-        this.applyDemoStatus(state.status, state.issueCount);
-        currentStateIndex++;
-      } else {
-        // End demo
-        clearInterval(demoTimer);
-        this.endDemo();
-      }
-    }, stateInterval);
-
-    // Store timer for cleanup
-    this.demoTimer = demoTimer;
-
-    // Start with first state immediately
-    this.applyDemoStatus(demoStates[0].status, demoStates[0].issueCount);
-  }
-  
-  /**
-   * Reset demo to original status
-   */
-  resetDemo() {
-    if (this.demoTimer) {
-      clearInterval(this.demoTimer);
-      this.demoTimer = null;
-    }
-    
-    this.endDemo();
-    
-    // Restore original status
-    if (this.originalStatus) {
-      this.restoreOriginalStatus();
-    }
-  }
-  
-  /**
-   * End the demo and reset UI
-   */
-  endDemo() {
-    if (this.elements.demoBtn) {
-      this.elements.demoBtn.disabled = false;
-      this.elements.demoBtn.innerHTML = '🎬 Demo';
-    }
-
-    // Restore status after a moment
-    setTimeout(() => {
-      this.restoreOriginalStatus();
-    }, 2000);
-  }
-  
-  /**
-   * Apply demo status to UI elements
-   */
-  applyDemoStatus(status, issueCount = 0) {
-    // Update main status indicator (use cached element)
-    if (this.elements.statusIndicator) {
-      this.elements.statusIndicator.className = `status-indicator status-${status}`;
-    }
-
-    // Update all service icons to show the demo status
-    document.querySelectorAll('.service-icon').forEach(icon => {
-      icon.className = `service-icon ${status}`;
-      icon.textContent = this.getServiceIcon(status);
-    });
-
-    // Update actual extension badge and icon
-    this.updateExtensionBadge(status, issueCount);
-  }
-  
-  /**
-   * Update actual extension badge during demo
-   */
-  async updateExtensionBadge(status, issueCount = 0) {
-    try {
-      // Set badge text based on status and issue count
-      let badgeText = '';
-      if (status === 'critical' && issueCount > 0) {
-        badgeText = issueCount.toString();
-      } else if (status === 'major' && issueCount > 0) {
-        badgeText = issueCount.toString();
-      } else if (status === 'minor' && issueCount > 0) {
-        badgeText = issueCount.toString();
-      } else if (status === 'critical') {
-        badgeText = '!';
-      }
-      
-      await chrome.action.setBadgeText({ text: badgeText });
-      
-      // Set badge color
-      const badgeColors = {
-        'operational': '#10b981',
-        'minor': '#f59e0b',
-        'major': '#f97316',
-        'critical': '#ef4444',
-        'unknown': '#64748b'
-      };
-      
-      if (badgeText) {
-        await chrome.action.setBadgeBackgroundColor({ color: badgeColors[status] || '#64748b' });
-      }
-      
-      // Update title to show current demo status
-      await chrome.action.setTitle({
-        title: `Vibe Stats - DEMO: ${status.toUpperCase()}${issueCount > 0 ? ` (${issueCount} issues)` : ''}`
-      });
-      
-    } catch (error) {
-      console.log('Demo: Could not update extension badge (normal in popup context)');
-    }
-  }
-  
-  /**
-   * Get current status for restoration
-   */
-  getCurrentStatus() {
-    if (!this.elements.statusIndicator) return null;
-
-    const classes = this.elements.statusIndicator.className.split(' ');
-    const statusClass = classes.find(cls => cls.startsWith('status-'));
-    return statusClass ? statusClass.replace('status-', '') : 'unknown';
-  }
-  
-  /**
-   * Restore original status after demo
-   */
-  async restoreOriginalStatus() {
-    // Reload actual status
-    await this.loadStatus();
-    
-    // Clear demo badge and restore normal title
-    try {
-      await chrome.action.setBadgeText({ text: '' });
-      await chrome.action.setTitle({ title: 'Vibe Stats - AI Dev Tools Monitor 🤖⚡' });
-    } catch (error) {
-      console.log('Could not reset extension badge (normal in popup context)');
-    }
-  }
-
 
   /**
    * Cleanup when popup closes
@@ -992,11 +683,8 @@ class VStatePopupController {
 // Initialize when DOM is ready
 document.addEventListener('DOMContentLoaded', () => {
   const controller = new VStatePopupController();
-  
-  // Cleanup when popup closes
+
   window.addEventListener('beforeunload', () => {
     controller.cleanup();
   });
 });
-
-// Removed old openTestFile function - replaced with status demo functionality

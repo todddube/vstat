@@ -4,1055 +4,925 @@
     <meta charset="utf-8">
     <style>
         :root {
-            /* Color Palette - Light Modern Theme */
-            --bg-primary: #f0f4f8;
+            /* Professional Light Theme */
+            --bg-primary: #f8fafc;
             --bg-secondary: #ffffff;
-            --bg-card: rgba(255, 255, 255, 0.95);
-            --bg-glass: rgba(255, 255, 255, 0.8);
+            --bg-card: #ffffff;
+            --bg-card-hover: #f1f5f9;
+            --border-color: #e2e8f0;
+            --border-light: #f1f5f9;
 
-            /* Accent Colors */
-            --accent-cyan: #0891b2;
-            --accent-purple: #7c3aed;
-            --accent-pink: #db2777;
-            --accent-blue: #2563eb;
-            --accent-green: #059669;
-            --accent-yellow: #ca8a04;
-            --accent-orange: #ea580c;
-            --accent-red: #dc2626;
+            /* Brand Colors */
+            --claude-orange: #d97706;
+            --github-purple: #7c3aed;
+            --openai-green: #059669;
+            --gemini-blue: #2563eb;
 
             /* Status Colors */
             --status-operational: #10b981;
+            --status-operational-bg: #ecfdf5;
+            --status-operational-border: #a7f3d0;
             --status-minor: #f59e0b;
+            --status-minor-bg: #fffbeb;
+            --status-minor-border: #fde68a;
             --status-major: #f97316;
+            --status-major-bg: #fff7ed;
+            --status-major-border: #fed7aa;
             --status-critical: #ef4444;
+            --status-critical-bg: #fef2f2;
+            --status-critical-border: #fecaca;
             --status-unknown: #6b7280;
+            --status-unknown-bg: #f9fafb;
+            --status-unknown-border: #e5e7eb;
 
             /* Text Colors */
-            --text-primary: #1e293b;
-            --text-secondary: #475569;
-            --text-muted: #94a3b8;
+            --text-primary: #111827;
+            --text-secondary: #4b5563;
+            --text-muted: #9ca3af;
+            --text-light: #6b7280;
 
-            /* Sizing */
-            --base-font-size: 12px;
-            --header-font-size: 14px;
-            --section-font-size: 11px;
-            --service-font-size: 11px;
-            --button-font-size: 10px;
-            --small-font-size: 10px;
-            --tiny-font-size: 9px;
+            /* Typography */
+            --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            --font-size-xs: 11px;
+            --font-size-sm: 12px;
+            --font-size-base: 13px;
+            --font-size-md: 14px;
+            --font-size-lg: 16px;
+            --font-size-xl: 18px;
+            --font-size-2xl: 22px;
 
-            --base-padding: 12px;
-            --small-padding: 8px;
-            --tiny-padding: 4px;
+            /* Spacing */
+            --space-1: 4px;
+            --space-2: 8px;
+            --space-3: 12px;
+            --space-4: 16px;
+            --space-5: 20px;
+            --space-6: 24px;
 
-            --border-radius: 12px;
-            --small-radius: 8px;
-            --tiny-radius: 4px;
+            /* Border Radius */
+            --radius-sm: 6px;
+            --radius-md: 8px;
+            --radius-lg: 12px;
+
+            /* Shadows */
+            --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
         }
 
         * {
             box-sizing: border-box;
+            margin: 0;
+            padding: 0;
         }
 
         body {
-            width: 380px;
-            min-height: 420px;
-            margin: 0;
-            padding: 0;
-            font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
-            font-size: var(--base-font-size);
-            line-height: 1.4;
-            overflow: hidden;
-            background: var(--bg-primary);
+            width: 400px;
+            min-height: 480px;
+            font-family: var(--font-sans);
+            font-size: var(--font-size-base);
+            line-height: 1.5;
             color: var(--text-primary);
+            background: var(--bg-primary);
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        .container {
+            padding: var(--space-4);
+        }
+
+        /* Header */
+        .header {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            padding: var(--space-5);
+            margin-bottom: var(--space-4);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .header-top {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: var(--space-4);
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: var(--space-3);
+        }
+
+        .brand-icon {
+            width: 36px;
+            height: 36px;
+        }
+
+        .brand-text {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .brand-name {
+            font-size: var(--font-size-lg);
+            font-weight: 700;
+            color: var(--text-primary);
+            letter-spacing: -0.025em;
+        }
+
+        .brand-version {
+            font-size: var(--font-size-xs);
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: var(--space-2);
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: var(--space-2) var(--space-3);
+            font-size: var(--font-size-sm);
+            font-weight: 500;
+            color: var(--text-secondary);
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+
+        .btn:hover {
+            background: var(--bg-card-hover);
+            border-color: #cbd5e1;
+            color: var(--text-primary);
+        }
+
+        .btn:active {
+            transform: scale(0.98);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* Status Banner */
+        .status-banner {
+            display: flex;
+            align-items: center;
+            gap: var(--space-3);
+            padding: var(--space-3) var(--space-4);
+            background: var(--status-operational-bg);
+            border: 1px solid var(--status-operational-border);
+            border-radius: var(--radius-md);
+            margin-bottom: var(--space-4);
+        }
+
+        .status-banner.minor {
+            background: var(--status-minor-bg);
+            border-color: var(--status-minor-border);
+        }
+
+        .status-banner.major {
+            background: var(--status-major-bg);
+            border-color: var(--status-major-border);
+        }
+
+        .status-banner.critical {
+            background: var(--status-critical-bg);
+            border-color: var(--status-critical-border);
+        }
+
+        .status-banner.unknown {
+            background: var(--status-unknown-bg);
+            border-color: var(--status-unknown-border);
+        }
+
+        .status-indicator {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: var(--status-operational);
+            flex-shrink: 0;
+        }
+
+        .status-indicator.minor { background: var(--status-minor); }
+        .status-indicator.major { background: var(--status-major); }
+        .status-indicator.critical { background: var(--status-critical); animation: pulse 1.5s ease-in-out infinite; }
+        .status-indicator.unknown { background: var(--status-unknown); }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.6; transform: scale(1.1); }
+        }
+
+        .status-message {
+            font-size: var(--font-size-md);
+            font-weight: 600;
+            color: var(--text-primary);
+            flex: 1;
+        }
+
+        .last-updated {
+            font-size: var(--font-size-xs);
+            color: var(--text-muted);
+            text-align: right;
+        }
+
+        /* Services Grid */
+        .services-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: var(--space-3);
+        }
+
+        /* Service Card */
+        .service-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            padding: var(--space-4);
+            cursor: pointer;
+            transition: all 0.2s ease;
             position: relative;
         }
 
-        /* Animated Background */
-        body::before {
+        .service-card:hover {
+            border-color: #cbd5e1;
+            box-shadow: var(--shadow-md);
+            transform: translateY(-2px);
+        }
+
+        .service-card::before {
             content: '';
             position: absolute;
             top: 0;
             left: 0;
             right: 0;
-            bottom: 0;
-            background:
-                radial-gradient(ellipse at 20% 20%, rgba(8, 145, 178, 0.08) 0%, transparent 50%),
-                radial-gradient(ellipse at 80% 80%, rgba(124, 58, 237, 0.08) 0%, transparent 50%),
-                radial-gradient(ellipse at 50% 50%, rgba(37, 99, 235, 0.05) 0%, transparent 70%);
-            animation: backgroundPulse 8s ease-in-out infinite;
-            pointer-events: none;
-            z-index: 0;
+            height: 3px;
+            border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+            background: var(--card-accent);
         }
 
-        @keyframes backgroundPulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.7; }
+        .service-card.claude { --card-accent: var(--claude-orange); }
+        .service-card.github { --card-accent: var(--github-purple); }
+        .service-card.openai { --card-accent: var(--openai-green); }
+        .service-card.gemini { --card-accent: var(--gemini-blue); }
+
+        .card-header {
+            display: flex;
+            align-items: flex-start;
+            gap: var(--space-3);
+            margin-bottom: var(--space-3);
         }
 
-        .container {
-            position: relative;
-            z-index: 1;
-            padding: var(--base-padding);
-            animation: fadeIn 0.4s ease-out;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(-10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        /* Header */
-        .header {
-            background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
-            border: 1px solid #e2e8f0;
-            border-radius: var(--border-radius);
-            padding: 16px;
-            margin-bottom: 12px;
-            position: relative;
-            overflow: hidden;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-        }
-
-        .header::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 200%;
-            height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(8, 145, 178, 0.08), transparent);
-            animation: shimmer 3s ease-in-out infinite;
-        }
-
-        @keyframes shimmer {
-            0% { transform: translateX(0); }
-            100% { transform: translateX(50%); }
-        }
-
-        .header-title-row {
+        .card-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: var(--radius-md);
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 10px;
-            margin-bottom: 12px;
-            position: relative;
-            z-index: 1;
-        }
-
-        .vibe-stats-icon {
-            width: 36px;
-            height: 36px;
-            filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
-            animation: iconFloat 3s ease-in-out infinite;
-            transition: all 0.3s ease;
-        }
-
-        .vibe-stats-icon:hover {
-            transform: scale(1.15) rotate(5deg);
-            filter: drop-shadow(0 4px 8px rgba(8, 145, 178, 0.3));
-        }
-
-        @keyframes iconFloat {
-            0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-2px); }
-        }
-
-        .status-title {
-            font-size: 18px;
+            font-size: var(--font-size-lg);
             font-weight: 700;
-            margin: 0;
-            background: linear-gradient(135deg, var(--accent-cyan) 0%, var(--accent-purple) 50%, var(--accent-pink) 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            text-shadow: none;
-            display: flex;
-            align-items: center;
-            gap: 8px;
+            flex-shrink: 0;
         }
 
-        .version-badge {
-            font-size: 9px;
+        .claude .card-icon {
+            background: #fef3c7;
+            color: var(--claude-orange);
+        }
+
+        .github .card-icon {
+            background: #ede9fe;
+            color: var(--github-purple);
+        }
+
+        .openai .card-icon {
+            background: #d1fae5;
+            color: var(--openai-green);
+        }
+
+        .gemini .card-icon {
+            background: #dbeafe;
+            color: var(--gemini-blue);
+        }
+
+        .card-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .card-title {
+            font-size: var(--font-size-md);
             font-weight: 600;
-            padding: 2px 6px;
-            background: linear-gradient(135deg, rgba(8, 145, 178, 0.1) 0%, rgba(124, 58, 237, 0.1) 100%);
-            border: 1px solid rgba(8, 145, 178, 0.3);
-            border-radius: 10px;
-            color: var(--accent-cyan);
-            -webkit-text-fill-color: var(--accent-cyan);
-            letter-spacing: 0.5px;
-            text-transform: uppercase;
-            transition: all 0.3s ease;
+            color: var(--text-primary);
+            margin-bottom: 2px;
         }
 
-        .version-badge:hover {
-            background: linear-gradient(135deg, rgba(8, 145, 178, 0.2) 0%, rgba(124, 58, 237, 0.2) 100%);
-            box-shadow: 0 2px 8px rgba(8, 145, 178, 0.2);
-            transform: scale(1.05);
+        .card-subtitle {
+            font-size: var(--font-size-xs);
+            color: var(--text-muted);
         }
 
-        .status-indicator {
-            display: inline-block;
-            width: 12px;
-            height: 12px;
+        /* Status Badge */
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 10px;
+            border-radius: var(--radius-sm);
+            font-size: var(--font-size-sm);
+            font-weight: 600;
+            margin-bottom: var(--space-3);
+            background: var(--status-operational-bg);
+            color: var(--status-operational);
+            border: 1px solid var(--status-operational-border);
+        }
+
+        .status-badge.minor {
+            background: var(--status-minor-bg);
+            color: #b45309;
+            border-color: var(--status-minor-border);
+        }
+
+        .status-badge.major {
+            background: var(--status-major-bg);
+            color: #c2410c;
+            border-color: var(--status-major-border);
+        }
+
+        .status-badge.critical {
+            background: var(--status-critical-bg);
+            color: #b91c1c;
+            border-color: var(--status-critical-border);
+        }
+
+        .status-badge.unknown {
+            background: var(--status-unknown-bg);
+            color: var(--status-unknown);
+            border-color: var(--status-unknown-border);
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
             border-radius: 50%;
-            animation: statusPulse 2s ease-in-out infinite;
-            border: 2px solid rgba(255, 255, 255, 0.8);
+            background: currentColor;
         }
 
-        @keyframes statusPulse {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.15); }
+        /* Components List */
+        .components-list {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            margin-bottom: var(--space-3);
         }
 
-        .status-operational {
-            background: var(--status-operational);
-            box-shadow: 0 0 6px var(--status-operational), 0 0 12px var(--status-operational), inset 0 0 4px rgba(255, 255, 255, 0.4);
-        }
-        .status-minor {
-            background: var(--status-minor);
-            box-shadow: 0 0 6px var(--status-minor), 0 0 12px var(--status-minor), inset 0 0 4px rgba(255, 255, 255, 0.4);
-        }
-        .status-major {
-            background: var(--status-major);
-            box-shadow: 0 0 6px var(--status-major), 0 0 12px var(--status-major), inset 0 0 4px rgba(255, 255, 255, 0.4);
-        }
-        .status-critical {
-            background: var(--status-critical);
-            box-shadow: 0 0 6px var(--status-critical), 0 0 12px var(--status-critical), inset 0 0 4px rgba(255, 255, 255, 0.4);
-            animation: criticalPulse 0.5s ease-in-out infinite;
-        }
-        .status-unknown {
-            background: var(--status-unknown);
-            box-shadow: 0 0 6px var(--status-unknown), 0 0 12px var(--status-unknown), inset 0 0 4px rgba(255, 255, 255, 0.4);
-        }
-        .status-none {
-            background: var(--status-operational);
-            box-shadow: 0 0 6px var(--status-operational), 0 0 12px var(--status-operational), inset 0 0 4px rgba(255, 255, 255, 0.4);
-        }
-
-        @keyframes criticalPulse {
-            0%, 100% { opacity: 1; transform: scale(1); }
-            50% { opacity: 0.7; transform: scale(1.2); }
-        }
-
-        .header-controls-row {
+        .component-row {
             display: flex;
             align-items: center;
             justify-content: space-between;
-            position: relative;
-            z-index: 1;
+            padding: 6px 8px;
+            background: var(--bg-primary);
+            border-radius: var(--radius-sm);
+            font-size: var(--font-size-sm);
         }
 
-        .last-updated {
+        .component-name {
             color: var(--text-secondary);
-            font-size: var(--small-font-size);
+            font-weight: 500;
         }
 
-        .header-buttons {
+        .component-status {
             display: flex;
-            gap: 8px;
-        }
-
-        .header-btn {
-            background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
-            color: var(--accent-cyan);
-            border: 1px solid #e2e8f0;
-            border-radius: var(--small-radius);
-            padding: 6px 12px;
-            font-size: var(--button-font-size);
+            align-items: center;
+            gap: 6px;
+            font-size: var(--font-size-xs);
             font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.025em;
+        }
+
+        .component-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--status-operational);
+        }
+
+        .component-dot.minor { background: var(--status-minor); }
+        .component-dot.major { background: var(--status-major); }
+        .component-dot.critical { background: var(--status-critical); }
+        .component-dot.unknown { background: var(--status-unknown); }
+
+        .component-text {
+            color: var(--text-muted);
+        }
+
+        .component-text.ok { color: var(--status-operational); }
+
+        /* Toggle Button */
+        .toggle-btn {
+            width: 100%;
             display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            padding: 6px;
+            background: transparent;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-sm);
+            font-size: var(--font-size-xs);
+            font-weight: 500;
+            color: var(--text-muted);
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+
+        .toggle-btn:hover {
+            background: var(--bg-primary);
+            color: var(--text-secondary);
+            border-color: #cbd5e1;
+        }
+
+        .toggle-btn .arrow {
+            font-size: 10px;
+            transition: transform 0.2s ease;
+        }
+
+        .toggle-btn.expanded .arrow {
+            transform: rotate(180deg);
+        }
+
+        /* Incidents */
+        .incidents-panel {
+            display: none;
+            margin-top: var(--space-3);
+            padding-top: var(--space-3);
+            border-top: 1px solid var(--border-light);
+        }
+
+        .incidents-panel.show {
+            display: block;
+        }
+
+        .incident-item {
+            padding: var(--space-3);
+            background: var(--bg-primary);
+            border-radius: var(--radius-sm);
+            margin-bottom: var(--space-2);
+            border-left: 3px solid var(--status-minor);
+        }
+
+        .incident-item.impact-major {
+            border-left-color: var(--status-major);
+        }
+
+        .incident-item.impact-critical {
+            border-left-color: var(--status-critical);
+        }
+
+        .incident-title {
+            font-size: var(--font-size-sm);
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 4px;
+            line-height: 1.4;
+        }
+
+        .incident-meta {
+            display: flex;
+            align-items: center;
+            gap: var(--space-2);
+            margin-bottom: 6px;
+        }
+
+        .incident-status-tag {
+            display: inline-block;
+            padding: 2px 6px;
+            font-size: 10px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.025em;
+            border-radius: 3px;
+            background: var(--status-minor-bg);
+            color: #b45309;
+        }
+
+        .incident-status-tag.resolved {
+            background: var(--status-operational-bg);
+            color: var(--status-operational);
+        }
+
+        .incident-time {
+            font-size: var(--font-size-xs);
+            color: var(--text-muted);
+        }
+
+        .incident-desc {
+            font-size: var(--font-size-xs);
+            color: var(--text-secondary);
+            line-height: 1.5;
+        }
+
+        .no-incidents {
+            text-align: center;
+            padding: var(--space-4);
+            color: var(--text-muted);
+            font-size: var(--font-size-sm);
+        }
+
+        /* About Modal */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.4);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+        }
+
+        .modal-overlay.show {
+            display: flex;
+        }
+
+        .modal-content {
+            background: var(--bg-secondary);
+            border-radius: var(--radius-lg);
+            padding: var(--space-6);
+            max-width: 320px;
+            width: 90%;
+            position: relative;
+            box-shadow: var(--shadow-lg);
+        }
+
+        .modal-close {
+            position: absolute;
+            top: var(--space-3);
+            right: var(--space-3);
+            width: 28px;
+            height: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-sm);
+            font-size: 18px;
+            color: var(--text-muted);
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+
+        .modal-close:hover {
+            background: var(--bg-card-hover);
+            color: var(--text-primary);
+        }
+
+        .modal-header {
+            text-align: center;
+            margin-bottom: var(--space-5);
+        }
+
+        .modal-icon {
+            width: 48px;
+            height: 48px;
+            margin-bottom: var(--space-3);
+        }
+
+        .modal-title {
+            font-size: var(--font-size-xl);
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 4px;
+        }
+
+        .modal-version {
+            font-size: var(--font-size-sm);
+            color: var(--text-muted);
+        }
+
+        .modal-services {
+            display: flex;
+            justify-content: center;
+            gap: var(--space-4);
+            padding: var(--space-4);
+            background: var(--bg-primary);
+            border-radius: var(--radius-md);
+            margin-bottom: var(--space-4);
+        }
+
+        .modal-service {
+            display: flex;
+            flex-direction: column;
             align-items: center;
             gap: 4px;
         }
 
-        .header-btn:hover:not(:disabled) {
-            background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
-            border-color: var(--accent-cyan);
-            box-shadow: 0 4px 12px rgba(8, 145, 178, 0.15);
-            transform: translateY(-2px);
-        }
-
-        .header-btn:active:not(:disabled) {
-            transform: translateY(0);
-        }
-
-        .header-btn:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
-
-        .header-btn[aria-busy="true"] {
-            position: relative;
-        }
-
-        .header-btn[aria-busy="true"]::after {
-            content: "";
-            position: absolute;
-            right: 8px;
-            top: 50%;
-            transform: translateY(-50%);
-            width: 12px;
-            height: 12px;
-            border: 2px solid var(--accent-cyan);
-            border-top-color: transparent;
-            border-radius: 50%;
-            animation: spin 0.8s linear infinite;
-        }
-
-        @keyframes spin {
-            to { transform: translateY(-50%) rotate(360deg); }
-        }
-
-        /* Service Sections */
-        .service-section {
-            background: var(--bg-card);
-            border: 1px solid #e2e8f0;
-            border-radius: var(--border-radius);
-            margin-bottom: 10px;
-            overflow: hidden;
-            transition: all 0.3s ease;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
-        }
-
-        .service-section:hover {
-            border-color: #cbd5e1;
-            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
-        }
-
-        .claude-section {
-            animation: slideUp 0.5s ease-out;
-        }
-
-        .claude-section:hover {
-            border-color: rgba(234, 88, 12, 0.4);
-            box-shadow: 0 4px 16px rgba(234, 88, 12, 0.1);
-        }
-
-        .github-section {
-            animation: slideUp 0.5s ease-out 0.1s both;
-        }
-
-        .github-section:hover {
-            border-color: rgba(124, 58, 237, 0.4);
-            box-shadow: 0 4px 16px rgba(124, 58, 237, 0.1);
-        }
-
-        @keyframes slideUp {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        .section-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 12px 14px;
-            background: linear-gradient(135deg, #fafafa 0%, #f5f5f5 100%);
-            border-bottom: 1px solid #e5e7eb;
-        }
-
-        .section-title {
-            font-size: var(--header-font-size);
-            font-weight: 700;
-            margin: 0;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .claude-section .section-title {
-            color: var(--accent-orange);
-        }
-
-        .github-section .section-title {
-            color: var(--accent-purple);
-        }
-
-        .status-link {
-            color: inherit;
-            text-decoration: none;
-            transition: all 0.3s ease;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .status-link:hover {
-            filter: brightness(0.85);
-        }
-
-        .status-link::after {
-            content: "↗";
-            font-size: 0.8em;
-            opacity: 0.6;
-            transition: all 0.3s ease;
-        }
-
-        .status-link:hover::after {
-            opacity: 1;
-            transform: translate(2px, -2px);
-        }
-
-        .section-incidents-toggle {
-            background: #f8fafc;
-            color: var(--text-secondary);
-            border: 1px solid #e2e8f0;
-            border-radius: var(--tiny-radius);
-            padding: 4px 10px;
-            font-size: var(--tiny-font-size);
-            font-weight: 500;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            transition: all 0.3s ease;
-        }
-
-        .section-incidents-toggle:hover {
-            background: #f1f5f9;
-            color: var(--text-primary);
-            border-color: #cbd5e1;
-        }
-
-        .section-incidents-toggle .expand-icon {
-            font-size: 8px;
-            transition: transform 0.3s ease;
-        }
-
-        .section-incidents-toggle.expanded .expand-icon {
-            transform: rotate(90deg);
-        }
-
-        /* Service Grid */
-        .service-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 8px;
-            padding: 12px;
-            background: #ffffff;
-        }
-
-        .service-item {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            padding: 10px 12px;
-            background: #f8fafc;
-            border: 1px solid #e2e8f0;
-            border-radius: var(--small-radius);
-            cursor: pointer;
-            transition: all 0.3s ease;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .service-item::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.8), transparent);
-            transition: left 0.5s ease;
-        }
-
-        .service-item:hover::before {
-            left: 100%;
-        }
-
-        .service-item:hover {
-            background: #ffffff;
-            border-color: #cbd5e1;
-            transform: translateY(-2px) scale(1.02);
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-        }
-
-        .service-icon {
+        .modal-service-icon {
             width: 28px;
             height: 28px;
-            border-radius: var(--tiny-radius);
+            border-radius: var(--radius-sm);
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 12px;
-            font-weight: bold;
-            flex-shrink: 0;
-            transition: all 0.3s ease;
-            position: relative;
-        }
-
-        .service-icon::after {
-            content: '';
-            position: absolute;
-            inset: -2px;
-            border-radius: inherit;
-            opacity: 0;
-            transition: opacity 0.3s ease;
-        }
-
-        .service-item:hover .service-icon::after {
-            opacity: 1;
-            animation: iconRing 1s ease-in-out infinite;
-        }
-
-        @keyframes iconRing {
-            0%, 100% { transform: scale(1); opacity: 0.5; }
-            50% { transform: scale(1.1); opacity: 0; }
-        }
-
-        .service-icon.operational {
-            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-            color: #ffffff;
-            box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
-        }
-        .service-icon.operational::after {
-            background: rgba(16, 185, 129, 0.2);
-        }
-
-        .service-icon.minor {
-            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
-            color: #ffffff;
-            box-shadow: 0 2px 8px rgba(245, 158, 11, 0.3);
-        }
-        .service-icon.minor::after {
-            background: rgba(245, 158, 11, 0.2);
-        }
-
-        .service-icon.major {
-            background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
-            color: #ffffff;
-            box-shadow: 0 2px 8px rgba(249, 115, 22, 0.3);
-        }
-        .service-icon.major::after {
-            background: rgba(249, 115, 22, 0.2);
-        }
-
-        .service-icon.critical {
-            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
-            color: #ffffff;
-            box-shadow: 0 2px 8px rgba(239, 68, 68, 0.4);
-            animation: criticalPulse 1s ease-in-out infinite;
-        }
-        .service-icon.critical::after {
-            background: rgba(239, 68, 68, 0.2);
-        }
-
-        @keyframes criticalPulse {
-            0%, 100% { box-shadow: 0 2px 8px rgba(239, 68, 68, 0.4); }
-            50% { box-shadow: 0 4px 16px rgba(239, 68, 68, 0.6); }
-        }
-
-        .service-icon.unknown {
-            background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%);
-            color: #ffffff;
-            box-shadow: 0 2px 8px rgba(107, 114, 128, 0.2);
-        }
-        .service-icon.unknown::after {
-            background: rgba(107, 114, 128, 0.2);
-        }
-
-        .service-name {
-            font-weight: 600;
-            color: var(--text-primary);
-            font-size: var(--service-font-size);
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            flex: 1;
-        }
-
-        /* Incidents Container */
-        .section-incidents-container {
-            background: #f8fafc;
-            border-top: 1px solid #e5e7eb;
-        }
-
-        .section-incidents-content {
-            padding: 12px;
-            max-height: 200px;
-            overflow-y: auto;
-        }
-
-        .section-incidents-content::-webkit-scrollbar {
-            width: 6px;
-        }
-
-        .section-incidents-content::-webkit-scrollbar-track {
-            background: #f1f5f9;
-            border-radius: 3px;
-        }
-
-        .section-incidents-content::-webkit-scrollbar-thumb {
-            background: #cbd5e1;
-            border-radius: 3px;
-        }
-
-        .section-incidents-content::-webkit-scrollbar-thumb:hover {
-            background: #94a3b8;
-        }
-
-        .incident {
-            background: #ffffff;
-            border-radius: var(--small-radius);
-            padding: 10px 12px;
-            margin-bottom: 8px;
-            border-left: 3px solid var(--status-unknown);
-            transition: all 0.3s ease;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-        }
-
-        .incident:hover {
-            background: #ffffff;
-            transform: translateX(4px);
-            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
-        }
-
-        .incident:last-child {
-            margin-bottom: 0;
-        }
-
-        .incident.impact-minor {
-            border-left-color: var(--status-minor);
-            background: #fffbeb;
-        }
-
-        .incident.impact-major {
-            border-left-color: var(--status-major);
-            background: #fff7ed;
-        }
-
-        .incident.impact-critical {
-            border-left-color: var(--status-critical);
-            background: #fef2f2;
-        }
-
-        .incident-name {
-            font-weight: 600;
-            margin-bottom: 6px;
-            color: var(--text-primary);
-            font-size: var(--small-font-size);
-        }
-
-        .incident-status {
-            display: inline-block;
-            padding: 2px 8px;
-            border-radius: var(--tiny-radius);
-            font-size: var(--tiny-font-size);
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            margin-bottom: 6px;
-        }
-
-        .incident-status.investigating {
-            background: #fef3c7;
-            color: #b45309;
-        }
-
-        .incident-status.identified {
-            background: #ffedd5;
-            color: #c2410c;
-        }
-
-        .incident-status.monitoring {
-            background: #d1fae5;
-            color: #047857;
-        }
-
-        .incident-update {
-            margin-top: 6px;
-            font-size: var(--tiny-font-size);
-            color: var(--text-secondary);
-            line-height: 1.4;
-        }
-
-        .incident-date {
-            font-size: 8px;
-            color: var(--text-muted);
-            margin-top: 6px;
-        }
-
-        .no-incidents {
-            color: var(--text-secondary);
-            font-style: italic;
-            text-align: center;
-            padding: 16px;
-        }
-
-        .loading {
-            text-align: center;
-            color: var(--text-secondary);
-            padding: 16px;
-        }
-
-        /* About Modal */
-        .about-modal {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.4);
-            backdrop-filter: blur(4px);
-            display: none;
-            z-index: 1000;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .about-modal.show {
-            display: flex;
-            animation: modalFadeIn 0.3s ease-out;
-        }
-
-        @keyframes modalFadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
-        }
-
-        .about-content {
-            background: #ffffff;
-            border: 1px solid #e2e8f0;
-            border-radius: var(--border-radius);
-            padding: 24px;
-            max-width: 320px;
-            margin: 16px;
-            position: relative;
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
-            animation: modalSlideIn 0.3s ease-out;
-        }
-
-        @keyframes modalSlideIn {
-            from { transform: scale(0.9) translateY(-20px); opacity: 0; }
-            to { transform: scale(1) translateY(0); opacity: 1; }
-        }
-
-        .about-close {
-            position: absolute;
-            top: 12px;
-            right: 14px;
-            background: none;
-            border: none;
-            font-size: 24px;
-            color: var(--text-muted);
-            cursor: pointer;
-            transition: all 0.3s ease;
-            line-height: 1;
-        }
-
-        .about-close:hover {
-            color: var(--accent-cyan);
-            transform: rotate(90deg);
-        }
-
-        .about-header {
-            text-align: center;
-            margin-bottom: 16px;
-        }
-
-        .about-icon {
-            width: 48px;
-            height: 48px;
-            margin-bottom: 12px;
-            filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
-        }
-
-        .about-title {
-            font-size: 18px;
+            font-size: var(--font-size-sm);
             font-weight: 700;
-            margin: 0 0 4px 0;
-            background: linear-gradient(135deg, var(--accent-cyan) 0%, var(--accent-purple) 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
         }
 
-        .about-version {
+        .modal-service-icon.claude { background: #fef3c7; color: var(--claude-orange); }
+        .modal-service-icon.github { background: #ede9fe; color: var(--github-purple); }
+        .modal-service-icon.openai { background: #d1fae5; color: var(--openai-green); }
+        .modal-service-icon.gemini { background: #dbeafe; color: var(--gemini-blue); }
+
+        .modal-service-name {
+            font-size: 9px;
+            font-weight: 600;
             color: var(--text-muted);
-            font-size: var(--small-font-size);
-            margin: 0;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
         }
 
-        .about-status-colors {
-            display: flex;
-            justify-content: center;
-            gap: 12px;
-            margin: 16px 0;
-        }
-
-        .status-color-item {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            font-size: var(--tiny-font-size);
+        .modal-desc {
+            font-size: var(--font-size-sm);
             color: var(--text-secondary);
-        }
-
-        .status-color {
-            width: 12px;
-            height: 12px;
-            border-radius: 50%;
-            transition: transform 0.3s ease;
-        }
-
-        .status-color:hover {
-            transform: scale(1.3);
-        }
-
-        .status-color.green {
-            background: var(--status-operational);
-            box-shadow: 0 2px 6px rgba(16, 185, 129, 0.4);
-        }
-
-        .status-color.yellow {
-            background: var(--status-minor);
-            box-shadow: 0 2px 6px rgba(245, 158, 11, 0.4);
-        }
-
-        .status-color.red {
-            background: var(--status-critical);
-            box-shadow: 0 2px 6px rgba(239, 68, 68, 0.4);
-        }
-
-        .about-description {
-            color: var(--text-secondary);
-            font-size: var(--small-font-size);
-            line-height: 1.5;
-            margin: 16px 0;
             text-align: center;
+            line-height: 1.6;
+            margin-bottom: var(--space-4);
         }
 
-        .about-author {
+        .modal-footer {
             text-align: center;
-            padding-top: 16px;
-            border-top: 1px solid #e5e7eb;
+            padding-top: var(--space-4);
+            border-top: 1px solid var(--border-color);
         }
 
-        .about-author-label {
+        .modal-author-label {
+            font-size: var(--font-size-xs);
             color: var(--text-muted);
-            font-size: var(--tiny-font-size);
             margin-bottom: 4px;
         }
 
-        .about-author-link {
-            color: var(--accent-cyan);
-            text-decoration: none;
+        .modal-author-link {
+            font-size: var(--font-size-sm);
             font-weight: 600;
-            font-size: var(--small-font-size);
-            transition: all 0.3s ease;
+            color: var(--claude-orange);
+            text-decoration: none;
         }
 
-        .about-author-link:hover {
-            color: var(--accent-purple);
+        .modal-author-link:hover {
+            color: var(--github-purple);
         }
 
-        /* Demo Active State */
-        .demo-active {
-            animation: demoGlow 2s ease-in-out infinite;
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
         }
 
-        @keyframes demoGlow {
-            0%, 100% { box-shadow: 0 4px 12px rgba(8, 145, 178, 0.1); }
-            50% { box-shadow: 0 8px 24px rgba(8, 145, 178, 0.2); }
+        ::-webkit-scrollbar-track {
+            background: transparent;
         }
 
-        /* Error States */
+        ::-webkit-scrollbar-thumb {
+            background: var(--border-color);
+            border-radius: 3px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #cbd5e1;
+        }
+
+        /* Error state */
         .last-updated.error {
             color: var(--status-critical);
-        }
-
-        .no-incidents.error {
-            color: var(--status-critical);
-        }
-
-        /* Section Incident Headers */
-        .section-incident-header {
-            padding: 10px;
-            border-radius: 6px;
-            color: white;
-            margin-bottom: 10px;
-        }
-
-        .section-incident-header strong {
-            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
-        }
-
-        .section-incident-header.claude-header {
-            background: linear-gradient(135deg, #D97706 0%, #DC2626 100%);
-        }
-
-        .section-incident-header.github-header {
-            background: linear-gradient(135deg, #24292E 0%, #0D1117 100%);
-        }
-
-        .section-incident-header-lg {
-            margin-bottom: 15px;
-            padding: 10px;
-            border-radius: 6px;
-            color: white;
-        }
-
-        .section-incident-header-lg strong {
-            font-size: 14px;
-            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
-        }
-
-        .section-incident-header-lg.claude-header {
-            background: linear-gradient(135deg, #D97706 0%, #DC2626 100%);
-        }
-
-        .section-incident-header-lg.github-header {
-            background: linear-gradient(135deg, #24292E 0%, #0D1117 100%);
-        }
-
-        /* Utility Classes */
-        .pulse {
-            animation: pulse 2s ease-in-out infinite;
-        }
-
-        @keyframes pulse {
-            0%, 100% { transform: scale(1); opacity: 1; }
-            50% { transform: scale(1.05); opacity: 0.8; }
         }
     </style>
 </head>
 <body>
     <div class="container">
+        <!-- Header -->
         <div class="header">
-            <div class="header-title-row">
-                <img src="icons/ai-vibe-32.png" alt="Vibe Stats" class="vibe-stats-icon" id="status-icon">
-                <h1 class="status-title">
-                    Vibe Stats
-                    <span class="version-badge" id="version-badge">v0.0.0</span>
-                    <span class="status-indicator" id="status-indicator" role="img"></span>
-                </h1>
-            </div>
-            <div class="header-controls-row">
-                <div class="last-updated" id="last-updated" aria-live="polite">Loading...</div>
-                <div class="header-buttons">
-                    <button class="header-btn" id="refresh-btn" aria-label="Refresh status data" title="Refresh (Ctrl+R)">
-                        <span>Refresh</span>
-                    </button>
-                    <button class="header-btn" id="demo-btn" aria-label="Run demo" title="Demo">
-                        <span>Demo</span>
-                    </button>
-                    <button class="header-btn" id="about-btn" aria-label="About" title="About">
-                        <span>About</span>
-                    </button>
+            <div class="header-top">
+                <div class="brand">
+                    <img src="icons/ai-vibe-32.png" alt="Vibe Stats" class="brand-icon" id="status-icon">
+                    <div class="brand-text">
+                        <span class="brand-name">Vibe Stats</span>
+                        <span class="brand-version" id="version-badge">v0.0.0</span>
+                    </div>
+                </div>
+                <div class="header-actions">
+                    <button class="btn" id="refresh-btn" title="Refresh (Ctrl+R)">Refresh</button>
+                    <button class="btn" id="about-btn" title="About">About</button>
                 </div>
             </div>
+
+            <!-- Status Banner -->
+            <div class="status-banner" id="overall-status">
+                <div class="status-indicator" id="status-dot"></div>
+                <span class="status-message" id="status-text">All Systems Operational</span>
+            </div>
+
+            <div class="last-updated" id="last-updated">Loading...</div>
         </div>
 
-        <!-- Claude Services Section -->
-        <div class="service-section claude-section">
-            <div class="section-header">
-                <h2 class="section-title">
-                    <a href="https://status.anthropic.com" target="_blank" class="status-link">Claude AI</a>
-                </h2>
-                <button class="section-incidents-toggle" data-section="claude" aria-label="Toggle Claude incidents">
-                    <span class="incidents-text">Issues</span>
-                    <span class="expand-icon">▶</span>
+        <!-- Services Grid -->
+        <div class="services-grid">
+            <!-- Claude -->
+            <div class="service-card claude" id="claude-card" data-service="claude">
+                <div class="card-header">
+                    <div class="card-icon">C</div>
+                    <div class="card-info">
+                        <div class="card-title">Claude AI</div>
+                        <div class="card-subtitle">Anthropic</div>
+                    </div>
+                </div>
+                <div class="status-badge" id="claude-status">
+                    <span class="status-dot"></span>
+                    <span class="status-label">Operational</span>
+                </div>
+                <div class="components-list" id="claude-components">
+                    <div class="component-row">
+                        <span class="component-name">Claude.ai</span>
+                        <div class="component-status">
+                            <span class="component-dot"></span>
+                            <span class="component-text ok">OK</span>
+                        </div>
+                    </div>
+                    <div class="component-row">
+                        <span class="component-name">API</span>
+                        <div class="component-status">
+                            <span class="component-dot"></span>
+                            <span class="component-text ok">OK</span>
+                        </div>
+                    </div>
+                </div>
+                <button class="toggle-btn" data-service="claude">
+                    <span>View Issues</span>
+                    <span class="arrow">▼</span>
                 </button>
-            </div>
-            <div class="section-incidents-container" id="claude-incidents" style="display: none;">
-                <div class="section-incidents-content" id="claude-incidents-content">
-                    <div class="loading">Loading...</div>
+                <div class="incidents-panel" id="claude-incidents">
+                    <div class="no-incidents">No recent incidents</div>
                 </div>
             </div>
-            <div class="service-grid claude-grid" id="claude-grid">
-                <div class="service-item" data-service="claude-web" data-url="https://claude.ai">
-                    <div class="service-icon unknown">?</div>
-                    <div class="service-name">Claude Web</div>
-                </div>
-                <div class="service-item" data-service="claude-api" data-url="https://console.anthropic.com">
-                    <div class="service-icon unknown">?</div>
-                    <div class="service-name">Claude API</div>
-                </div>
-                <div class="service-item" data-service="claude-dashboard" data-url="https://console.anthropic.com">
-                    <div class="service-icon unknown">?</div>
-                    <div class="service-name">Dashboard</div>
-                </div>
-                <div class="service-item" data-service="claude-docs" data-url="https://docs.anthropic.com">
-                    <div class="service-icon unknown">?</div>
-                    <div class="service-name">Docs</div>
-                </div>
-            </div>
-        </div>
 
-        <!-- GitHub Copilot Section -->
-        <div class="service-section github-section">
-            <div class="section-header">
-                <h2 class="section-title">
-                    <a href="https://www.githubstatus.com" target="_blank" class="status-link">GitHub Copilot</a>
-                </h2>
-                <button class="section-incidents-toggle" data-section="github" aria-label="Toggle GitHub incidents">
-                    <span class="incidents-text">Issues</span>
-                    <span class="expand-icon">▶</span>
+            <!-- GitHub -->
+            <div class="service-card github" id="github-card" data-service="github">
+                <div class="card-header">
+                    <div class="card-icon">G</div>
+                    <div class="card-info">
+                        <div class="card-title">GitHub</div>
+                        <div class="card-subtitle">Copilot & Actions</div>
+                    </div>
+                </div>
+                <div class="status-badge" id="github-status">
+                    <span class="status-dot"></span>
+                    <span class="status-label">Operational</span>
+                </div>
+                <div class="components-list" id="github-components">
+                    <div class="component-row">
+                        <span class="component-name">Copilot</span>
+                        <div class="component-status">
+                            <span class="component-dot"></span>
+                            <span class="component-text ok">OK</span>
+                        </div>
+                    </div>
+                    <div class="component-row">
+                        <span class="component-name">Actions</span>
+                        <div class="component-status">
+                            <span class="component-dot"></span>
+                            <span class="component-text ok">OK</span>
+                        </div>
+                    </div>
+                </div>
+                <button class="toggle-btn" data-service="github">
+                    <span>View Issues</span>
+                    <span class="arrow">▼</span>
                 </button>
-            </div>
-            <div class="section-incidents-container" id="github-incidents" style="display: none;">
-                <div class="section-incidents-content" id="github-incidents-content">
-                    <div class="loading">Loading...</div>
+                <div class="incidents-panel" id="github-incidents">
+                    <div class="no-incidents">No recent incidents</div>
                 </div>
             </div>
-            <div class="service-grid github-grid" id="github-grid">
-                <div class="service-item" data-service="github-copilot" data-url="https://github.com/features/copilot">
-                    <div class="service-icon unknown">?</div>
-                    <div class="service-name">Copilot</div>
+
+            <!-- OpenAI -->
+            <div class="service-card openai" id="openai-card" data-service="openai">
+                <div class="card-header">
+                    <div class="card-icon">O</div>
+                    <div class="card-info">
+                        <div class="card-title">OpenAI</div>
+                        <div class="card-subtitle">ChatGPT & API</div>
+                    </div>
                 </div>
-                <div class="service-item" data-service="github-api" data-url="https://docs.github.com/en/rest">
-                    <div class="service-icon unknown">?</div>
-                    <div class="service-name">GitHub API</div>
+                <div class="status-badge" id="openai-status">
+                    <span class="status-dot"></span>
+                    <span class="status-label">Operational</span>
                 </div>
-                <div class="service-item" data-service="github-codespaces" data-url="https://github.com/features/codespaces">
-                    <div class="service-icon unknown">?</div>
-                    <div class="service-name">Codespaces</div>
+                <div class="components-list" id="openai-components">
+                    <div class="component-row">
+                        <span class="component-name">ChatGPT</span>
+                        <div class="component-status">
+                            <span class="component-dot"></span>
+                            <span class="component-text ok">OK</span>
+                        </div>
+                    </div>
+                    <div class="component-row">
+                        <span class="component-name">API</span>
+                        <div class="component-status">
+                            <span class="component-dot"></span>
+                            <span class="component-text ok">OK</span>
+                        </div>
+                    </div>
                 </div>
-                <div class="service-item" data-service="github-actions" data-url="https://github.com/features/actions">
-                    <div class="service-icon unknown">?</div>
-                    <div class="service-name">Actions</div>
+                <button class="toggle-btn" data-service="openai">
+                    <span>View Issues</span>
+                    <span class="arrow">▼</span>
+                </button>
+                <div class="incidents-panel" id="openai-incidents">
+                    <div class="no-incidents">No recent incidents</div>
+                </div>
+            </div>
+
+            <!-- Gemini -->
+            <div class="service-card gemini" id="gemini-card" data-service="gemini">
+                <div class="card-header">
+                    <div class="card-icon">G</div>
+                    <div class="card-info">
+                        <div class="card-title">Gemini</div>
+                        <div class="card-subtitle">Google AI</div>
+                    </div>
+                </div>
+                <div class="status-badge" id="gemini-status">
+                    <span class="status-dot"></span>
+                    <span class="status-label">Operational</span>
+                </div>
+                <div class="components-list" id="gemini-components">
+                    <div class="component-row">
+                        <span class="component-name">AI Studio</span>
+                        <div class="component-status">
+                            <span class="component-dot"></span>
+                            <span class="component-text ok">OK</span>
+                        </div>
+                    </div>
+                    <div class="component-row">
+                        <span class="component-name">Gemini API</span>
+                        <div class="component-status">
+                            <span class="component-dot"></span>
+                            <span class="component-text ok">OK</span>
+                        </div>
+                    </div>
+                </div>
+                <button class="toggle-btn" data-service="gemini">
+                    <span>View Issues</span>
+                    <span class="arrow">▼</span>
+                </button>
+                <div class="incidents-panel" id="gemini-incidents">
+                    <div class="no-incidents">No recent incidents</div>
                 </div>
             </div>
         </div>
     </div>
 
     <!-- About Modal -->
-    <div class="about-modal" id="about-modal">
-        <div class="about-content">
-            <button class="about-close" id="about-close" aria-label="Close">&times;</button>
-            <div class="about-header">
-                <img src="icons/ai-vibe-48.png" alt="Vibe Stats" class="about-icon">
-                <h2 class="about-title" id="about-title">Vibe Stats</h2>
-                <p class="about-version" id="about-version">Loading version...</p>
+    <div class="modal-overlay" id="about-modal">
+        <div class="modal-content">
+            <button class="modal-close" id="about-close">&times;</button>
+            <div class="modal-header">
+                <img src="icons/ai-vibe-48.png" alt="Vibe Stats" class="modal-icon">
+                <div class="modal-title" id="about-title">Vibe Stats</div>
+                <div class="modal-version" id="about-version">Loading version...</div>
             </div>
-            <div class="about-status-colors">
-                <div class="status-color-item">
-                    <div class="status-color green" title="Operational"></div>
-                    <span>OK</span>
+            <div class="modal-services">
+                <div class="modal-service">
+                    <div class="modal-service-icon claude">C</div>
+                    <span class="modal-service-name">Claude</span>
                 </div>
-                <div class="status-color-item">
-                    <div class="status-color yellow" title="Minor Issues"></div>
-                    <span>Minor</span>
+                <div class="modal-service">
+                    <div class="modal-service-icon github">G</div>
+                    <span class="modal-service-name">GitHub</span>
                 </div>
-                <div class="status-color-item">
-                    <div class="status-color red" title="Critical"></div>
-                    <span>Critical</span>
+                <div class="modal-service">
+                    <div class="modal-service-icon openai">O</div>
+                    <span class="modal-service-name">OpenAI</span>
+                </div>
+                <div class="modal-service">
+                    <div class="modal-service-icon gemini">G</div>
+                    <span class="modal-service-name">Gemini</span>
                 </div>
             </div>
-            <p class="about-description" id="about-description">
-                Monitor Claude AI and GitHub Copilot status in real-time. Keep your dev tools vibe in check!
+            <p class="modal-desc" id="about-description">
+                Monitor your favorite AI development tools in real-time. Stay informed about service status, incidents, and outages.
             </p>
-            <div class="about-author">
-                <div class="about-author-label">Created by</div>
-                <a href="https://github.com/todddube/vstat" target="_blank" class="about-author-link" id="about-author">
-                    Todd Dube
-                </a>
+            <div class="modal-footer">
+                <div class="modal-author-label">Created by</div>
+                <a href="https://github.com/todddube/vstat" target="_blank" class="modal-author-link" id="about-author">Todd Dube</a>
             </div>
         </div>
     </div>

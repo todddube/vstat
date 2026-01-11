@@ -1,17 +1,18 @@
 /**
- * VStateMonitor class handles monitoring of Claude and GitHub Copilot service status
+ * VStateMonitor class handles monitoring of AI service status
+ * Monitors: Claude, GitHub Copilot, OpenAI, and Google Gemini
  * Uses Chrome alarms API for reliable background execution
  */
 class VStateMonitor {
   constructor() {
-    // Claude API endpoints
+    // Claude API endpoints (Anthropic)
     this.claude = {
       statusUrl: 'https://status.anthropic.com/api/v2/status.json',
       incidentsUrl: 'https://status.anthropic.com/api/v2/incidents.json',
       summaryUrl: 'https://status.anthropic.com/api/v2/summary.json',
       componentsUrl: 'https://status.anthropic.com/api/v2/components.json'
     };
-    
+
     // GitHub API endpoints
     this.github = {
       statusUrl: 'https://www.githubstatus.com/api/v2/status.json',
@@ -19,7 +20,21 @@ class VStateMonitor {
       summaryUrl: 'https://www.githubstatus.com/api/v2/summary.json',
       componentsUrl: 'https://www.githubstatus.com/api/v2/components.json'
     };
-    
+
+    // OpenAI API endpoints
+    this.openai = {
+      statusUrl: 'https://status.openai.com/api/v2/status.json',
+      incidentsUrl: 'https://status.openai.com/api/v2/incidents.json',
+      summaryUrl: 'https://status.openai.com/api/v2/summary.json',
+      componentsUrl: 'https://status.openai.com/api/v2/components.json'
+    };
+
+    // Google Gemini/AI Studio - uses Google Cloud status
+    this.gemini = {
+      statusUrl: 'https://status.cloud.google.com/incidents.json',
+      summaryUrl: 'https://status.cloud.google.com/incidents.json'
+    };
+
     this.alarmName = 'vstateCheck';
     this.intervalMinutes = 5;
     this.maxRetries = 3;
@@ -37,11 +52,11 @@ class VStateMonitor {
     try {
       // Clear any existing alarm and create new one
       await chrome.alarms.clear(this.alarmName);
-      await chrome.alarms.create(this.alarmName, { 
-        periodInMinutes: this.intervalMinutes 
+      await chrome.alarms.create(this.alarmName, {
+        periodInMinutes: this.intervalMinutes
       });
-      
-      // Initial status check for both services
+
+      // Initial status check for all services
       await this.checkAllStatuses();
     } catch (error) {
       console.error('Failed to initialize VState monitor:', error);
@@ -50,25 +65,29 @@ class VStateMonitor {
   }
 
   /**
-   * Check status for Claude and GitHub services
+   * Check status for all AI services
    */
   async checkAllStatuses(retryCount = 0) {
     try {
-      const [claudeResults, githubResults] = await Promise.allSettled([
+      const [claudeResults, githubResults, openaiResults, geminiResults] = await Promise.allSettled([
         this.checkServiceStatus('claude'),
-        this.checkServiceStatus('github')
+        this.checkServiceStatus('github'),
+        this.checkServiceStatus('openai'),
+        this.checkGeminiStatus()
       ]);
 
       // Process results for all services
       const claudeStatus = this.extractStatusFromResult(claudeResults, 'claude');
       const githubStatus = this.extractStatusFromResult(githubResults, 'github');
+      const openaiStatus = this.extractStatusFromResult(openaiResults, 'openai');
+      const geminiStatus = this.extractGeminiStatusFromResult(geminiResults);
 
       // Combine status and determine overall state
-      const combinedStatus = this.combineStatuses(claudeStatus, githubStatus);
+      const combinedStatus = this.combineAllStatuses(claudeStatus, githubStatus, openaiStatus, geminiStatus);
 
       // Store the status data
-      await this.updateVStateStatus(claudeStatus, githubStatus, combinedStatus);
-      await this.updateBadgeIcon(combinedStatus);
+      await this.updateVStateStatus(claudeStatus, githubStatus, openaiStatus, geminiStatus, combinedStatus);
+      await this.updateBadgeIcon(combinedStatus.indicator);
 
       // Store success timestamp
       await chrome.storage.local.set({ lastSuccessfulCheck: Date.now() });
@@ -87,7 +106,7 @@ class VStateMonitor {
   }
 
   /**
-   * Check status for a specific service (claude or github)
+   * Check status for a specific service (claude, github, or openai)
    */
   async checkServiceStatus(serviceName) {
     const serviceConfig = this[serviceName];
@@ -103,16 +122,156 @@ class VStateMonitor {
 
     return {
       service: serviceName,
-      status: this.extractStatusFromResult(statusData),
+      status: this.extractStatusIndicator(statusData),
       incidents: this.extractIncidentsFromResult(incidentsData),
       components: this.extractComponentsFromResult(summaryData)
     };
   }
 
   /**
-   * Combine statuses from multiple services
+   * Check Gemini status from Google Cloud status page
+   * Google uses a different format than Atlassian Statuspage
    */
-  combineStatuses(claudeStatus, githubStatus) {
+  async checkGeminiStatus() {
+    try {
+      // For Gemini, we'll check Google Cloud's general status
+      // and filter for AI-related services
+      const response = await this.fetchData(this.gemini.statusUrl);
+
+      // Google Cloud status returns an array of incidents
+      const incidents = Array.isArray(response) ? response : [];
+
+      // Filter for AI/Gemini related incidents - check multiple fields
+      const aiIncidents = incidents.filter(incident => {
+        // Check all text fields for AI-related keywords
+        const fieldsToCheck = [
+          incident.external_desc,
+          incident.service_name,
+          incident.uri,
+          JSON.stringify(incident.affected_products || []),
+          JSON.stringify(incident.updates || [])
+        ].filter(Boolean).join(' ').toLowerCase();
+
+        return fieldsToCheck.includes('gemini') ||
+               fieldsToCheck.includes('ai studio') ||
+               fieldsToCheck.includes('vertex ai') ||
+               fieldsToCheck.includes('generative ai') ||
+               fieldsToCheck.includes('ai platform') ||
+               fieldsToCheck.includes('cloud ai');
+      });
+
+      // Map incidents to standard format first
+      const now = new Date();
+      const fourteenDaysAgo = new Date(now.getTime() - 14 * 24 * 60 * 60 * 1000);
+
+      const mappedIncidents = aiIncidents
+        .map(inc => ({
+          name: inc.external_desc || inc.service_name || 'Google AI Incident',
+          status: this.mapGoogleStatus(inc),
+          created_at: inc.begin || inc.created || inc.modified,
+          resolved_at: inc.end,
+          impact: this.mapGoogleSeverity(inc.severity),
+          incident_updates: (inc.updates || []).slice(0, 3).map(u => ({
+            body: u.text || u.description || u.when,
+            created_at: u.when || u.created || u.modified,
+            status: u.status || 'update'
+          }))
+        }))
+        .filter(inc => {
+          // Only include incidents from last 14 days
+          if (!inc.created_at) return false;
+          const incDate = new Date(inc.created_at);
+          return incDate >= fourteenDaysAgo;
+        })
+        .slice(0, 5);
+
+      // Determine status based on ACTIVE (unresolved) incidents only
+      const activeIncidents = mappedIncidents.filter(inc =>
+        inc.status !== 'resolved'
+      );
+
+      let status = 'operational';
+      if (activeIncidents.length > 0) {
+        const severity = activeIncidents.some(inc =>
+          inc.impact === 'critical' || inc.impact === 'major'
+        ) ? 'major' : 'minor';
+        status = severity;
+      }
+
+      return {
+        service: 'gemini',
+        status: { indicator: status },
+        incidents: mappedIncidents,
+        components: [
+          { name: 'AI Studio', status: status },
+          { name: 'Gemini API', status: status }
+        ]
+      };
+    } catch (error) {
+      console.warn('Gemini status check failed:', error);
+      return {
+        service: 'gemini',
+        status: { indicator: 'unknown' },
+        incidents: [],
+        components: [
+          { name: 'AI Studio', status: 'unknown' },
+          { name: 'Gemini API', status: 'unknown' }
+        ]
+      };
+    }
+  }
+
+  /**
+   * Map Google Cloud status to standard status
+   */
+  mapGoogleStatus(incident) {
+    if (!incident) return 'unknown';
+
+    // Check if resolved
+    if (incident.end) {
+      const endDate = new Date(incident.end);
+      if (endDate < new Date()) return 'resolved';
+    }
+
+    const status = incident.most_recent_update?.status?.toLowerCase() || '';
+    if (status.includes('resolved') || status.includes('closed')) return 'resolved';
+    if (status.includes('investigating')) return 'investigating';
+    if (status.includes('identified')) return 'identified';
+    if (status.includes('monitoring')) return 'monitoring';
+
+    return 'investigating';
+  }
+
+  /**
+   * Map Google severity to standard impact
+   */
+  mapGoogleSeverity(severity) {
+    if (!severity) return 'minor';
+    const sev = severity.toLowerCase();
+    if (sev === 'high' || sev === 'critical') return 'critical';
+    if (sev === 'medium') return 'major';
+    return 'minor';
+  }
+
+  /**
+   * Extract Gemini status from Promise result
+   */
+  extractGeminiStatusFromResult(result) {
+    if (result.status === 'fulfilled' && result.value) {
+      return result.value;
+    }
+    return {
+      service: 'gemini',
+      status: { indicator: 'unknown' },
+      incidents: [],
+      components: []
+    };
+  }
+
+  /**
+   * Combine statuses from all services
+   */
+  combineAllStatuses(claudeStatus, githubStatus, openaiStatus, geminiStatus) {
     // Priority: critical > major > minor > operational
     const statusPriority = {
       'critical': 4,
@@ -122,32 +281,63 @@ class VStateMonitor {
       'unknown': 0
     };
 
-    const claudeLevel = statusPriority[claudeStatus?.status?.indicator] || 0;
-    const githubLevel = statusPriority[githubStatus?.status?.indicator] || 0;
+    const getIndicator = (status) => {
+      if (!status) return 'unknown';
+      if (typeof status === 'string') return status;
+      return status.status?.indicator || status.indicator || 'unknown';
+    };
 
-    const maxLevel = Math.max(claudeLevel, githubLevel);
+    const statuses = [
+      { name: 'Claude', level: statusPriority[getIndicator(claudeStatus)] || 0 },
+      { name: 'GitHub', level: statusPriority[getIndicator(githubStatus)] || 0 },
+      { name: 'OpenAI', level: statusPriority[getIndicator(openaiStatus)] || 0 },
+      { name: 'Gemini', level: statusPriority[getIndicator(geminiStatus)] || 0 }
+    ];
+
+    const maxLevel = Math.max(...statuses.map(s => s.level));
     const combinedIndicator = Object.keys(statusPriority).find(key =>
       statusPriority[key] === maxLevel
     ) || 'unknown';
 
+    // Count affected services
+    const affectedServices = statuses.filter(s => s.level > 1).map(s => s.name);
+
     return {
       indicator: combinedIndicator,
-      description: this.getCombinedDescription(claudeStatus, githubStatus, combinedIndicator),
+      description: this.getCombinedDescription(combinedIndicator, affectedServices),
+      affectedServices,
       claude: claudeStatus,
-      github: githubStatus
+      github: githubStatus,
+      openai: openaiStatus,
+      gemini: geminiStatus
     };
   }
 
   /**
    * Get combined status description
    */
-  getCombinedDescription(claudeStatus, githubStatus, indicator) {
+  getCombinedDescription(indicator, affectedServices = []) {
+    if (indicator === 'operational') {
+      return 'All AI tools are vibing!';
+    }
+
+    if (affectedServices.length > 0) {
+      const serviceList = affectedServices.join(', ');
+      const descriptions = {
+        'minor': `Minor issues with ${serviceList}`,
+        'major': `Major issues affecting ${serviceList}`,
+        'critical': `Critical outage: ${serviceList}`,
+        'unknown': 'Unable to determine status'
+      };
+      return descriptions[indicator] || descriptions.unknown;
+    }
+
     const descriptions = {
-      'operational': 'All dev tools are vibing! 🔥',
-      'minor': 'Minor issues detected in your dev tools',
-      'major': 'Major issues affecting your dev tools',
-      'critical': 'Critical issues - dev tools are down!',
-      'unknown': 'Unable to determine dev tools status'
+      'operational': 'All AI tools are vibing!',
+      'minor': 'Minor issues detected',
+      'major': 'Major issues affecting services',
+      'critical': 'Critical issues detected',
+      'unknown': 'Unable to determine status'
     };
 
     return descriptions[indicator] || descriptions.unknown;
@@ -159,23 +349,23 @@ class VStateMonitor {
   async fetchData(url, timeout = 10000) {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), timeout);
-    
+
     try {
-      const response = await fetch(url, { 
+      const response = await fetch(url, {
         signal: controller.signal,
         cache: 'no-cache',
         headers: {
           'Accept': 'application/json',
-          'User-Agent': 'Claude Status Monitor Extension'
+          'User-Agent': 'Vibe Stats Extension'
         }
       });
-      
+
       clearTimeout(timeoutId);
-      
+
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }
-      
+
       return await response.json();
     } catch (error) {
       clearTimeout(timeoutId);
@@ -187,6 +377,16 @@ class VStateMonitor {
   }
 
   /**
+   * Extract status indicator from Promise.allSettled result
+   */
+  extractStatusIndicator(result) {
+    if (result.status === 'fulfilled' && result.value?.status?.indicator) {
+      return result.value.status;
+    }
+    return { indicator: 'unknown' };
+  }
+
+  /**
    * Extract status from Promise.allSettled result or service result
    */
   extractStatusFromResult(result, serviceName = null) {
@@ -194,13 +394,13 @@ class VStateMonitor {
     if (serviceName && result.status === 'fulfilled' && result.value) {
       return result.value;
     }
-    
-    // Handle individual API call results  
+
+    // Handle individual API call results
     if (result.status === 'fulfilled' && result.value?.status?.indicator) {
       return result.value.status.indicator;
     }
-    
-    return 'unknown';
+
+    return { service: serviceName, status: { indicator: 'unknown' }, incidents: [], components: [] };
   }
 
   /**
@@ -227,14 +427,20 @@ class VStateMonitor {
    * Handle check failure with proper error tracking
    */
   async handleCheckFailure(error) {
-    await this.updateStatus('unknown', [], [], [], []);
-    await this.updateBadgeIcon('unknown', []);
-    await chrome.storage.local.set({ 
+    const unknownStatus = {
+      indicator: 'unknown',
+      description: 'Unable to check status'
+    };
+
+    await chrome.storage.local.set({
+      vstateStatus: unknownStatus,
       lastError: {
         message: error.message,
         timestamp: Date.now()
       }
     });
+
+    await this.updateBadgeIcon('unknown');
     this.handleError(error, 'status-check');
   }
 
@@ -243,14 +449,14 @@ class VStateMonitor {
    */
   handleError(error, category) {
     console.error(`[${category}] Error:`, error);
-    // Could integrate with crash reporting service here
   }
-
 
   /**
    * Get recent active incidents (unresolved) with formatted titles
    */
   getRecentIncidents(incidents) {
+    if (!Array.isArray(incidents)) return [];
+
     return incidents
       .filter(incident => incident.status !== 'resolved')
       .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
@@ -262,7 +468,7 @@ class VStateMonitor {
         created_at: incident.created_at,
         shortlink: incident.shortlink,
         impact: incident.impact,
-        updates: incident.incident_updates.slice(0, 1).map(update => ({
+        updates: (incident.incident_updates || []).slice(0, 1).map(update => ({
           body: update.body,
           created_at: update.created_at,
           status: update.status
@@ -271,80 +477,36 @@ class VStateMonitor {
   }
 
   /**
-   * Get last 5 incidents regardless of status with formatted titles
+   * Format incident title with date
    */
-  getLastFiveIncidents(incidents) {
-    return incidents
-      .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
-      .slice(0, 5)
-      .map(incident => ({
-        name: incident.name,
-        titleWithDate: this.formatIncidentTitle(incident.name, incident.created_at),
-        status: incident.status,
-        created_at: incident.created_at,
-        resolved_at: incident.resolved_at,
-        shortlink: incident.shortlink,
-        impact: incident.impact,
-        duration: incident.resolved_at ? 
-          this.calculateDuration(incident.created_at, incident.resolved_at) : null,
-        summary: this.generateIncidentSummary(incident),
-        updates: incident.incident_updates.slice(0, 2).map(update => ({
-          body: update.body,
-          created_at: update.created_at,
-          status: update.status
-        }))
-      }));
+  formatIncidentTitle(name, createdAt) {
+    if (!createdAt) return name;
+
+    const date = new Date(createdAt);
+    const dateStr = date.toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: date.getFullYear() !== new Date().getFullYear() ? 'numeric' : undefined
+    });
+    const timeStr = date.toLocaleTimeString('en-US', {
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true
+    });
+
+    return `${dateStr} ${timeStr} - ${name}`;
   }
 
-  getHistoricalIncidents(incidents) {
-    const last24Hours = new Date(Date.now() - 24 * 60 * 60 * 1000);
-    return incidents
-      .filter(incident => new Date(incident.created_at) >= last24Hours)
-      .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
-      .slice(0, 3)
-      .map(incident => ({
-        name: incident.name,
-        status: incident.status,
-        created_at: incident.created_at,
-        resolved_at: incident.resolved_at,
-        impact: incident.impact,
-        summary: this.generateIncidentSummary(incident),
-        duration: incident.resolved_at ? 
-          this.calculateDuration(incident.created_at, incident.resolved_at) : null,
-        updates: incident.incident_updates.map(update => ({
-          body: update.body,
-          created_at: update.created_at,
-          status: update.status
-        }))
-      }));
-  }
-
-  generateIncidentSummary(incident) {
-    if (!incident.incident_updates || incident.incident_updates.length === 0) {
-      return `${incident.impact || 'Minor'} impact incident affecting Claude services.`;
-    }
-    
-    const firstUpdate = incident.incident_updates[incident.incident_updates.length - 1];
-    const lastUpdate = incident.incident_updates[0];
-    
-    let summary = `${incident.impact || 'Minor'} impact: `;
-    
-    if (incident.status === 'resolved') {
-      summary += `Issue resolved. ${lastUpdate.body.slice(0, 100)}...`;
-    } else {
-      summary += `${firstUpdate.body.slice(0, 100)}...`;
-    }
-    
-    return summary;
-  }
-
+  /**
+   * Calculate duration between two times
+   */
   calculateDuration(startTime, endTime) {
     const start = new Date(startTime);
     const end = new Date(endTime);
     const durationMs = end - start;
     const hours = Math.floor(durationMs / (1000 * 60 * 60));
     const minutes = Math.floor((durationMs % (1000 * 60 * 60)) / (1000 * 60));
-    
+
     if (hours > 0) {
       return `${hours}h ${minutes}m`;
     }
@@ -352,35 +514,18 @@ class VStateMonitor {
   }
 
   /**
-   * Format incident title with date
-   */
-  formatIncidentTitle(name, createdAt) {
-    const date = new Date(createdAt);
-    const dateStr = date.toLocaleDateString('en-US', { 
-      month: 'short', 
-      day: 'numeric',
-      year: date.getFullYear() !== new Date().getFullYear() ? 'numeric' : undefined
-    });
-    const timeStr = date.toLocaleTimeString('en-US', { 
-      hour: 'numeric', 
-      minute: '2-digit',
-      hour12: true
-    });
-    
-    return `${dateStr} ${timeStr} - ${name}`;
-  }
-
-  /**
    * Update VState status data in storage
    * Includes pruning to prevent storage accumulation
    */
-  async updateVStateStatus(claudeStatus, githubStatus, combinedStatus) {
+  async updateVStateStatus(claudeStatus, githubStatus, openaiStatus, geminiStatus, combinedStatus) {
     const currentTime = new Date().toISOString();
-    const maxIncidents = 50; // Limit stored incidents to prevent accumulation
+    const maxIncidents = 50;
 
     // Prune incidents to prevent storage bloat
     const claudeIncidents = this.pruneIncidents(claudeStatus?.incidents || [], maxIncidents);
     const githubIncidents = this.pruneIncidents(githubStatus?.incidents || [], maxIncidents);
+    const openaiIncidents = this.pruneIncidents(openaiStatus?.incidents || [], maxIncidents);
+    const geminiIncidents = this.pruneIncidents(geminiStatus?.incidents || [], maxIncidents);
 
     await chrome.storage.local.set({
       // Combined status
@@ -389,14 +534,20 @@ class VStateMonitor {
       // Individual service data
       claudeStatus: claudeStatus,
       githubStatus: githubStatus,
+      openaiStatus: openaiStatus,
+      geminiStatus: geminiStatus,
 
       // Individual incidents (pruned)
       claudeIncidents: claudeIncidents,
       githubIncidents: githubIncidents,
+      openaiIncidents: openaiIncidents,
+      geminiIncidents: geminiIncidents,
 
       // Individual components
       claudeComponents: claudeStatus?.components || [],
       githubComponents: githubStatus?.components || [],
+      openaiComponents: openaiStatus?.components || [],
+      geminiComponents: geminiStatus?.components || [],
 
       // Timestamps
       lastUpdated: currentTime,
@@ -405,28 +556,21 @@ class VStateMonitor {
   }
 
   /**
-   * Prune incidents array to prevent storage accumulation
-   * Keeps the most recent incidents up to maxCount
+   * Prune incidents array to only include last 14 days and limit count
    */
-  pruneIncidents(incidents, maxCount = 50) {
+  pruneIncidents(incidents, maxCount = 4, maxDays = 14) {
     if (!Array.isArray(incidents)) return [];
-    if (incidents.length <= maxCount) return incidents;
 
-    // Sort by created_at descending and take the most recent
+    const cutoffDate = new Date();
+    cutoffDate.setDate(cutoffDate.getDate() - maxDays);
+
     return incidents
+      .filter(incident => {
+        const incidentDate = new Date(incident.created_at);
+        return incidentDate >= cutoffDate;
+      })
       .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
       .slice(0, maxCount);
-  }
-
-  async updateStatus(status, incidents, historicalIncidents, components, lastFiveIncidents) {
-    await chrome.storage.local.set({
-      status: status,
-      incidents: incidents,
-      historicalIncidents: historicalIncidents || [],
-      lastFiveIncidents: lastFiveIncidents || [],
-      components: components || [],
-      lastUpdated: new Date().toISOString()
-    });
   }
 
   /**
@@ -435,15 +579,15 @@ class VStateMonitor {
   async updateBadgeIcon(status, components = []) {
     try {
       const iconPath = this.getIconPath(status);
-      
+
       await chrome.action.setIcon({ path: iconPath });
-      
+
       // Start icon animation for non-operational states
       this.handleIconAnimation(status);
 
       // Count affected services
       const affectedCount = this.countAffectedServices(components);
-      
+
       let badgeText = '';
       if (status === 'critical') {
         badgeText = affectedCount > 0 ? affectedCount.toString() : '!';
@@ -452,7 +596,7 @@ class VStateMonitor {
       } else if (status === 'minor') {
         badgeText = affectedCount > 0 ? affectedCount.toString() : '?';
       }
-      
+
       await chrome.action.setBadgeText({ text: badgeText });
 
       if (badgeText) {
@@ -460,8 +604,8 @@ class VStateMonitor {
           color: this.getBadgeColor(status)
         });
       }
-      
-      // Update title with version, status and affected count
+
+      // Update title with version and status
       const manifest = chrome.runtime.getManifest();
       const version = manifest.version;
       const statusText = this.getStatusText(status);
@@ -469,7 +613,7 @@ class VStateMonitor {
       await chrome.action.setTitle({
         title: `Vibe Stats v${version} - ${statusText}${titleSuffix}`
       });
-      
+
     } catch (error) {
       console.error('Failed to update badge icon:', error);
     }
@@ -481,44 +625,11 @@ class VStateMonitor {
   countAffectedServices(components) {
     if (!Array.isArray(components)) return 0;
 
-    // Key service components to track - using word patterns for robust matching
-    const keyServicePatterns = [
-      /\bclaude\.ai\b/i,
-      /\bclaude\s+frontend\b/i,
-      /\bclaude\.ai\s+website\b/i,
-      /\banthropic\s+console\b/i,
-      /\bconsole\.anthropic\.com\b/i,
-      /\bconsole\b/i,
-      /\banthropic\s+api\b/i,
-      /\bapi\.anthropic\.com\b/i,
-      /\bapi\s+requests?\b/i,
-      /\bclaude\s+code\b/i,
-      /\bcode\s+editor\b/i
-    ];
-
     return components.filter(component => {
-      const name = component.name;
-      const isKeyService = keyServicePatterns.some(pattern => pattern.test(name));
       const isNotOperational = component.status &&
         component.status.toLowerCase() !== 'operational';
-
-      return isKeyService && isNotOperational;
+      return isNotOperational;
     }).length;
-  }
-
-  getIconColor(status) {
-    switch (status) {
-      case 'none':
-      case 'operational':
-        return 'green';
-      case 'minor':
-        return 'yellow';
-      case 'major':
-      case 'critical':
-        return 'red';
-      default:
-        return 'gray';
-    }
   }
 
   getIconPath(color) {
@@ -532,24 +643,19 @@ class VStateMonitor {
 
   /**
    * Handle icon animation for different statuses
-   * Includes max duration to prevent indefinite animation
    */
   handleIconAnimation(status) {
-    // Clear any existing animation interval
     this.clearAnimation();
 
-    // Start badge animation for problematic statuses instead of icon blinking
     if (status !== 'operational' && status !== 'none') {
       let isVisible = true;
       this.animationStartTime = Date.now();
 
       this.animationInterval = setInterval(async () => {
         try {
-          // Check if max animation duration exceeded
           if (Date.now() - this.animationStartTime > this.maxAnimationDuration) {
             console.log('Animation max duration reached, stopping animation');
             this.clearAnimation();
-            // Restore original badge color
             await chrome.action.setBadgeBackgroundColor({
               color: this.getBadgeColor(status)
             });
@@ -557,12 +663,10 @@ class VStateMonitor {
           }
 
           if (isVisible) {
-            // Make badge flash by changing opacity
             await chrome.action.setBadgeBackgroundColor({
-              color: [255, 0, 0, 100] // Red with low opacity
+              color: [255, 0, 0, 100]
             });
           } else {
-            // Restore original badge color
             await chrome.action.setBadgeBackgroundColor({
               color: this.getBadgeColor(status)
             });
@@ -570,10 +674,9 @@ class VStateMonitor {
           isVisible = !isVisible;
         } catch (error) {
           console.error('Animation error:', error);
-          // If animation fails, clear the interval to prevent spam
           this.clearAnimation();
         }
-      }, 1000); // Flash every second
+      }, 1000);
     }
   }
 
@@ -592,14 +695,14 @@ class VStateMonitor {
     switch (status) {
       case 'none':
       case 'operational':
-        return '#4CAF50';
+        return '#22c55e';
       case 'minor':
-        return '#FFC107';
+        return '#eab308';
       case 'major':
       case 'critical':
-        return '#F44336';
+        return '#ef4444';
       default:
-        return '#9E9E9E';
+        return '#64748b';
     }
   }
 
@@ -670,15 +773,15 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         sendResponse({ status: 'error', error: error.message });
       }
     })();
-    return true; // Indicates async response
+    return true;
   }
-  
+
   if (message.action === 'getStatus') {
     (async () => {
       try {
         const data = await chrome.storage.local.get([
-          'vstateStatus', 'claudeStatus', 'githubStatus',
-          'claudeIncidents', 'githubIncidents',
+          'vstateStatus', 'claudeStatus', 'githubStatus', 'openaiStatus', 'geminiStatus',
+          'claudeIncidents', 'githubIncidents', 'openaiIncidents', 'geminiIncidents',
           'lastUpdated', 'lastError'
         ]);
         sendResponse({ status: 'success', data });
@@ -686,6 +789,6 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         sendResponse({ status: 'error', error: error.message });
       }
     })();
-    return true; // Indicates async response
+    return true;
   }
 });
