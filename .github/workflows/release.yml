@@ -17,6 +17,8 @@ on:
         required: false
         type: string
   push:
+    branches:
+      - main
     tags:
       - 'v*'
 
@@ -134,6 +136,109 @@ jobs:
           echo "### 📦 Artifacts:" >> $GITHUB_STEP_SUMMARY
           echo "- vibe-stats-v${VERSION}.zip" >> $GITHUB_STEP_SUMMARY
           echo "- manifest.json" >> $GITHUB_STEP_SUMMARY
+
+  # Auto-detect version changes and create release
+  auto-release:
+    name: 🔄 Auto-Release on Version Change
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && !startsWith(github.ref, 'refs/tags/')
+
+    steps:
+      - name: 📥 Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: 🔧 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: 🔍 Check for Version Change
+        id: version_check
+        run: |
+          # Get current version from manifest.json
+          CURRENT_VERSION=$(node -p "require('./manifest.json').version")
+          echo "current_version=$CURRENT_VERSION" >> $GITHUB_OUTPUT
+          echo "📦 Current manifest version: $CURRENT_VERSION"
+
+          # Check if tag already exists
+          if git rev-parse "v$CURRENT_VERSION" >/dev/null 2>&1; then
+            echo "🏷️ Tag v$CURRENT_VERSION already exists - skipping release"
+            echo "should_release=false" >> $GITHUB_OUTPUT
+          else
+            echo "✨ New version detected: v$CURRENT_VERSION"
+            echo "should_release=true" >> $GITHUB_OUTPUT
+          fi
+
+      - name: 🔍 Validate Extension Files
+        if: steps.version_check.outputs.should_release == 'true'
+        run: npm run validate
+
+      - name: 🏗️ Build Extension
+        if: steps.version_check.outputs.should_release == 'true'
+        run: npm run build:clean
+
+      - name: ⚙️ Configure Git
+        if: steps.version_check.outputs.should_release == 'true'
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+
+      - name: 🏷️ Create and Push Tag
+        if: steps.version_check.outputs.should_release == 'true'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          VERSION=${{ steps.version_check.outputs.current_version }}
+          echo "🏷️ Creating tag v$VERSION..."
+          git tag -a "v$VERSION" -m "Release v$VERSION"
+          git push origin "v$VERSION"
+
+      - name: 🎉 Create GitHub Release
+        if: steps.version_check.outputs.should_release == 'true'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          VERSION=${{ steps.version_check.outputs.current_version }}
+          ZIP_FILE="dist/vibe-stats-v${VERSION}.zip"
+
+          if [ ! -f "$ZIP_FILE" ]; then
+            echo "❌ Zip file not found: $ZIP_FILE"
+            exit 1
+          fi
+
+          echo "🚀 Creating GitHub release v$VERSION..."
+          gh release create "v${VERSION}" \
+            "$ZIP_FILE" \
+            "manifest.json" \
+            --title "🤖 Vibe Stats v${VERSION} - AI Dev Tools Monitor" \
+            --generate-notes \
+            --latest
+
+      - name: 📊 Release Summary
+        if: steps.version_check.outputs.should_release == 'true'
+        run: |
+          VERSION=${{ steps.version_check.outputs.current_version }}
+          echo "## 🎉 Auto-Release v${VERSION} Created" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Version:** v${VERSION}" >> $GITHUB_STEP_SUMMARY
+          echo "**Trigger:** Push to main with new version" >> $GITHUB_STEP_SUMMARY
+          echo "**Release URL:** [View Release](https://github.com/${{ github.repository }}/releases/tag/v${VERSION})" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 📦 Artifacts:" >> $GITHUB_STEP_SUMMARY
+          echo "- vibe-stats-v${VERSION}.zip" >> $GITHUB_STEP_SUMMARY
+          echo "- manifest.json" >> $GITHUB_STEP_SUMMARY
+
+      - name: ℹ️ No Release Needed
+        if: steps.version_check.outputs.should_release == 'false'
+        run: |
+          VERSION=${{ steps.version_check.outputs.current_version }}
+          echo "## ℹ️ No Release Needed" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Current Version:** v${VERSION}" >> $GITHUB_STEP_SUMMARY
+          echo "**Status:** Tag already exists - no new release created" >> $GITHUB_STEP_SUMMARY
 
   validate-build:
     name: 🔍 Validate Build
