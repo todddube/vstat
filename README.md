@@ -1,10 +1,10 @@
 # Vibe Stats - AI Dev Tools Status Monitor
 
-Monitor **Claude AI** and **GitHub Copilot** service status in real-time with AI-themed vibe indicators.
+Monitor **Claude AI**, **OpenAI**, **GitHub Copilot**, and **Google Gemini** service status in real-time with AI-themed vibe indicators.
 
 [![Chrome Web Store](https://img.shields.io/badge/Chrome%20Web%20Store-Available-4285F4?style=flat&logo=googlechrome&logoColor=white)](https://chromewebstore.google.com/detail/vibe-stats-ai-dev-tools-m/kedjfbglocmffhdopahgkbgokpfdmlng)
 [![Manifest V3](https://img.shields.io/badge/Manifest-V3-green)](https://developer.chrome.com/docs/extensions/mv3/)
-[![Version](https://img.shields.io/badge/version-1.2.6-blue)](https://github.com/todddube/vstat/releases)
+[![Version](https://img.shields.io/badge/version-1.3.1-blue)](https://github.com/todddube/vstat/releases)
 
 ## Install
 
@@ -15,11 +15,12 @@ Or load unpacked for development - see [Development](#development) section.
 ## Features
 
 - **Real-time Monitoring** - Automatic status checks every 5 minutes
-- **Dual Service Support** - Monitors both Claude AI and GitHub Copilot
+- **4 AI Services** - Monitors Claude AI, OpenAI (ChatGPT), GitHub Copilot, and Google Gemini
 - **Status Indicators** - Visual vibe icons show service health at a glance
-- **Incident Details** - Expandable sections show recent issues
+- **Incident Details** - Expandable sections show recent issues (14-day history)
 - **Auto-refresh** - Updates every 30 seconds when popup is open
 - **Keyboard Shortcuts** - Ctrl+R to refresh, accessible navigation
+- **Professional UI** - Clean light theme with color-coded service cards
 
 ### Status Icons
 
@@ -32,12 +33,14 @@ Or load unpacked for development - see [Development](#development) section.
 
 ## Screenshots
 
-Click the extension icon to see detailed status for both services:
+Click the extension icon to see detailed status for all 4 AI services:
 
-- Overall status indicator
-- Individual service status (Claude Web, API, Console, Docs)
-- GitHub services (Copilot, API, Codespaces, Actions)
-- Recent incidents with timestamps
+- Overall status indicator with combined health
+- Claude AI (claude.ai, API, Platform, Claude Code)
+- OpenAI (ChatGPT, API, DALL-E, Codex)
+- GitHub (Copilot, Actions, API, Codespaces)
+- Google Gemini (AI Studio, Gemini API)
+- Recent incidents with timestamps and expandable details
 
 ## Development
 
@@ -90,12 +93,19 @@ See [BUILD.md](BUILD.md) for detailed build and release instructions.
 The extension monitors these status APIs:
 
 **Claude AI (Anthropic)**
-- `https://status.anthropic.com/api/v2/status.json`
-- `https://status.anthropic.com/api/v2/incidents.json`
+- `https://status.claude.com/api/v2/status.json`
+- `https://status.claude.com/api/v2/incidents.json`
+
+**OpenAI**
+- `https://status.openai.com/api/v2/status.json`
+- `https://status.openai.com/api/v2/incidents.json`
 
 **GitHub Copilot**
 - `https://www.githubstatus.com/api/v2/status.json`
 - `https://www.githubstatus.com/api/v2/incidents.json`
+
+**Google Gemini (via Google Cloud)**
+- `https://status.cloud.google.com/incidents.json`
 
 ## Privacy
 

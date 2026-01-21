@@ -5,12 +5,12 @@
  */
 class VStateMonitor {
   constructor() {
-    // Claude API endpoints (Anthropic)
+    // Claude API endpoints (now at status.claude.com, redirected from status.anthropic.com)
     this.claude = {
-      statusUrl: 'https://status.anthropic.com/api/v2/status.json',
-      incidentsUrl: 'https://status.anthropic.com/api/v2/incidents.json',
-      summaryUrl: 'https://status.anthropic.com/api/v2/summary.json',
-      componentsUrl: 'https://status.anthropic.com/api/v2/components.json'
+      statusUrl: 'https://status.claude.com/api/v2/status.json',
+      incidentsUrl: 'https://status.claude.com/api/v2/incidents.json',
+      summaryUrl: 'https://status.claude.com/api/v2/summary.json',
+      componentsUrl: 'https://status.claude.com/api/v2/components.json'
     };
 
     // GitHub API endpoints

@@ -4,9 +4,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-**Vibe Stats** is a Chrome/Edge browser extension that monitors the status of developer tools (Claude AI and GitHub Copilot) in real-time. The extension displays service health through AI-themed vibe indicators and provides detailed incident information through a popup interface.
+**Vibe Stats** is a Chrome/Edge browser extension that monitors the status of AI developer tools (Claude AI, OpenAI, GitHub Copilot, and Google Gemini) in real-time. The extension displays service health through AI-themed vibe indicators and provides detailed incident information through a popup interface.
 
-This project has evolved from "Claude Status Monitor" to "Vibe Stats - AI Dev Tools Monitor" to encompass both Claude and GitHub Copilot monitoring with an AI-themed interface.
+This project has evolved from "Claude Status Monitor" to "Vibe Stats - AI Dev Tools Monitor" to encompass Claude, OpenAI, GitHub Copilot, and Google Gemini monitoring with an AI-themed interface.
 
 ## Commands
 
@@ -41,14 +41,14 @@ npm run test:viewer
 
 **Service Worker (`background.js`)**
 - `VStateMonitor` class handles all background monitoring
-- Monitors both Claude (`status.anthropic.com`) and GitHub (`www.githubstatus.com`) APIs
+- Monitors 4 AI services: Claude (`status.claude.com`), GitHub (`www.githubstatus.com`), OpenAI (`status.openai.com`), and Gemini (`status.cloud.google.com`)
 - Uses Chrome Alarms API for reliable 5-minute periodic checks
 - Manages extension icons, badges, and status indicators
 - Implements smart retry logic with exponential backoff
 
 **Popup Interface (`popup.js` + `popup.html`)**
 - `VStatePopupController` class manages the interactive interface
-- Dual-service status display with expandable service details
+- 4-service status display with expandable service details
 - Real-time updates with 30-second auto-refresh when popup is open
 - Keyboard navigation and accessibility support
 
@@ -77,15 +77,23 @@ npm run test:viewer
 
 ### API Integration
 
-**Anthropic Status APIs**:
-- Status: `https://status.anthropic.com/api/v2/status.json`
-- Incidents: `https://status.anthropic.com/api/v2/incidents.json`
-- Summary: `https://status.anthropic.com/api/v2/summary.json`
+**Claude Status APIs** (Anthropic):
+- Status: `https://status.claude.com/api/v2/status.json`
+- Incidents: `https://status.claude.com/api/v2/incidents.json`
+- Summary: `https://status.claude.com/api/v2/summary.json`
 
 **GitHub Status APIs**:
 - Status: `https://www.githubstatus.com/api/v2/status.json`
 - Incidents: `https://www.githubstatus.com/api/v2/incidents.json`
 - Summary: `https://www.githubstatus.com/api/v2/summary.json`
+
+**OpenAI Status APIs**:
+- Status: `https://status.openai.com/api/v2/status.json`
+- Incidents: `https://status.openai.com/api/v2/incidents.json`
+- Summary: `https://status.openai.com/api/v2/summary.json`
+
+**Google Gemini Status API** (via Google Cloud):
+- Incidents: `https://status.cloud.google.com/incidents.json`
 
 ## Development Workflow
 
